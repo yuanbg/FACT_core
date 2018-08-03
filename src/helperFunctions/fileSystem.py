@@ -1,10 +1,11 @@
 import logging
 import os
 import sys
-
+from pathlib import Path
 import magic
 
 from helperFunctions.dataConversion import make_unicode_string
+from common_helper_process.fail_safe_subprocess import execute_shell_command_get_return_code
 
 
 def get_src_dir():
@@ -141,3 +142,21 @@ def file_is_empty(file_path):
         logging.error('Unexpected Exception: {} {}'.format(sys.exc_info()[0].__name__, e))
     else:
         return False
+ 
+    
+def create_dir_for_file(file_path: Path) -> None:
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def compress_and_pack_folder(input_dir: Path, output_file: Path):
+    '''
+    create tar.gz of input_dir and store it to output_file
+    return None on error or output_file on success
+    '''
+    create_dir_for_file(output_file)
+    output, rc = execute_shell_command_get_return_code('tar -C {} -cvzf {} .'.format(input_dir, output_file))
+    if rc != 0:
+        logging.error('Could not create tar.gz:\n{}'.format(output))
+        return None
+    else:
+        return output_file

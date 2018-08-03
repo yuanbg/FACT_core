@@ -1,9 +1,13 @@
 import logging
+from pathlib import Path
 
-from common_helper_files.fail_safe_file_operations import get_binary_from_file
+from common_helper_files import get_binary_from_file
 
+from tempfile import TemporaryDirectory
+from helperFunctions.web_interface import ConnectTo
 from storage.db_interface_common import MongoInterfaceCommon
 from unpacker.tar_repack import TarRepack
+
 
 
 class BinaryService(object):
@@ -34,10 +38,24 @@ class BinaryService(object):
             return (tar, name)
 
     def _get_file_name_and_path_from_db(self, uid):
-        db_service = BinaryServiceDbInterface(config=self.config)
-        tmp = db_service.get_file_name_and_path(uid)
-        db_service.shutdown()
-        return tmp
+        with ConnectTo(BinaryServiceDbInterface, self._config) as db:
+            tmp = db.get_file_name_and_path(uid)
+            return tmp
+    
+    def get_unpacked_firmware(self, uid):
+        archive_directory = TemporaryDirectory(prefix='FACT_fw_download_')
+        root_path = Path(archive_directory.name)
+        with ConnectTo(MongoInterfaceCommon, self._config) as db:
+            firmware = db.get_firmware(uid=uid, analysis_filter=[])
+            if firmware is not None:
+                self.test_create_extraction_folder(root_path, firmware['file_name'])
+                # ToDo extract and recurse
+    
+    @staticmethod            
+    def create_extraction_folder(root_path: Path, file_name: str) -> Path:
+        extraction_path = Path(root_path, '{}_extracted'.format(file_name))
+        extraction_path.mkdir(parents=True, exist_ok= True)
+        return extraction_path
 
 
 class BinaryServiceDbInterface(MongoInterfaceCommon):

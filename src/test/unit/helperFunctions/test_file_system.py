@@ -1,10 +1,14 @@
 from common_helper_files import get_files_in_dir
 import os
 import unittest
+import pytest
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 from helperFunctions.fileSystem import get_parent_dir, get_src_dir, \
     get_test_data_dir, get_absolute_path, get_file_type_from_path, file_is_empty, \
-    get_chroot_path, get_chroot_path_excluding_extracted_dir, get_faf_bin_dir, get_template_dir
+    get_chroot_path, get_chroot_path_excluding_extracted_dir, get_faf_bin_dir, get_template_dir,\
+    create_dir_for_file, compress_and_pack_folder
 
 
 class TestFileSystemHelpers(unittest.TestCase):
@@ -83,3 +87,40 @@ class TestFileSystemHelpers(unittest.TestCase):
         file_type = get_file_type_from_path(os.path.join(get_test_data_dir(), 'symbolic_link_representation'))
         self.assertEqual(file_type['full'], 'symbolic link to \'/tmp\'')
         self.assertEqual(file_type['mime'], 'inode/symlink')
+
+
+@pytest.mark.parametrize('out_file, out_folder', [
+    ('test.txt', ''),
+    ('folder/test.txt', 'folder'),
+    ('folder/sub_folder/test.txt', 'folder/sub_folder')
+])
+def test_create_dir_for_file(out_file, out_folder):
+    tmp_dir = TemporaryDirectory(prefix='FACT_test_')
+    root_path = tmp_dir.name
+    test_file_path = Path(root_path, out_file)
+    create_dir_for_file(test_file_path)
+    folder_path = Path(root_path, out_folder)
+    assert folder_path.exists()
+    assert folder_path.is_dir()
+    tmp_dir.cleanup()
+
+
+def test_compress_and_pack_folder():
+    tmp_dir = TemporaryDirectory(prefix='FACT_test_')
+    root_path = tmp_dir.name
+    input_path = Path(get_test_data_dir(), 'get_files_test')
+    file_path = Path(root_path, 'test.tar.gz')
+    output_file_path = compress_and_pack_folder(input_path, file_path)
+    assert file_path == output_file_path
+    assert output_file_path.exists()
+    tmp_dir.cleanup()
+
+
+def test_compress_and_pack_folder_error():
+    tmp_dir = TemporaryDirectory(prefix='FACT_test_')
+    root_path = tmp_dir.name
+    input_path = Path('/none/existing/path')
+    file_path = Path(root_path, '')
+    output_file_path = compress_and_pack_folder(input_path, file_path)
+    assert output_file_path is None
+    tmp_dir.cleanup()
