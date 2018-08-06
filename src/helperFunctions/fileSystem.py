@@ -142,8 +142,8 @@ def file_is_empty(file_path):
         logging.error('Unexpected Exception: {} {}'.format(sys.exc_info()[0].__name__, e))
     else:
         return False
- 
-    
+
+
 def create_dir_for_file(file_path: Path) -> None:
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
