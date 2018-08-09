@@ -57,21 +57,6 @@ class Test_Objects_File(unittest.TestCase):
         fo.virtual_file_path = {fo.get_uid(): '/foo/bar/the_file_name.txt'}
         self.assertEqual(fo.get_virtual_file_paths()[fo.get_uid()], '/foo/bar/the_file_name.txt', 'not correct if path set')
 
-    def test_get_root_of_virtual_path(self):
-        fo = FileObject(binary=b'file_object')
-        virtual_test_path = 'root_uid|child_1_uid|child_2_uid|directory/file.type'
-        self.assertEqual(fo.get_root_of_virtual_path(virtual_test_path), 'root_uid')
-
-    def test_get_base_of_virtual_path(self):
-        fo = FileObject(binary=b'file_object')
-        virtual_test_path = 'root_uid|child_1_uid|child_2_uid|directory/file.type'
-        self.assertEqual(fo.get_base_of_virtual_path(virtual_test_path), 'root_uid|child_1_uid|child_2_uid')
-
-    def test_get_base_of_virtual_path_root(self):
-        fo = FileObject(binary=b'file_object')
-        virtual_test_path = 'root_uid'
-        self.assertEqual(fo.get_base_of_virtual_path(virtual_test_path), '')
-
     def test_get_root_uid(self):
         fo = FileObject(binary=b'file_object')
         fo.virtual_file_path = {'root_uid_1': 'virtual_file_path', 'root_uid_2': 'virtual_file_path'}
@@ -89,11 +74,6 @@ class Test_Objects_File(unittest.TestCase):
     def test_get_virtual_path_for_none_existing_uid(self):
         fo = FileObject(binary=b'foo')
         self.assertEqual(fo.get_virtual_paths_for_one_uid(root_uid='none_existing'), ['insufficient information: firmware analysis not complete'])
-
-    def test_get_top_of_virtual_path(self):
-        fo = FileObject()
-        result = fo.get_top_of_virtual_path('foo|bar|test')
-        self.assertEqual(result, 'test', 'top should be test')
 
     def test_overwrite_uid(self):
         fo = create_test_file_object()

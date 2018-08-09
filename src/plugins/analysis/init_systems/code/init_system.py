@@ -2,6 +2,7 @@ import re
 
 from analysis.PluginBase import AnalysisBasePlugin
 from helperFunctions.dataConversion import make_unicode_string
+from helperFunctions.objects import get_top_of_virtual_path
 
 FILE_IGNORES = ['README', 'README.md', 'README.txt', 'INSTALL', 'VERSION']
 
@@ -30,7 +31,7 @@ class AnalysisPlugin(AnalysisBasePlugin):
 
     @staticmethod
     def _get_file_path(file_object):
-        return file_object.get_top_of_virtual_path(file_object.virtual_file_path[file_object.root_uid][0])
+        return get_top_of_virtual_path(file_object.virtual_file_path[file_object.root_uid][0])
 
     def _get_systemd_config(self, file_object):
         result = dict()

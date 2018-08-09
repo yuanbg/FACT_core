@@ -6,6 +6,7 @@ from common_helper_files import get_binary_from_file
 from helperFunctions.dataConversion import make_bytes, make_unicode_string, get_value_of_first_key
 from helperFunctions.hash import get_sha256
 from helperFunctions.uid import create_uid
+from helperFunctions.objects import get_top_of_virtual_path, get_base_of_virtual_path
 
 
 class FileObject(object):
@@ -76,7 +77,7 @@ class FileObject(object):
         if root_uid is not None:
             self.root_uid = root_uid
         tmp = self.get_virtual_paths_for_one_uid(root_uid=self.get_root_uid())[0]
-        return self.get_top_of_virtual_path(tmp)
+        return get_top_of_virtual_path(tmp)
 
     def get_included_files_uids(self):
         return self.files_included
@@ -97,7 +98,7 @@ class FileObject(object):
         if self.root_uid not in self.virtual_file_path.keys():
             self.virtual_file_path[self.root_uid] = []
             for item in parent_pathes:
-                base_path = self.get_base_of_virtual_path(item)
+                base_path = get_base_of_virtual_path(item)
                 if len(base_path) > 0:
                     base_path += "|"
                 self.virtual_file_path[self.root_uid].append("{}{}|{}".format(base_path, parent_uid, self.file_path))
@@ -127,18 +128,6 @@ class FileObject(object):
             return self.virtual_file_path
         else:
             return {self.get_uid(): ['{}'.format(self.get_uid())]}
-
-    @staticmethod
-    def get_root_of_virtual_path(virtual_path):
-        return virtual_path.split("|")[0]
-
-    @staticmethod
-    def get_base_of_virtual_path(virtual_path):
-        return "|".join(virtual_path.split("|")[:-1])
-
-    @staticmethod
-    def get_top_of_virtual_path(virtual_path):
-        return virtual_path.split("|")[-1]
 
     def get_root_uid(self):
         if self.root_uid is not None:

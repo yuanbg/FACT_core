@@ -7,6 +7,7 @@ from common_helper_unpacking_classifier import avg_entropy, get_binary_size_with
 
 from helperFunctions.dataConversion import make_list_from_dict, make_unicode_string
 from helperFunctions.fileSystem import file_is_empty, get_chroot_path_excluding_extracted_dir, get_file_type_from_path
+from helperFunctions.objects import get_base_of_virtual_path
 from objects.file import FileObject
 from storage.fs_organizer import FS_Organizer
 from unpacker.unpackBase import UnpackBase
@@ -99,7 +100,7 @@ class Unpacker(UnpackBase):
             if not file_is_empty(item):
                 current_file = FileObject(file_path=item)
                 current_virtual_path = '{}|{}|{}'.format(
-                    parent.get_base_of_virtual_path(parent.get_virtual_file_paths()[parent.get_root_uid()][0]),
+                    get_base_of_virtual_path(parent.get_virtual_file_paths()[parent.get_root_uid()][0]),
                     parent.get_uid(), get_chroot_path_excluding_extracted_dir(make_unicode_string(item), tmp_dir)
                 )
                 current_file.temporary_data['parent_fo_type'] = get_file_type_from_path(parent.file_path)['mime']
