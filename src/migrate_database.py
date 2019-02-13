@@ -20,21 +20,23 @@
 import logging
 import sys
 
-from storage.MongoMgr import MongoMgr
+from helperFunctions.web_interface import ConnectTo
+from storage.db_interface_backend import BackEndDbInterface
 from helperFunctions.program_setup import program_setup
 
 
-PROGRAM_NAME = 'FACT Database Initializer'
-PROGRAM_DESCRIPTION = 'Initialize authentication and users for FACT\'s Database'
+PROGRAM_NAME = 'FACT Database Migration Helper'
+PROGRAM_DESCRIPTION = 'Migrate FACT\'s Database from an old version'
 
 
 def main(command_line_options=sys.argv):
     _, config = program_setup(PROGRAM_NAME, PROGRAM_DESCRIPTION, command_line_options=command_line_options)
 
     logging.info('Trying to start Mongo Server and initializing users...')
-    mongo_manger = MongoMgr(config=config, auth=False)
-    mongo_manger.init_users()
-    mongo_manger.shutdown()
+    with ConnectTo(BackEndDbInterface, config) as db_service:
+        firmwares = db_service.firmwares.find()
+        for f in firmwares:
+            db_service.firmware_metadata
 
     return 0
 

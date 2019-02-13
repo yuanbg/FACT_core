@@ -20,6 +20,7 @@ class MongoInterfaceCommon(MongoInterface):
         self.main = self.client[main_database]
         self.firmwares = self.main.firmwares
         self.file_objects = self.main.file_objects
+        self.firmware_metadata = self.main.firmware_metadata
         self.locks = self.main.locks
         # sanitize stuff
         self.report_threshold = int(self.config['data_storage']['report_threshold'])
@@ -89,8 +90,16 @@ class MongoInterfaceCommon(MongoInterface):
         if not uid_list:
             return []
         query = self._build_search_query_for_uid_list(uid_list)
-        results = [self._convert_to_firmware(i, analysis_filter=analysis_filter) for i in self.firmwares.find(query) if i is not None]
-        results.extend([self._convert_to_file_object(i, analysis_filter=analysis_filter) for i in self.file_objects.find(query) if i is not None])
+        results = [
+            self._convert_to_firmware(i, analysis_filter=analysis_filter)
+            for i in self.firmwares.find(query)
+            if i is not None
+        ]
+        results.extend([
+            self._convert_to_file_object(i, analysis_filter=analysis_filter)
+            for i in self.file_objects.find(query)
+            if i is not None
+        ])
         return results
 
     @staticmethod

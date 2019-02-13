@@ -79,24 +79,25 @@ class BackEndDbInterface(MongoInterfaceCommon):
     def build_firmware_dict(self, firmware):
         analysis = self.sanitize_analysis(analysis_dict=firmware.processed_analysis, uid=firmware.get_uid())
         entry = {
-            '_id': firmware.get_uid(),
-            'file_path': firmware.file_path,
-            'file_name': firmware.file_name,
             'device_part': firmware.part,
-            'virtual_file_path': firmware.virtual_file_path,
             'version': firmware.version,
             'md5': firmware.md5,
-            'sha256': firmware.sha256,
-            'processed_analysis': analysis,
-            'files_included': list(firmware.files_included),
             'device_name': firmware.device_name,
-            'size': firmware.size,
             'device_class': firmware.device_class,
             'vendor': firmware.vendor,
             'release_date': convert_str_to_time(firmware.release_date),
             'submission_date': time(),
+            'tags': firmware.tags,
+
+            '_id': firmware.get_uid(),
+            'file_path': firmware.file_path,
+            'file_name': firmware.file_name,
+            'virtual_file_path': firmware.virtual_file_path,
+            'sha256': firmware.sha256,
+            'processed_analysis': analysis,
+            'files_included': list(firmware.files_included),
+            'size': firmware.size,
             'analysis_tags': firmware.analysis_tags,
-            'tags': firmware.tags
         }
         if hasattr(firmware, 'comments'):  # for backwards compatibility
             entry['comments'] = firmware.comments
@@ -124,18 +125,19 @@ class BackEndDbInterface(MongoInterfaceCommon):
     def build_file_object_dict(self, file_object):
         analysis = self.sanitize_analysis(analysis_dict=file_object.processed_analysis, uid=file_object.get_uid())
         entry = {
+            'parents': file_object.parents,
+            'depth': file_object.depth,
+            'parent_firmware_uids': list(file_object.parent_firmware_uids),
+
             '_id': file_object.get_uid(),
             'file_path': file_object.file_path,
             'file_name': file_object.file_name,
             'virtual_file_path': file_object.virtual_file_path,
-            'parents': file_object.parents,
-            'depth': file_object.depth,
             'sha256': file_object.sha256,
             'processed_analysis': analysis,
             'files_included': list(file_object.files_included),
             'size': file_object.size,
             'analysis_tags': file_object.analysis_tags,
-            'parent_firmware_uids': list(file_object.parent_firmware_uids)
         }
         for attribute in ['comments']:  # for backwards compatibility
             if hasattr(file_object, attribute):
