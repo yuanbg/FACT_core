@@ -1,7 +1,6 @@
 import json
 import logging
 import pickle
-import sys
 from typing import Set
 
 import gridfs
@@ -21,6 +20,7 @@ class MongoInterfaceCommon(MongoInterface):
         self.main = self.client[main_database]
         self.firmwares = self.main.firmwares
         self.file_objects = self.main.file_objects
+        self.firmware_metadata = self.main.firmware_metadata
         self.locks = self.main.locks
         # sanitize stuff
         self.report_threshold = int(self.config['data_storage']['report_threshold'])
@@ -90,8 +90,16 @@ class MongoInterfaceCommon(MongoInterface):
         if not uid_list:
             return []
         query = self._build_search_query_for_uid_list(uid_list)
-        results = [self._convert_to_firmware(i, analysis_filter=analysis_filter) for i in self.firmwares.find(query) if i is not None]
-        results.extend([self._convert_to_file_object(i, analysis_filter=analysis_filter) for i in self.file_objects.find(query) if i is not None])
+        results = [
+            self._convert_to_firmware(i, analysis_filter=analysis_filter)
+            for i in self.firmwares.find(query)
+            if i is not None
+        ]
+        results.extend([
+            self._convert_to_file_object(i, analysis_filter=analysis_filter)
+            for i in self.file_objects.find(query)
+            if i is not None
+        ])
         return results
 
     @staticmethod
@@ -174,7 +182,7 @@ class MongoInterfaceCommon(MongoInterface):
                 else:
                     sanitized_dict[key].pop('file_system_flag')
             except Exception as e:
-                logging.debug('Could not retrieve information: {} {}'.format(sys.exc_info()[0].__name__, e))
+                logging.debug('Could not retrieve information: {} {}'.format(type(e), e))
         return sanitized_dict
 
     def _extract_binaries(self, analysis_dict, key, uid):
@@ -265,7 +273,7 @@ class MongoInterfaceCommon(MongoInterface):
                 for item in file_object.processed_analysis[selected_analysis]['summary']:
                     summary[item] = [file_object.get_uid()]
         except Exception as e:
-            logging.warning('Could not get summary: {} {}'.format(sys.exc_info()[0].__name__, e))
+            logging.warning('Could not get summary: {} {}'.format(type(e), e))
         return summary
 
     def _collect_summary(self, uid_list, selected_analysis):
