@@ -78,6 +78,22 @@ class MongoInterfaceCommon(MongoInterface):
             logging.debug('No firmware with UID {} found.'.format(uid))
             return None
 
+    def get_combined_firmware_data(self, uid: str) -> dict:
+        '''
+        returns a dictionary with merged firmware metadata and respective file object data
+        '''
+        cursor = self.firmware_metadata.aggregate([
+            {'$match': {'uid': uid}},
+            {'$lookup:': {
+                'from': 'file_objects',
+                'localField': 'uid',
+                'foreignField': '_id',
+                'as': 'file_object_data'
+            }},
+            {'$replaceRoot': {'newRoot': {'$mergeObjects': [{'$arrayElemAt': ['$file_object_data', 0]}, '$$ROOT']}}}
+        ])
+        return dict(cursor.find_one())
+
     def get_file_object(self, uid, analysis_filter=None):
         file_entry = self.file_objects.find_one(uid)
         if file_entry:
