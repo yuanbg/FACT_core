@@ -2,13 +2,14 @@ import logging
 import os
 
 from common_helper_files import get_binary_from_file
-
-from helperFunctions.dataConversion import make_bytes, make_unicode_string, get_value_of_first_key
+from helperFunctions.dataConversion import (
+    get_value_of_first_key, make_bytes, make_unicode_string
+)
 from helperFunctions.hash import get_sha256
 from helperFunctions.uid import create_uid
 
 
-class FileObject(object):
+class FileObject:  # pylint: disable=too-many-instance-attributes
     '''
     This is the base file objects. All files in FAF should be implemented as this object type.
     '''
@@ -41,6 +42,7 @@ class FileObject(object):
         else:
             self.file_path = None
         self.virtual_file_path = {}
+        self.is_firmware = False
 
     def set_binary(self, binary):
         self.binary = make_bytes(binary)
@@ -115,17 +117,15 @@ class FileObject(object):
                 req_root_uid = self.root_uid
             if req_root_uid is None:
                 return get_value_of_first_key(file_paths)
-            else:
-                return file_paths[req_root_uid]
+            return file_paths[req_root_uid]
         except Exception:
             logging.error('Error on virtual file path retrieval. This should be fixed')
             return ["insufficient information: firmware analysis not complete"]
 
     def get_virtual_file_paths(self):
-        if len(self.virtual_file_path.keys()) > 0:
+        if self.virtual_file_path:
             return self.virtual_file_path
-        else:
-            return {self.get_uid(): ['{}'.format(self.get_uid())]}
+        return {self.get_uid(): ['{}'.format(self.get_uid())]}
 
     @staticmethod
     def get_root_of_virtual_path(virtual_path):
@@ -142,8 +142,7 @@ class FileObject(object):
     def get_root_uid(self):
         if self.root_uid is not None:
             return self.root_uid
-        else:
-            return list(self.get_virtual_file_paths().keys())[0]
+        return list(self.get_virtual_file_paths().keys())[0]
 
     def __str__(self):
         return "UID: {}\n Processed analysis: {}\n Files included: {}".format(self.get_uid(), list(self.processed_analysis.keys()), self.files_included)

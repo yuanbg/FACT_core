@@ -4,6 +4,7 @@ import pickle
 from typing import Set
 
 import gridfs
+import pymongo
 from common_helper_files import get_safe_name
 from common_helper_mongo.aggregate import (
     get_list_of_all_values,
@@ -20,9 +21,9 @@ class MongoInterfaceCommon(MongoInterface):
     def _setup_database_mapping(self):
         main_database = self.config['data_storage']['main_database']
         self.main = self.client[main_database]
-        self.firmwares = self.main.firmwares
-        self.file_objects = self.main.file_objects
-        self.firmware_metadata = self.main.firmware_metadata
+        self.firmwares = self.main.firmwares  # type:  pymongo.collection.Collection
+        self.file_objects = self.main.file_objects  # type:  pymongo.collection.Collection
+        self.firmware_metadata = self.main.firmware_metadata  # type:  pymongo.collection.Collection
         self.locks = self.main.locks
         # sanitize stuff
         self.report_threshold = int(self.config['data_storage']['report_threshold'])
@@ -39,7 +40,7 @@ class MongoInterfaceCommon(MongoInterface):
             return False
 
     def is_firmware(self, uid):
-        return self.firmwares.count_documents({'_id': uid}) > 0
+        return self.firmware_metadata.count_documents({'uid': uid}) > 0
 
     def is_file_object(self, uid):
         return self.file_objects.count_documents({'_id': uid}) > 0
@@ -73,7 +74,7 @@ class MongoInterfaceCommon(MongoInterface):
         return fo
 
     def get_firmware(self, uid, analysis_filter=None):
-        firmware_entry = self.firmwares.find_one(uid)
+        firmware_entry = self.get_combined_firmware_data(uid)
         if firmware_entry:
             return self._convert_to_firmware(firmware_entry, analysis_filter=analysis_filter)
         else:
@@ -86,13 +87,14 @@ class MongoInterfaceCommon(MongoInterface):
         '''
         cursor = self.firmware_metadata.aggregate([
             {'$match': {'uid': uid}},
-            {'$lookup:': {
+            {'$lookup': {
                 'from': 'file_objects',
                 'localField': 'uid',
                 'foreignField': '_id',
-                'as': 'file_object_data'
+                'as': 'fo_data'
             }},
-            {'$replaceRoot': {'newRoot': {'$mergeObjects': [{'$arrayElemAt': ['$file_object_data', 0]}, '$$ROOT']}}}
+            {'$replaceRoot': {'newRoot': {'$mergeObjects': [{'$arrayElemAt': ['$fo_data', 0]}, '$$ROOT']}}},
+            {'$project': {'fo_data': 0}}
         ])
         return dict(cursor.find_one())
 
@@ -127,7 +129,7 @@ class MongoInterfaceCommon(MongoInterface):
 
     def _convert_to_firmware(self, entry, analysis_filter=None):
         firmware = Firmware()
-        firmware.uid = entry['_id']
+        firmware.uid = entry['uid']
         firmware.size = entry['size']
         firmware.set_name(entry['file_name'])
         firmware.set_device_name(entry['device_name'])
@@ -141,13 +143,8 @@ class MongoInterfaceCommon(MongoInterface):
         firmware.tags = entry['tags'] if 'tags' in entry else dict()
         firmware.analysis_tags = entry['analysis_tags'] if 'analysis_tags' in entry else dict()
 
-        try:  # for backwards compatibility
-            firmware.set_part_name(entry['device_part'])
-        except KeyError:
-            firmware.set_part_name('complete')
-
-        if 'comments' in entry:  # for backwards compatibility
-            firmware.comments = entry['comments']
+        for key, default in [('comments', []), ('device_part', 'complete')]:  # for backwards compatibility
+            setattr(firmware, key, entry[key] if key in entry else default)
         return firmware
 
     def _convert_to_file_object(self, entry, analysis_filter=None):

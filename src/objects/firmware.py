@@ -1,10 +1,11 @@
-from objects.file import FileObject
-from helperFunctions.hash import get_md5
-from helperFunctions.tag import TagColor
 from contextlib import suppress
 
+from helperFunctions.hash import get_md5
+from helperFunctions.tag import TagColor
+from objects.file import FileObject
 
-class Firmware(FileObject):
+
+class Firmware(FileObject):  # pylint: disable=too-many-instance-attributes
     '''
     This objects represents a firmware
     '''
@@ -15,19 +16,26 @@ class Firmware(FileObject):
         self.version = None
         self.device_class = None
         self.vendor = None
-        self.part = ''
+        self._part = ''
         self.release_date = None
+        self.md5 = None
         self.tags = dict()
+        self.is_firmware = True
         self._update_root_id_and_virtual_path()
 
     def set_device_name(self, device_name):
         self.device_name = device_name
 
+    def get_part_name(self):
+        return self._part
+
     def set_part_name(self, part):
         if part == 'complete':
-            self.part = ''
+            self._part = ''
         else:
-            self.part = part
+            self._part = part
+
+    part = property(get_part_name, set_part_name)
 
     def set_firmware_version(self, version):
         self.version = version

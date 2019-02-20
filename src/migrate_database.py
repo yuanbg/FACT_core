@@ -23,8 +23,6 @@ from typing import Iterable
 
 from helperFunctions.program_setup import program_setup
 from helperFunctions.web_interface import ConnectTo
-from objects.firmware import Firmware
-from objects.firmware_metadata import FirmwareMetadata
 from storage.db_interface_backend import BackEndDbInterface
 
 PROGRAM_NAME = 'FACT Database Migration Helper'
@@ -36,23 +34,10 @@ def main():
 
     logging.info('Trying to migrate MongoDB')
     with ConnectTo(BackEndDbInterface, config) as db_service:  # type: BackEndDbInterface
-        firmwares = db_service.firmwares.find()  # type: Iterable[Firmware]
+        firmwares = db_service.firmwares.find()  # type: Iterable[dict]
         for firmware in firmwares:
-
-            firmware_metadata_object = FirmwareMetadata(
-                fo_uid=firmware.uid,
-                device_name=firmware.device_name,
-                version=firmware.version,
-                device_class=firmware.device_class,
-                vendor=firmware.vendor,
-                part=firmware.part,
-                release_date=firmware.release_date
-            )
-            firmware_metadata_entry = db_service.build_firmware_metadata_dict(firmware_metadata_object)
-            db_service.add_firmware_metadata(firmware_metadata_entry)
-
-            firmware.firmware_ids = [firmware_metadata_object.id]
-            db_service.add_file_object(firmware)
+            firmware_object = db_service._convert_to_firmware(firmware)
+            db_service.add_firmware(firmware_object)
 
     return 0
 
