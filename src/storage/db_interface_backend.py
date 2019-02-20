@@ -2,13 +2,14 @@ import logging
 import sys
 from time import time
 
-from pymongo.errors import PyMongoError
-
 from helperFunctions.dataConversion import convert_str_to_time
-from helperFunctions.object_storage import update_virtual_file_path, update_included_files, update_analysis_tags
+from helperFunctions.object_storage import (
+    update_analysis_tags, update_included_files, update_virtual_file_path
+)
 from helperFunctions.tag import update_tags
 from objects.file import FileObject
 from objects.firmware import Firmware
+from pymongo.errors import PyMongoError
 from storage.db_interface_common import MongoInterfaceCommon
 
 
