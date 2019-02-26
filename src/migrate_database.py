@@ -21,8 +21,12 @@ import logging
 import sys
 from typing import Iterable
 
+import pymongo
+
+from helperFunctions.dataConversion import convert_time_to_str
 from helperFunctions.program_setup import program_setup
 from helperFunctions.web_interface import ConnectTo
+from objects.firmware import Firmware
 from storage.db_interface_backend import BackEndDbInterface
 
 PROGRAM_NAME = 'FACT Database Migration Helper'
@@ -34,12 +38,33 @@ def main():
 
     logging.info('Trying to migrate MongoDB')
     with ConnectTo(BackEndDbInterface, config) as db_service:  # type: BackEndDbInterface
-        firmwares = db_service.firmwares.find()  # type: Iterable[dict]
+        collection = db_service.main.firmwares  # type: pymongo.collection.Collection
+        firmwares = collection.find()  # type: Iterable[dict]
         for firmware in firmwares:
-            firmware_object = db_service._convert_to_firmware(firmware)
+            firmware_object = convert_to_firmware(firmware, db_service)
             db_service.add_firmware(firmware_object)
-
     return 0
+
+
+def convert_to_firmware(entry, db_service, analysis_filter=None):
+    firmware = Firmware()
+    firmware.uid = entry['_id']
+    firmware.size = entry['size']
+    firmware.set_name(entry['file_name'])
+    firmware.set_device_name(entry['device_name'])
+    firmware.set_device_class(entry['device_class'])
+    firmware.set_release_date(convert_time_to_str(entry['release_date']))
+    firmware.set_vendor(entry['vendor'])
+    firmware.set_firmware_version(entry['version'])
+    firmware.processed_analysis = db_service.retrieve_analysis(entry['processed_analysis'], analysis_filter=analysis_filter)
+    firmware.files_included = set(entry['files_included'])
+    firmware.virtual_file_path = entry['virtual_file_path']
+    firmware.tags = entry['tags'] if 'tags' in entry else dict()
+    firmware.analysis_tags = entry['analysis_tags'] if 'analysis_tags' in entry else dict()
+
+    for key, default in [('comments', []), ('device_part', 'complete')]:  # for backwards compatibility
+        setattr(firmware, key, entry[key] if key in entry else default)
+    return firmware
 
 
 if __name__ == '__main__':
