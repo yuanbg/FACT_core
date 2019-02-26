@@ -11,22 +11,19 @@ class FrontendEditingDbInterface(MongoInterfaceCommon):
         )
 
     def update_object_field(self, uid, field, value):
-        current_db = self.firmwares if self.is_firmware(uid) else self.file_objects
-        current_db.find_one_and_update(
+        self.file_objects.find_one_and_update(
             {'_id': uid},
             {'$set': {field: value}}
         )
 
     def add_element_to_array_in_field(self, uid, field, element):
-        current_db = self.firmwares if self.is_firmware(uid) else self.file_objects
-        current_db.update_one(
+        self.file_objects.update_one(
             {'_id': uid},
             {'$push': {field: element}}
         )
 
     def remove_element_from_array_in_field(self, uid, field, condition):
-        current_db = self.firmwares if self.is_firmware(uid) else self.file_objects
-        current_db.update_one(
+        self.file_objects.update_one(
             {'_id': uid},
             {'$pull': {field: condition}}
         )

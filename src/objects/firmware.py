@@ -10,7 +10,7 @@ class Firmware(FileObject):  # pylint: disable=too-many-instance-attributes
     This objects represents a firmware
     '''
 
-    def __init__(self, binary=None, file_name=None, file_path=None, scheduled_analysis=None):
+    def __init__(self, binary=None, file_name=None, file_path=None, scheduled_analysis=None, firmware_id=None):
         super().__init__(binary=binary, file_name=file_name, file_path=file_path, scheduled_analysis=scheduled_analysis)
         self.device_name = None
         self.version = None
@@ -21,6 +21,7 @@ class Firmware(FileObject):  # pylint: disable=too-many-instance-attributes
         self.md5 = None
         self.tags = dict()
         self.is_firmware = True
+        self._firmware_id = firmware_id
         self._update_root_id_and_virtual_path()
 
     def set_device_name(self, device_name):
@@ -71,6 +72,12 @@ class Firmware(FileObject):  # pylint: disable=too-many-instance-attributes
         '''
         part = ' - {}'.format(self.part) if self.part else ''
         return '{} {}{} v. {}'.format(self.vendor, self.device_name, part, self.version)
+
+    @property
+    def firmware_id(self):
+        if self._firmware_id is None:
+            self._firmware_id = 'F_{}'.format(get_md5(self.get_hid() + self.get_uid()))
+        return self._firmware_id
 
     def __str__(self):
         return '{}\nProcessed Analysis: {}\nScheduled Analysis: {}'.format(self.get_hid(), list(self.processed_analysis.keys()), self.scheduled_analysis)

@@ -1,7 +1,7 @@
 import json
 import logging
 import pickle
-from typing import Set
+from typing import Optional, Set, Union, List
 
 import gridfs
 import pymongo
@@ -21,7 +21,6 @@ class MongoInterfaceCommon(MongoInterface):
     def _setup_database_mapping(self):
         main_database = self.config['data_storage']['main_database']
         self.main = self.client[main_database]
-        self.firmwares = self.main.firmwares  # type:  pymongo.collection.Collection
         self.file_objects = self.main.file_objects  # type:  pymongo.collection.Collection
         self.firmware_metadata = self.main.firmware_metadata  # type:  pymongo.collection.Collection
         self.locks = self.main.locks
@@ -32,20 +31,17 @@ class MongoInterfaceCommon(MongoInterface):
         self.sanitize_fs = gridfs.GridFS(self.sanitize_storage)
 
     def existence_quick_check(self, uid):
-        if self.is_firmware(uid):
+        if self.is_file_object(uid) or self.is_firmware(uid):
             return True
-        elif self.is_file_object(uid):
-            return True
-        else:
-            return False
+        return False
 
-    def is_firmware(self, uid):
+    def is_firmware(self, uid: str) -> bool:
         return self.firmware_metadata.count_documents({'uid': uid}) > 0
 
-    def is_file_object(self, uid):
+    def is_file_object(self, uid: str) -> bool:
         return self.file_objects.count_documents({'_id': uid}) > 0
 
-    def get_object(self, uid, analysis_filter=None):
+    def get_object(self, uid: str, analysis_filter=None) -> Optional[Union[Firmware, FileObject]]:
         '''
         input uid
         output:
@@ -73,13 +69,12 @@ class MongoInterfaceCommon(MongoInterface):
                 fo.processed_analysis[analysis]['summary'] = self.get_summary(fo, analysis)
         return fo
 
-    def get_firmware(self, uid, analysis_filter=None):
+    def get_firmware(self, uid: str, analysis_filter=None) -> Optional[Firmware]:
         firmware_entry = self.get_combined_firmware_data(uid)
         if firmware_entry:
             return self._convert_to_firmware(firmware_entry, analysis_filter=analysis_filter)
-        else:
-            logging.debug('No firmware with UID {} found.'.format(uid))
-            return None
+        logging.debug('No firmware with UID {} found.'.format(uid))
+        return None
 
     def get_combined_firmware_data(self, uid: str) -> dict:
         '''
@@ -98,28 +93,23 @@ class MongoInterfaceCommon(MongoInterface):
         ])
         return dict(cursor.find_one())
 
-    def get_file_object(self, uid, analysis_filter=None):
+    def get_file_object(self, uid: str, analysis_filter=None) -> Optional[FileObject]:
         file_entry = self.file_objects.find_one(uid)
         if file_entry:
             return self._convert_to_file_object(file_entry, analysis_filter=analysis_filter)
-        else:
-            logging.debug('No FileObject with UID {} found.'.format(uid))
-            return None
+        logging.debug('No FileObject with UID {} found.'.format(uid))
+        return None
 
-    def get_objects_by_uid_list(self, uid_list, analysis_filter=None):
+    def get_objects_by_uid_list(self, uid_list: List[str], analysis_filter=None) -> List[FileObject]:
         if not uid_list:
             return []
         query = self._build_search_query_for_uid_list(uid_list)
         results = [
-            self._convert_to_firmware(i, analysis_filter=analysis_filter)
-            for i in self.firmwares.find(query)
-            if i is not None
+            (self._convert_to_firmware(entry, analysis_filter=analysis_filter) if entry['is_firmware']
+             else self._convert_to_file_object(entry, analysis_filter=analysis_filter))
+            for entry in self.file_objects.find(query)
+            if entry is not None
         ]
-        results.extend([
-            self._convert_to_file_object(i, analysis_filter=analysis_filter)
-            for i in self.file_objects.find(query)
-            if i is not None
-        ])
         return results
 
     @staticmethod
@@ -128,7 +118,7 @@ class MongoInterfaceCommon(MongoInterface):
         return query
 
     def _convert_to_firmware(self, entry, analysis_filter=None):
-        firmware = Firmware()
+        firmware = Firmware(firmware_id=entry['_id'])
         firmware.uid = entry['uid']
         firmware.size = entry['size']
         firmware.set_name(entry['file_name'])
@@ -176,15 +166,12 @@ class MongoInterfaceCommon(MongoInterface):
                 sanitized_dict[key]['file_system_flag'] = False
         return sanitized_dict
 
-    def retrieve_analysis(self, sanitized_dict, analysis_filter=None):
+    def retrieve_analysis(self, sanitized_dict: dict, analysis_filter: List[str] = None) -> dict:
         '''
         retrieves analysis including sanitized entries
         :param sanitized_dict: processed analysis dictionary including references to sanitized entries
-        :type dict:
         :param analysis_filter: list of analysis plugins to be restored
-        :type list:
         :default None:
-        :return: dict
         '''
         if analysis_filter is None:
             analysis_filter = sanitized_dict.keys()
@@ -196,8 +183,8 @@ class MongoInterfaceCommon(MongoInterface):
                     sanitized_dict[key] = self._retrieve_binaries(sanitized_dict, key)
                 else:
                     sanitized_dict[key].pop('file_system_flag')
-            except Exception as e:
-                logging.debug('Could not retrieve information: {} {}'.format(type(e), e))
+            except Exception as exception:
+                logging.debug('Could not retrieve information: {} {}'.format(type(exception), exception))
         return sanitized_dict
 
     def _extract_binaries(self, analysis_dict, key, uid):
@@ -214,7 +201,7 @@ class MongoInterfaceCommon(MongoInterface):
     def _retrieve_binaries(self, sanitized_dict, key):
         tmp_dict = {}
         for analysis_key in sanitized_dict[key].keys():
-            if analysis_key == 'summary' and type(sanitized_dict[key][analysis_key]) != str:
+            if analysis_key == 'summary' and not isinstance(sanitized_dict[key][analysis_key], str):
                 tmp_dict[analysis_key] = sanitized_dict[key][analysis_key]
             else:
                 logging.debug('Retrieving {}'.format(analysis_key))
@@ -228,7 +215,7 @@ class MongoInterfaceCommon(MongoInterface):
         return tmp_dict
 
     def get_specific_fields_of_db_entry(self, uid, field_dict):
-        return self.file_objects.find_one(uid, field_dict) or self.firmwares.find_one(uid, field_dict)
+        return self.file_objects.find_one(uid, field_dict)
 
     # --- summary recreation
 
@@ -246,15 +233,14 @@ class MongoInterfaceCommon(MongoInterface):
         return a set of all included files uids
         the set includes fo uid as well
         '''
-        if fo is not None:
-            files = set()
-            files.add(fo.get_uid())
-            included_files = self.get_objects_by_uid_list(fo.files_included, analysis_filter=[])
-            for item in included_files:
-                files.update(self.get_set_of_all_included_files(item))
-            return files
-        else:
+        if fo is None:
             return set()
+        files = set()
+        files.add(fo.get_uid())
+        included_files = self.get_objects_by_uid_list(fo.files_included, analysis_filter=[])
+        for item in included_files:
+            files.update(self.get_set_of_all_included_files(item))
+        return files
 
     def get_uids_of_all_included_files(self, uid: str) -> Set[str]:
         return {
@@ -263,22 +249,19 @@ class MongoInterfaceCommon(MongoInterface):
         }
 
     def get_summary(self, fo, selected_analysis):
-        if selected_analysis in fo.processed_analysis:
-            if 'summary' in fo.processed_analysis[selected_analysis]:
-                if isinstance(fo, Firmware):
-                    summary = get_list_of_all_values_and_collect_information_of_additional_field(
-                        self.file_objects, '$processed_analysis.{}.summary'.format(selected_analysis), '$_id', unwind=True,
-                        match={'virtual_file_path.{}'.format(fo.get_uid()): {'$exists': 'true'}})
-                    fo_summary = self._get_summary_of_one(fo, selected_analysis)
-                    self._update_summary(summary, fo_summary)
-                    return summary
-                else:
-                    return self._collect_summary(fo.list_of_all_included_files, selected_analysis)
-            else:
-                return None
-        else:
+        if selected_analysis not in fo.processed_analysis:
             logging.warning('Analysis {} not available on {}'.format(selected_analysis, fo.get_uid()))
             return None
+        if 'summary' in fo.processed_analysis[selected_analysis]:
+            return None
+        if not fo.is_firmware:
+            return self._collect_summary(fo.list_of_all_included_files, selected_analysis)
+        summary = get_list_of_all_values_and_collect_information_of_additional_field(
+            self.file_objects, '$processed_analysis.{}.summary'.format(selected_analysis), '$_id', unwind=True,
+            match={'virtual_file_path.{}'.format(fo.get_uid()): {'$exists': 'true'}})
+        fo_summary = self._get_summary_of_one(fo, selected_analysis)
+        self._update_summary(summary, fo_summary)
+        return summary
 
     @staticmethod
     def _get_summary_of_one(file_object, selected_analysis):
@@ -287,8 +270,8 @@ class MongoInterfaceCommon(MongoInterface):
             if 'summary' in file_object.processed_analysis[selected_analysis].keys():
                 for item in file_object.processed_analysis[selected_analysis]['summary']:
                     summary[item] = [file_object.get_uid()]
-        except Exception as e:
-            logging.warning('Could not get summary: {} {}'.format(type(e), e))
+        except Exception as exception:
+            logging.warning('Could not get summary: {} {}'.format(type(exception), exception))
         return summary
 
     def _collect_summary(self, uid_list, selected_analysis):
@@ -307,10 +290,10 @@ class MongoInterfaceCommon(MongoInterface):
                 original_dict[item] = update_dict[item]
         return original_dict
 
-    def get_firmware_number(self, query=None):
+    def get_firmware_number(self, query=None):  # FIXME
         if query is not None and isinstance(query, str):
             query = json.loads(query)
-        return self.firmwares.count_documents(query or {})
+        return self.firmware_metadata.count_documents(query or {})
 
     def get_file_object_number(self, query=None, zero_on_empty_query=True):
         if isinstance(query, str):

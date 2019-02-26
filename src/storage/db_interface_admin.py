@@ -17,33 +17,35 @@ class AdminDbInterface(MongoInterfaceCommon):
         super().shutdown()
 
     def remove_object_field(self, uid, field):
-        current_db = self.firmwares if self.is_firmware(uid) else self.file_objects
-        current_db.find_one_and_update(
+        self.file_objects.find_one_and_update(
             {'_id': uid},
             {'$unset': {field: ''}}
         )
 
     def remove_from_object_array(self, uid, field, value):
-        current_db = self.firmwares if self.is_firmware(uid) else self.file_objects
-        current_db.find_one_and_update(
+        self.file_objects.find_one_and_update(
             {'_id': uid},
             {'$pull': {field: value}}
         )
 
-    def delete_firmware(self, uid, delete_root_file=True):
+    def delete_firmware(self, firmware_id: str, delete_root_file=True):
         removed_fp, deleted = 0, 1
-        fw = self.firmwares.find_one(uid)
-        if fw:
-            for included_file_uid in fw['files_included']:
-                child_removed_fp, child_deleted = self._remove_virtual_path_entries(uid, included_file_uid)
-                removed_fp += child_removed_fp
-                deleted += child_deleted
-            if delete_root_file:
-                self.intercom.delete_file(fw)
-            self._delete_swapped_analysis_entries(fw)
-            self.firmwares.delete_one({'_id': uid})
+        fw_entry = self.firmware_metadata.find_one({'_id': firmware_id})
+        if fw_entry:
+            uid = fw_entry['uid']
+            # there can be more than one set of metadata per firmware
+            if len(self.firmware_metadata.count_documents({'uid': uid})) == 1:
+                fo_entry = self.file_objects.find_one(uid)
+                for included_file_uid in fo_entry['files_included']:
+                    child_removed_fp, child_deleted = self._remove_virtual_path_entries(uid, included_file_uid)
+                    removed_fp += child_removed_fp
+                    deleted += child_deleted
+                if delete_root_file:
+                    self.intercom.delete_file(fo_entry)  # TODO überprüfen
+                self._delete_swapped_analysis_entries(fo_entry)
+            self.firmware_metadata.delete_one({'_id': firmware_id})
         else:
-            logging.error('Firmware not found in Database: {}'.format(uid))
+            logging.error('Firmware not found in Database: {}'.format(firmware_id))
         return removed_fp, deleted
 
     def _delete_swapped_analysis_entries(self, fo_entry):
@@ -54,7 +56,7 @@ class AdminDbInterface(MongoInterfaceCommon):
                         if analysis_key != 'file_system_flag' and isinstance(fo_entry['processed_analysis'][key][analysis_key], str):
                             sanitize_id = fo_entry['processed_analysis'][key][analysis_key]
                             entry = self.sanitize_fs.find_one({'filename': sanitize_id})
-                            self.sanitize_fs.delete(entry._id)
+                            self.sanitize_fs.delete(entry._id)  # pylint: disable=protected-access
             except KeyError:
                 logging.warning('key error while deleting analysis for {}:{}'.format(fo_entry['_id'], key))
 
