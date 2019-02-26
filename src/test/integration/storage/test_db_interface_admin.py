@@ -14,10 +14,10 @@ from test.common_helper import create_test_firmware, create_test_file_object
 
 
 TESTS_DIR = get_test_data_dir()
-test_file_original = os.path.join(TESTS_DIR, 'get_files_test/testfile1')
-test_file_copy = os.path.join(TESTS_DIR, 'get_files_test/testfile_copy')
-test_firmware_original = os.path.join(TESTS_DIR, 'container/test.zip')
-test_firmware_copy = os.path.join(TESTS_DIR, 'container/test_copy.zip')
+TEST_FILE_ORIGINAL = os.path.join(TESTS_DIR, 'get_files_test/testfile1')
+TEST_FILE_COPY = os.path.join(TESTS_DIR, 'get_files_test/testfile_copy')
+TEST_FIRMWARE_ORIGINAL = os.path.join(TESTS_DIR, 'container/test.zip')
+TEST_FIRMWARE_COPY = os.path.join(TESTS_DIR, 'container/test_copy.zip')
 TMP_DIR = TemporaryDirectory(prefix='faf_test_')
 
 
@@ -33,12 +33,12 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
     def setUp(self):
         self.admin_interface = AdminDbInterface(config=self.config)
         self.db_backend_interface = BackEndDbInterface(config=self.config)
-        copyfile(test_firmware_original, test_firmware_copy)
+        copyfile(TEST_FIRMWARE_ORIGINAL, TEST_FIRMWARE_COPY)
         self.test_firmware = create_test_firmware(bin_path='container/test_copy.zip')
         self.uid = self.test_firmware.get_uid()
         self.test_firmware.virtual_file_path = {self.uid: ['|{}|'.format(self.test_firmware.get_uid())]}
-        copyfile(test_file_original, test_file_copy)
-        self.child_fo = create_test_file_object(test_file_copy)
+        copyfile(TEST_FILE_ORIGINAL, TEST_FILE_COPY)
+        self.child_fo = create_test_file_object(TEST_FILE_COPY)
         self.child_fo.virtual_file_path = {self.uid: ['|{}|/folder/{}'.format(self.uid, self.child_fo.file_name)]}
         self.test_firmware.files_included = [self.child_fo.get_uid()]
         self.child_uid = self.child_fo.get_uid()
@@ -53,7 +53,7 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.mongo_server.shutdown()
-        for test_file in [test_file_copy, test_firmware_copy]:
+        for test_file in [TEST_FILE_COPY, TEST_FIRMWARE_COPY]:
             if os.path.isfile(test_file):
                 os.remove(test_file)
         TMP_DIR.cleanup()
@@ -87,7 +87,7 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
         self.admin_interface.client.drop_database(self.config.get('data_storage', 'sanitize_database'))
         self.admin_interface.sanitize_analysis(self.test_firmware.processed_analysis, self.uid)
         self.assertIn('test_plugin_result_{}'.format(self.test_firmware.get_uid()), self.admin_interface.sanitize_fs.list())
-        self.admin_interface._delete_swapped_analysis_entries(self.admin_interface.firmwares.find_one(self.uid))
+        self.admin_interface._delete_swapped_analysis_entries(self.admin_interface.file_objects.find_one(self.uid))
         self.assertNotIn('test_plugin_result_{}'.format(self.test_firmware.get_uid()), self.admin_interface.sanitize_fs.list())
 
     def test_delete_file_object(self):
@@ -102,12 +102,15 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
     def test_delete_firmware(self):
         self.db_backend_interface.add_firmware(self.test_firmware)
         self.db_backend_interface.add_file_object(self.child_fo)
-        self.assertIsNotNone(self.db_backend_interface.firmwares.find_one(self.uid))
+        self.assertIsNotNone(self.db_backend_interface.firmware_metadata.find_one({'uid': self.uid}))
+        self.assertIsNotNone(self.db_backend_interface.file_objects.find_one(self.uid))
         self.assertIsNotNone(self.db_backend_interface.file_objects.find_one(self.child_uid))
         self.assertTrue(os.path.isfile(self.test_firmware.file_path))
         self.assertTrue(os.path.isfile(self.child_fo.file_path))
-        removed_vps, deleted_files = self.admin_interface.delete_firmware(self.uid)
-        self.assertIsNone(self.db_backend_interface.firmwares.find_one(self.uid), 'firmware not deleted from db')
+        removed_vps, deleted_files = self.admin_interface.delete_firmware(self.test_firmware.firmware_id)
+        # self.assertIsNone(self.db_backend_interface.firmwares.find_one(self.uid), 'firmware not deleted from db')
+        self.assertIsNone(self.db_backend_interface.firmware_metadata.find_one({'uid': self.uid}), 'firmware metadata not deleted from db')
+        self.assertIsNone(self.db_backend_interface.file_objects.find_one(self.uid), 'firmware fo not deleted from db')
         self.assertIsNone(self.db_backend_interface.file_objects.find_one(self.child_uid), 'child not deleted from db')
         self.assertEqual(removed_vps, 0)
         self.assertEqual(deleted_files, 2, 'number of removed files not correct')

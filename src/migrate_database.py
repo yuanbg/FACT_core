@@ -29,6 +29,7 @@ from helperFunctions.web_interface import ConnectTo
 from objects.firmware import Firmware
 from storage.db_interface_backend import BackEndDbInterface
 
+
 PROGRAM_NAME = 'FACT Database Migration Helper'
 PROGRAM_DESCRIPTION = 'Migrate FACT\'s Database from an old version'
 
@@ -46,7 +47,7 @@ def main():
     return 0
 
 
-def convert_to_firmware(entry, db_service, analysis_filter=None):
+def convert_to_firmware(entry, db_service, analysis_filter=None) -> Firmware:
     firmware = Firmware()
     firmware.uid = entry['_id']
     firmware.size = entry['size']

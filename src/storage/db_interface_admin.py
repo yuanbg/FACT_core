@@ -34,15 +34,16 @@ class AdminDbInterface(MongoInterfaceCommon):
         if fw_entry:
             uid = fw_entry['uid']
             # there can be more than one set of metadata per firmware
-            if len(self.firmware_metadata.count_documents({'uid': uid})) == 1:
+            if self.firmware_metadata.count_documents({'uid': uid}) == 1:
                 fo_entry = self.file_objects.find_one(uid)
                 for included_file_uid in fo_entry['files_included']:
                     child_removed_fp, child_deleted = self._remove_virtual_path_entries(uid, included_file_uid)
                     removed_fp += child_removed_fp
                     deleted += child_deleted
                 if delete_root_file:
-                    self.intercom.delete_file(fo_entry)  # TODO überprüfen
+                    self.intercom.delete_file(fo_entry)
                 self._delete_swapped_analysis_entries(fo_entry)
+                self.file_objects.delete_one({'_id': uid})
             self.firmware_metadata.delete_one({'_id': firmware_id})
         else:
             logging.error('Firmware not found in Database: {}'.format(firmware_id))

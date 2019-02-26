@@ -151,7 +151,7 @@ class BackEndDbInterface(MongoInterfaceCommon):
             logging.error('Firmware not in database yet: {}'.format(uid))
             return
 
-        if firmware_object.is_firmware():
+        if firmware_object.is_firmware:
             try:
                 self.file_objects.update_one({'_id': uid}, {'$set': {'analysis_tags': tags}})
             except (TypeError, ValueError, PyMongoError) as exception:

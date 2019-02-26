@@ -49,9 +49,9 @@ class MongoInterfaceCommon(MongoInterface):
             - else: file_object if uid found in file_database
             - else: None
         '''
-        fo = self.get_file_object(uid, analysis_filter=analysis_filter)
+        fo = self.get_firmware(uid, analysis_filter=analysis_filter)
         if fo is None:
-            fo = self.get_firmware(uid, analysis_filter=analysis_filter)
+            fo = self.get_file_object(uid, analysis_filter=analysis_filter)
         return fo
 
     def get_complete_object_including_all_summaries(self, uid):
@@ -63,10 +63,9 @@ class MongoInterfaceCommon(MongoInterface):
         fo = self.get_object(uid)
         if fo is None:
             raise Exception('UID not found: {}'.format(uid))
-        else:
-            fo.list_of_all_included_files = self.get_list_of_all_included_files(fo)
-            for analysis in fo.processed_analysis:
-                fo.processed_analysis[analysis]['summary'] = self.get_summary(fo, analysis)
+        fo.list_of_all_included_files = self.get_list_of_all_included_files(fo)
+        for analysis in fo.processed_analysis:
+            fo.processed_analysis[analysis]['summary'] = self.get_summary(fo, analysis)
         return fo
 
     def get_firmware(self, uid: str, analysis_filter=None) -> Optional[Firmware]:
@@ -91,7 +90,10 @@ class MongoInterfaceCommon(MongoInterface):
             {'$replaceRoot': {'newRoot': {'$mergeObjects': [{'$arrayElemAt': ['$fo_data', 0]}, '$$ROOT']}}},
             {'$project': {'fo_data': 0}}
         ])
-        return dict(cursor.find_one())
+        try:
+            return list(cursor)[0]
+        except IndexError:
+            return {}
 
     def get_file_object(self, uid: str, analysis_filter=None) -> Optional[FileObject]:
         file_entry = self.file_objects.find_one(uid)
@@ -104,12 +106,14 @@ class MongoInterfaceCommon(MongoInterface):
         if not uid_list:
             return []
         query = self._build_search_query_for_uid_list(uid_list)
-        results = [
-            (self._convert_to_firmware(entry, analysis_filter=analysis_filter) if entry['is_firmware']
-             else self._convert_to_file_object(entry, analysis_filter=analysis_filter))
-            for entry in self.file_objects.find(query)
-            if entry is not None
-        ]
+        results = []
+        for entry in self.file_objects.find(query):
+            if entry is None:
+                continue
+            if entry['is_firmware']:
+                results.append(self._convert_to_firmware(self.get_combined_firmware_data(entry['_id']), analysis_filter=analysis_filter))
+            else:
+                results.append(self._convert_to_file_object(entry, analysis_filter=analysis_filter))
         return results
 
     @staticmethod
@@ -252,7 +256,7 @@ class MongoInterfaceCommon(MongoInterface):
         if selected_analysis not in fo.processed_analysis:
             logging.warning('Analysis {} not available on {}'.format(selected_analysis, fo.get_uid()))
             return None
-        if 'summary' in fo.processed_analysis[selected_analysis]:
+        if 'summary' not in fo.processed_analysis[selected_analysis]:
             return None
         if not fo.is_firmware:
             return self._collect_summary(fo.list_of_all_included_files, selected_analysis)
@@ -290,10 +294,12 @@ class MongoInterfaceCommon(MongoInterface):
                 original_dict[item] = update_dict[item]
         return original_dict
 
-    def get_firmware_number(self, query=None):  # FIXME
+    def get_firmware_number(self, query=None):
         if query is not None and isinstance(query, str):
             query = json.loads(query)
-        return self.firmware_metadata.count_documents(query or {})
+        firmware_query = {'is_firmware': True}
+        firmware_query.update(query or {})
+        return self.file_objects.count_documents(firmware_query)
 
     def get_file_object_number(self, query=None, zero_on_empty_query=True):
         if isinstance(query, str):
