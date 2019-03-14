@@ -69,18 +69,27 @@ class MongoInterfaceCommon(MongoInterface):
         return fo
 
     def get_firmware(self, uid: str, analysis_filter=None) -> Optional[Firmware]:
-        firmware_entry = self.get_combined_firmware_data(uid)
+        firmware_entry = self.get_joined_firmware_data(uid)
         if firmware_entry:
             return self._convert_to_firmware(firmware_entry, analysis_filter=analysis_filter)
         logging.debug('No firmware with UID {} found.'.format(uid))
         return None
 
-    def get_combined_firmware_data(self, uid: str) -> dict:
+    def get_joined_firmware_data(self, uid: str) -> Optional[dict]:
         '''
         returns a dictionary with merged firmware metadata and respective file object data
         '''
-        cursor = self.firmware_metadata.aggregate([
-            {'$match': {'uid': uid}},
+        result = self.perform_joined_firmware_query({'uid': uid})
+        try:
+            return list(result)[0]
+        except IndexError:
+            return None
+
+    def perform_joined_firmware_query(self, query: dict = None, **kwargs) -> pymongo.cursor.Cursor:
+        '''
+        returns a dictionary with merged firmware metadata and respective file object data
+        '''
+        pipeline = [
             {'$lookup': {
                 'from': 'file_objects',
                 'localField': 'uid',
@@ -88,12 +97,36 @@ class MongoInterfaceCommon(MongoInterface):
                 'as': 'fo_data'
             }},
             {'$replaceRoot': {'newRoot': {'$mergeObjects': [{'$arrayElemAt': ['$fo_data', 0]}, '$$ROOT']}}},
-            {'$project': {'fo_data': 0}}
-        ])
-        try:
-            return list(cursor)[0]
-        except IndexError:
-            return {}
+            {'$project': {'fo_data': 0}},
+        ]
+        if query:
+            pipeline.append({'$match': query})
+        for key, value in list(kwargs.items()):
+            if value:
+                pipeline.append({'$' + key: value})
+        return self.firmware_metadata.aggregate(pipeline)
+
+    def perform_reverse_joined_firmware_query(self, query: dict = None, **kwargs) -> pymongo.cursor.Cursor:
+        '''
+        returns a dictionary with merged firmware metadata and respective file object data
+        '''
+        pipeline = [
+            {'$match': {'is_firmware': True}},
+            {'$lookup': {
+                'from': 'firmware_metadata',
+                'localField': '_id',
+                'foreignField': 'uid',
+                'as': 'fo_data'
+            }},
+            {'$replaceRoot': {'newRoot': {'$mergeObjects': [{'$arrayElemAt': ['$fo_data', 0]}, '$$ROOT']}}},
+            {'$project': {'fo_data': 0}},
+        ]
+        if query:
+            pipeline.append({'$match': query})
+        for key, value in list(kwargs.items()):
+            if value:
+                pipeline.append({'$' + key: value})
+        return self.file_objects.aggregate(pipeline)
 
     def get_file_object(self, uid: str, analysis_filter=None) -> Optional[FileObject]:
         file_entry = self.file_objects.find_one(uid)
@@ -111,7 +144,8 @@ class MongoInterfaceCommon(MongoInterface):
             if entry is None:
                 continue
             if entry['is_firmware']:
-                results.append(self._convert_to_firmware(self.get_combined_firmware_data(entry['_id']), analysis_filter=analysis_filter))
+                full_entry = self.get_joined_firmware_data(entry['_id'])
+                results.append(self._convert_to_firmware(full_entry, analysis_filter=analysis_filter))
             else:
                 results.append(self._convert_to_file_object(entry, analysis_filter=analysis_filter))
         return results
