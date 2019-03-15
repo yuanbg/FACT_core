@@ -262,9 +262,8 @@ class FrontEndDbInterface(MongoInterfaceCommon):
     def rest_get_firmware_uids(self, offset, limit, query=None, recursive=False):
         if recursive:
             return self.generic_search(search_dict=query, skip=offset, limit=limit, only_fo_parent_firmware=True)
-        edited_query = query if query else dict()
-        edited_query.update({'is_firmware': True})
-        return self.rest_get_object_uids(offset, limit, edited_query)
+        uid_cursor = self.perform_reverse_joined_firmware_query(query, skip=offset, limit=limit)
+        return [result['_id'] for result in uid_cursor]
 
     def rest_get_file_object_uids(self, offset, limit, query=None):
         return self.rest_get_object_uids(offset, limit, query if query else dict())

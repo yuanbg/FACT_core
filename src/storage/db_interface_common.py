@@ -180,8 +180,9 @@ class MongoInterfaceCommon(MongoInterface):
         firmware.tags = entry['tags'] if 'tags' in entry else dict()
         firmware.analysis_tags = entry['analysis_tags'] if 'analysis_tags' in entry else dict()
 
-        for key, default in [('comments', []), ('device_part', 'complete')]:  # for backwards compatibility
-            setattr(firmware, key, entry[key] if key in entry else default)
+        # for backwards compatibility
+        for key, attribute, default in [('comments', 'comments', []), ('device_part', 'part', 'complete')]:
+            setattr(firmware, attribute, entry[key] if key in entry else default)
         return firmware
 
     def _convert_to_file_object(self, entry, analysis_filter=None):
