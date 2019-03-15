@@ -23,13 +23,12 @@ def create_analysis_task(request):
 
 
 def get_file_name_and_binary_from_request(request):
-    result = []
     try:
-        result.append(request.files['file'].filename)
-    except Exception:
-        result.append('no name')
-    result.append(get_uploaded_file_binary(request.files['file']))
-    return result
+        file_name = request.files['file'].filename
+    except (AttributeError, KeyError):
+        file_name = 'no name'
+    binary = get_uploaded_file_binary(request.files['file'])
+    return file_name, binary
 
 
 def create_re_analyze_task(request, uid):
@@ -69,8 +68,7 @@ def _get_meta_from_dropdowns(meta, request):
 def _get_tag_list(tag_string):
     if tag_string == '':
         return []
-    else:
-        return tag_string.split(',')
+    return tag_string.split(',')
 
 
 def convert_analysis_task_to_fw_obj(analysis_task):
@@ -97,8 +95,7 @@ def get_uid_of_analysis_task(analysis_task):
     if analysis_task['binary']:
         uid = create_uid(analysis_task['binary'])
         return uid
-    else:
-        return None
+    return None
 
 
 def get_uploaded_file_binary(request_file):
@@ -129,8 +126,7 @@ def is_sanitized_entry(entry):
     try:
         if re.search(r'_[0-9a-f]{64}_[0-9]+', entry) is None:
             return False
-        else:
-            return True
+        return True
     except TypeError:  # DB entry has type other than string (e.g. integer or float)
         return False
     except Exception as e:

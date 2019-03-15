@@ -1,6 +1,7 @@
 import json
 import logging
 import pickle
+from copy import deepcopy
 from typing import Optional, Set, Union, List
 
 import gridfs
@@ -89,6 +90,7 @@ class MongoInterfaceCommon(MongoInterface):
         '''
         returns a dictionary with merged firmware metadata and respective file object data
         '''
+        query_copy = deepcopy(query)  # prevent side effects
         pipeline = [
             {'$lookup': {
                 'from': 'file_objects',
@@ -99,8 +101,11 @@ class MongoInterfaceCommon(MongoInterface):
             {'$replaceRoot': {'newRoot': {'$mergeObjects': [{'$arrayElemAt': ['$fo_data', 0]}, '$$ROOT']}}},
             {'$project': {'fo_data': 0}},
         ]
-        if query:
-            pipeline.append({'$match': query})
+        if query_copy and 'uid' in query_copy:
+            uid_match = {'$match': {'uid': query_copy.pop('uid')}}
+            pipeline.insert(0, uid_match)
+        if query_copy:
+            pipeline.append({'$match': query_copy})
         for key, value in list(kwargs.items()):
             if value:
                 pipeline.append({'$' + key: value})
@@ -110,6 +115,7 @@ class MongoInterfaceCommon(MongoInterface):
         '''
         returns a dictionary with merged firmware metadata and respective file object data
         '''
+        query_copy = deepcopy(query)  # prevent side effects
         pipeline = [
             {'$match': {'is_firmware': True}},
             {'$lookup': {
@@ -121,8 +127,11 @@ class MongoInterfaceCommon(MongoInterface):
             {'$replaceRoot': {'newRoot': {'$mergeObjects': [{'$arrayElemAt': ['$fo_data', 0]}, '$$ROOT']}}},
             {'$project': {'fo_data': 0}},
         ]
-        if query:
-            pipeline.append({'$match': query})
+        if query_copy and '_id' in query_copy:
+            uid_match = {'$match': {'_id': query_copy.pop('_id')}}
+            pipeline.insert(0, uid_match)
+        if query_copy:
+            pipeline.append({'$match': query_copy})
         for key, value in list(kwargs.items()):
             if value:
                 pipeline.append({'$' + key: value})

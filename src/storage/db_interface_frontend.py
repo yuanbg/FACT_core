@@ -2,7 +2,7 @@ import json
 import logging
 import sys
 from copy import deepcopy
-from typing import Union
+from typing import Union, Iterable
 
 from helperFunctions.compare_sets import remove_duplicates_from_list
 from helperFunctions.dataConversion import get_value_of_first_key
@@ -17,6 +17,11 @@ from storage.db_interface_common import MongoInterfaceCommon
 class FrontEndDbInterface(MongoInterfaceCommon):
 
     READ_ONLY = True
+
+    def get_fo_data_for_uid_list(self, uid_iterable: Iterable[str], only_firmwares=False):
+        if only_firmwares:
+            return [self.get_joined_firmware_data(uid) for uid in uid_iterable]
+        return [self.get_joined_firmware_data(uid) or self.file_objects.find_one(uid) for uid in uid_iterable]
 
     def get_meta_list(self, firmware_list=None):
         list_of_firmware_data = []
