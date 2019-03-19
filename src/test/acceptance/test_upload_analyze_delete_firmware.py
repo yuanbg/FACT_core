@@ -72,7 +72,7 @@ class TestAcceptanceAnalyzeFirmware(TestAcceptanceBase):
 
     def _show_analysis_page(self):
         with ConnectTo(FrontEndDbInterface, self.config) as connection:
-            self.assertIsNotNone(connection.firmwares.find_one({'_id': self.test_fw_a.uid}), 'Error: Test firmware not found in DB!')
+            self.assertIsNotNone(connection.firmware_metadata.find_one({'uid': self.test_fw_a.uid}), 'Error: Test firmware not found in DB!')
         rv = self.test_client.get('/analysis/{}'.format(self.test_fw_a.uid))
         self.assertIn(self.test_fw_a.uid.encode(), rv.data)
         self.assertIn(b'test_device', rv.data)

@@ -2,8 +2,9 @@ import pytest
 
 from test.common_helper import CommonDbInterfaceMock
 
-current_data_format = {
-    '_id': 'some_UID',
+CURRENT_DATA_FORMAT = {
+    '_id': 'some_ID',
+    'uid': 'some UID',
     'size': 1,
     'file_name': 'name_of_the_file',
     'device_name': 'test_device',
@@ -19,8 +20,9 @@ current_data_format = {
     'device_part': 'bootloader'
 }
 
-old_data_format = {
-    '_id': 'some_UID',
+OLD_DATA_FORMAT = {
+    '_id': 'some_ID',
+    'uid': 'some UID',
     'size': 1,
     'file_name': 'name_of_the_file',
     'device_name': 'test_device',
@@ -36,8 +38,8 @@ old_data_format = {
 
 
 @pytest.mark.parametrize('input_data, expected', [
-    (current_data_format, 'bootloader'),
-    (old_data_format, '')
+    (CURRENT_DATA_FORMAT, 'bootloader'),
+    (OLD_DATA_FORMAT, '')
 ])
 def test_convert_to_firmware(input_data, expected):
     test_interface = CommonDbInterfaceMock()

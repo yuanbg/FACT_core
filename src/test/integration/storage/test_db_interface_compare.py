@@ -72,7 +72,11 @@ class TestCompare(unittest.TestCase):
     def test_object_existence_quick_check(self):
         self.db_interface_backend.add_firmware(self.fw_one)
         self.assertIsNone(self.db_interface_compare.object_existence_quick_check(self.fw_one.get_uid()), 'existing_object not found')
-        self.assertEqual(self.db_interface_compare.object_existence_quick_check('{};none_existing_object'.format(self.fw_one.get_uid())), 'none_existing_object not found in database', 'error message not correct')
+        self.assertEqual(
+            self.db_interface_compare.object_existence_quick_check('{};none_existing_object'.format(self.fw_one.get_uid())),
+            'none_existing_object not found in database',
+            'error message not correct'
+        )
 
     def test_get_compare_result_of_none_existing_uid(self):
         self.db_interface_backend.add_firmware(self.fw_one)
@@ -85,25 +89,22 @@ class TestCompare(unittest.TestCase):
         before = time()
         self.db_interface_compare.add_compare_result(self.compare_dict)
         result = self.db_interface_compare.page_compare_results(limit=10)
-        for id, hids, submission_date in result:
+        for id_, hids, submission_date in result:
             self.assertIn(self.fw_one.get_uid(), hids)
             self.assertIn(self.fw_two.get_uid(), hids)
-            self.assertIn(self.fw_one.get_uid(), id)
-            self.assertIn(self.fw_two.get_uid(), id)
+            self.assertIn(self.fw_one.get_uid(), id_)
+            self.assertIn(self.fw_two.get_uid(), id_)
             self.assertTrue(before <= submission_date <= time())
 
     def test_get_latest_comparisons_removed_firmware(self):
         self.db_interface_backend.add_firmware(self.fw_one)
         self.db_interface_backend.add_firmware(self.fw_two)
         self.db_interface_compare.add_compare_result(self.compare_dict)
-
         result = self.db_interface_compare.page_compare_results(limit=10)
         self.assertNotEqual(result, [], 'A compare result should be available')
 
-        self.db_interface_admin.delete_firmware(self.fw_two.uid)
-
+        self.db_interface_admin.delete_firmware(self.fw_two.firmware_id)
         result = self.db_interface_compare.page_compare_results(limit=10)
-
         self.assertEqual(result, [], 'No compare result should be available')
 
     def test_get_total_number_of_results(self):

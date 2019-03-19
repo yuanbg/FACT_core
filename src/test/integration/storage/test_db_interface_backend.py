@@ -13,7 +13,7 @@ from test.common_helper import create_test_firmware, create_test_file_object
 
 
 TESTS_DIR = get_test_data_dir()
-test_file_one = path.join(TESTS_DIR, 'get_files_test/testfile1')
+TEST_FILE_ONE = path.join(TESTS_DIR, 'get_files_test/testfile1')
 TMP_DIR = TemporaryDirectory(prefix='fact_test_')
 
 
@@ -58,17 +58,15 @@ class TestStorageDbInterfaceBackend(unittest.TestCase):
         TMP_DIR.cleanup()
 
     def _get_all_firmware_uids(self):
-        uid_list = []
-        tmp = self.db_interface.firmwares.find()
-        for item in tmp:
-            uid_list.append(item['_id'])
-        return uid_list
+        return [entry['uid'] for entry in self.db_interface.firmware_metadata.find()]
 
     def test_add_firmware(self):
         self.db_interface_backend.add_firmware(self.test_firmware)
         self.assertGreater(len(self._get_all_firmware_uids()), 0, 'No entry added to DB')
-        recoverd_firmware_entry = self.db_interface_backend.firmwares.find_one()
+        recoverd_firmware_entry = self.db_interface_backend.firmware_metadata.find_one()
         self.assertAlmostEqual(recoverd_firmware_entry['submission_date'], time(), msg='submission time not set correctly', delta=5.0)
+        fo_entry = self.db_interface_backend.file_objects.find_one({'_id': self.test_firmware.get_uid()})
+        assert fo_entry is not None
 
     def test_add_and_get_firmware(self):
         self.db_interface_backend.add_firmware(self.test_firmware)

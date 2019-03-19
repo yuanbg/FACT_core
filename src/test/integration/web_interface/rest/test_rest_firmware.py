@@ -8,6 +8,8 @@ from storage.db_interface_backend import BackEndDbInterface
 from test.common_helper import create_test_firmware
 from test.integration.web_interface.rest.base import RestTestBase
 
+FW_UID = b'418a54d78550e8584291c96e5d6168133621f352bfc1d43cf84e81187fef4962_787'
+
 
 class TestRestFirmware(RestTestBase):
 
@@ -25,7 +27,7 @@ class TestRestFirmware(RestTestBase):
 
         rv = self.test_client.get('/rest/firmware', follow_redirects=True)
         assert b'uids' in rv.data
-        assert b'418a54d78550e8584291c96e5d6168133621f352bfc1d43cf84e81187fef4962_787' in rv.data
+        assert FW_UID in rv.data
 
     def test_offset_to_empty_response(self):
         test_firmware = create_test_firmware(device_class='test class', device_name='test device', vendor='test vendor')
@@ -33,7 +35,7 @@ class TestRestFirmware(RestTestBase):
 
         rv = self.test_client.get('/rest/firmware?offset=1', follow_redirects=True)
         assert b'uids' in rv.data
-        assert b'418a54d78550e8584291c96e5d6168133621f352bfc1d43cf84e81187fef4962_787' not in rv.data
+        assert FW_UID not in rv.data
 
     def test_stable_response_on_bad_paging(self):
         rv = self.test_client.get('/rest/firmware?offset=Y', follow_redirects=True)
@@ -46,7 +48,7 @@ class TestRestFirmware(RestTestBase):
 
         rv = self.test_client.get('/rest/firmware?query={}'.format(urllib.parse.quote('{"device_class": "test class"}')), follow_redirects=True)
         assert b'uids' in rv.data
-        assert b'418a54d78550e8584291c96e5d6168133621f352bfc1d43cf84e81187fef4962_787' in rv.data
+        assert FW_UID in rv.data
 
     def test_rest_search_not_existing(self):
         test_firmware = create_test_firmware(device_class='test class', device_name='test device', vendor='test vendor')

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import logging
 import sys
@@ -75,8 +74,8 @@ class DatabaseRoutes(ComponentBase):
             if self._query_has_only_one_result(firmware_list, query):
                 uid = firmware_list[0][0]
                 return redirect(url_for('analysis/<uid>', uid=uid))
-        except Exception as e:
-            error_message = 'Could not query database: {} {}'.format(sys.exc_info()[0].__name__, e)
+        except Exception as exception:
+            error_message = 'Could not query database: {} {}'.format(sys.exc_info()[0].__name__, exception)
             logging.error(error_message)
             return render_template('error.html', message=error_message)
 
@@ -94,18 +93,17 @@ class DatabaseRoutes(ComponentBase):
         return len(result_list) == 1 and query != '{}'
 
     def _search_database(self, query, skip=0, limit=0, only_firmwares=False):
-        sorted_meta_list = list()
         with ConnectTo(FrontEndDbInterface, self._config) as connection:
             result = connection.generic_search(query, skip, limit, only_fo_parent_firmware=only_firmwares)
             if not isinstance(result, list):
                 raise Exception(result)
-            if not (query == '{}' or query == {}):
-                firmware_list = [connection.firmwares.find_one(uid) or connection.file_objects.find_one(uid) for uid in result]
-            else:  # if search query is empty: get only firmware objects
-                firmware_list = [connection.firmwares.find_one(uid) for uid in result]
+            firmware_list = connection.get_fo_data_for_uid_list(result, only_firmwares=self._query_is_empty(query))
             sorted_meta_list = sorted(connection.get_meta_list(firmware_list), key=lambda x: x[1].lower())
-
         return sorted_meta_list
+
+    @staticmethod
+    def _query_is_empty(query):
+        return query == '{}' or query == {} or query is None
 
     def _build_search_query(self):
         query = {}
@@ -144,8 +142,8 @@ class DatabaseRoutes(ComponentBase):
                 if not isinstance(query, dict):
                     raise Exception('Error: search query invalid (wrong type)')
                 return redirect(url_for('database/browse', query=json.dumps(query), only_firmwares=only_firmwares))
-            except Exception as e:
-                error = e
+            except Exception as exception:
+                error = exception
         return render_template('database/database_advanced_search.html', error=error, database_structure=database_structure)
 
     @roles_accepted(*PRIVILEGES['pattern_search'])
@@ -160,20 +158,19 @@ class DatabaseRoutes(ComponentBase):
                     with ConnectTo(InterComFrontEndBinding, self._config) as connection:
                         request_id = connection.add_binary_search_request(yara_rule_file, firmware_uid)
                     return redirect(url_for('database/database_binary_search_results.html', request_id=request_id))
-                else:
-                    error = 'Error in YARA rules: {}'.format(get_yara_error(yara_rule_file))
+                error = 'Error in YARA rules: {}'.format(get_yara_error(yara_rule_file))
             else:
                 error = 'please select a file or enter rules in the text area'
         return render_template('database/database_binary_search.html', error=error)
 
     @staticmethod
-    def _get_items_from_binary_search_request(request):
+    def _get_items_from_binary_search_request(search_request):
         yara_rule_file = None
-        if 'file' in request.files and request.files['file']:
-            _, yara_rule_file = get_file_name_and_binary_from_request(request)
-        elif request.form['textarea']:
-            yara_rule_file = request.form['textarea'].encode()
-        firmware_uid = request.form.get('firmware_uid') if request.form.get('firmware_uid') else None
+        if 'file' in search_request.files and search_request.files['file']:
+            _, yara_rule_file = get_file_name_and_binary_from_request(search_request)
+        elif search_request.form['textarea']:
+            yara_rule_file = search_request.form['textarea'].encode()
+        firmware_uid = search_request.form.get('firmware_uid') if search_request.form.get('firmware_uid') else None
         return yara_rule_file, firmware_uid
 
     def _firmware_is_in_db(self, firmware_uid: str) -> bool:
@@ -200,14 +197,10 @@ class DatabaseRoutes(ComponentBase):
 
     def _build_firmware_dict_for_binary_search(self, uid_dict):
         firmware_dict = {}
-        for rule in uid_dict:
-            with ConnectTo(FrontEndDbInterface, self._config) as connection:
-                firmware_list = [
-                    connection.firmwares.find_one(uid) or
-                    connection.file_objects.find_one(uid)
-                    for uid in uid_dict[rule]
-                ]
-                firmware_dict[rule] = sorted(connection.get_meta_list(firmware_list))
+        with ConnectTo(FrontEndDbInterface, self._config) as connection:
+            for rule in uid_dict:
+                firmware_data = connection.get_fo_data_for_uid_list(uid_dict[rule])
+                firmware_dict[rule] = sorted(connection.get_meta_list(firmware_data))
         return firmware_dict
 
     @roles_accepted(*PRIVILEGES['basic_search'])

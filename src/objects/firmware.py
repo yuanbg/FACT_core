@@ -1,33 +1,42 @@
-from objects.file import FileObject
-from helperFunctions.hash import get_md5
-from helperFunctions.tag import TagColor
 from contextlib import suppress
 
+from helperFunctions.hash import get_md5
+from helperFunctions.tag import TagColor
+from objects.file import FileObject
 
-class Firmware(FileObject):
+
+class Firmware(FileObject):  # pylint: disable=too-many-instance-attributes
     '''
     This objects represents a firmware
     '''
 
-    def __init__(self, binary=None, file_name=None, file_path=None, scheduled_analysis=None):
+    def __init__(self, binary=None, file_name=None, file_path=None, scheduled_analysis=None, firmware_id=None):
         super().__init__(binary=binary, file_name=file_name, file_path=file_path, scheduled_analysis=scheduled_analysis)
         self.device_name = None
         self.version = None
         self.device_class = None
         self.vendor = None
-        self.part = ''
+        self._part = ''
         self.release_date = None
+        self.md5 = None
         self.tags = dict()
+        self.is_firmware = True
+        self._firmware_id = firmware_id
         self._update_root_id_and_virtual_path()
 
     def set_device_name(self, device_name):
         self.device_name = device_name
 
+    def get_part_name(self):
+        return self._part
+
     def set_part_name(self, part):
         if part == 'complete':
-            self.part = ''
+            self._part = ''
         else:
-            self.part = part
+            self._part = part
+
+    part = property(get_part_name, set_part_name)
 
     def set_firmware_version(self, version):
         self.version = version
@@ -63,6 +72,12 @@ class Firmware(FileObject):
         '''
         part = ' - {}'.format(self.part) if self.part else ''
         return '{} {}{} v. {}'.format(self.vendor, self.device_name, part, self.version)
+
+    @property
+    def firmware_id(self):
+        if self._firmware_id is None:
+            self._firmware_id = 'F_{}'.format(get_md5(self.get_hid() + self.get_uid()))
+        return self._firmware_id
 
     def __str__(self):
         return '{}\nProcessed Analysis: {}\nScheduled Analysis: {}'.format(self.get_hid(), list(self.processed_analysis.keys()), self.scheduled_analysis)

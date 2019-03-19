@@ -14,8 +14,8 @@ from helperFunctions.fileSystem import get_test_data_dir
 
 from ..code import qemu_exec
 
-TEST_DATA_DIR = os.path.join(get_dir_of_file(__file__), 'data/test_tmp_dir')
-TEST_DATA_DIR_2 = os.path.join(get_dir_of_file(__file__), 'data/test_tmp_dir_2')
+TEST_DATA_DIR = Path(get_dir_of_file(__file__)) / 'data/test_tmp_dir'
+TEST_DATA_DIR_2 = Path(get_dir_of_file(__file__)) / 'data/test_tmp_dir_2'
 
 
 class MockTmpDir:
@@ -289,10 +289,10 @@ class TestPluginQemuExec(AnalysisPluginTest):
         qemu_exec.test_qemu_executability = lambda file_path, arch_suffix, root_path: {'--option': {'stdout': 'test', 'stderr': '', 'return_code': '0'}}
 
         results = {}
-        qemu_exec.process_qemu_job('test_path', 'test_arch', 'test_root', results, 'test_uid')
+        qemu_exec.process_qemu_job('test_path', 'test_arch', Path('test_root'), results, 'test_uid')
         assert results == {'test_uid': {'path': 'test_path', 'results': {'test_arch': {'--option': {'stdout': 'test', 'stderr': '', 'return_code': '0'}}}}}
 
-        qemu_exec.process_qemu_job('test_path', 'test_arch_2', 'test_root', results, 'test_uid')
+        qemu_exec.process_qemu_job('test_path', 'test_arch_2', Path('test_root'), results, 'test_uid')
         assert results == {'test_uid': {'path': 'test_path', 'results': {
             'test_arch': {'--option': {'stderr': '', 'return_code': '0', 'stdout': 'test'}},
             'test_arch_2': {'--option': {'stderr': '', 'return_code': '0', 'stdout': 'test'}}
