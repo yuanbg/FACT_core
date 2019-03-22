@@ -22,25 +22,21 @@ class CommonDbInterfaceMock(MongoInterfaceCommon):
         return {}
 
 
-def create_test_firmware(device_class='Router', device_name='test_router', vendor='test_vendor', bin_path='container/test.zip', all_files_included_set=False, version='0.1'):
-    fw = Firmware(file_path=os.path.join(get_test_data_dir(), bin_path))
-    fw.set_device_class(device_class)
-    fw.set_device_name(device_name)
-    fw.set_vendor(vendor)
-
-    fw.set_release_date('1970-01-01')
-    fw.version = version
-    processed_analysis = {
+def create_test_firmware(device_class='Router', device_name='test_router', vendor='test_vendor',
+                         bin_path='container/test.zip', all_files_included_set=False, version='0.1'):
+    root_fo = FileObject(file_path=os.path.join(get_test_data_dir(), bin_path), is_root=True)
+    fw = Firmware(device_name=device_name, device_class=device_class, vendor=vendor, version=version,
+                  release_date='1970-01-01', uid=root_fo.get_uid())
+    root_fo.processed_analysis = {
         'dummy': {'summary': ['sum a', 'fw exclusive sum a'], 'content': 'abcd'},
         'unpacker': {'plugin_used': 'used_unpack_plugin'},
         'file_type': {'mime': 'test_type', 'full': 'Not a PE file'}
     }
 
-    fw.processed_analysis.update(processed_analysis)
     if all_files_included_set:
-        fw.list_of_all_included_files = list(fw.files_included)
-        fw.list_of_all_included_files.append(fw.get_uid())
-    return fw
+        root_fo.list_of_all_included_files = list(root_fo.files_included)
+        root_fo.list_of_all_included_files.append(root_fo.get_uid())
+    return fw, root_fo
 
 
 def create_test_file_object(bin_path='get_files_test/testfile1'):
@@ -69,9 +65,10 @@ class MockFileObject:
 
 
 class DatabaseMock:  # pylint: disable=too-many-public-methods
-    fw_uid = TEST_FW.get_uid()
-    fo_uid = TEST_TEXT_FILE.get_uid()
-    fw2_uid = TEST_FW_2.get_uid()
+    # FIXME
+    # fw_uid = TEST_FW.get_uid()
+    # fo_uid = TEST_TEXT_FILE.get_uid()
+    # fw2_uid = TEST_FW_2.get_uid()
 
     def __init__(self, config=None):
         self.tasks = []
@@ -157,7 +154,7 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
             return {'this_is': 'a_compare_result'}
         return 'generic error'
 
-    def existence_quick_check(self, uid):
+    def object_exists(self, uid):
         if uid in [self.fw_uid, self.fo_uid, self.fw2_uid]:
             return True
         if uid == 'error':
@@ -179,30 +176,6 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
             {'time': str(time), 'author': author, 'comment': comment}
         )
 
-    # class firmwares():
-    #     @staticmethod
-    #     def find_one(uid):
-    #         if uid == 'test_uid':
-    #             return 'test'
-    #         elif uid == TEST_FW.get_uid():
-    #             return TEST_FW.get_uid()
-    #         else:
-    #             return None
-    #
-    #     @staticmethod
-    #     def find(query, filter):
-    #         return {}
-    #
-    # class file_objects():
-    #     @staticmethod
-    #     def find_one(uid):
-    #         if uid == TEST_TEXT_FILE.get_uid():
-    #             return TEST_TEXT_FILE.get_uid()
-    #
-    #     @staticmethod
-    #     def find(query, filter):
-    #         return {}
-
     def get_data_for_nice_list(self, input_data, root_uid):
         return []
 
@@ -210,13 +183,13 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
     def create_analysis_structure():
         return ''
 
-    def generic_search(self, search_string, skip=0, limit=0, only_fo_parent_firmware=False):
+    def generic_search(self, query, skip=0, limit=0, only_fo_parent_firmware=False):
         result = []
-        if isinstance(search_string, dict):
-            search_string = json.dumps(search_string)
-        if self.fw_uid in search_string or search_string == '{}':
+        if isinstance(query, dict):
+            query = json.dumps(query)
+        if self.fw_uid in query or query == '{}':
             result.append(self.fw_uid)
-        if self.fo_uid in search_string or search_string == '{}':
+        if self.fo_uid in query or query == '{}':
             if not only_fo_parent_firmware:
                 result.append(self.fo_uid)
             else:
