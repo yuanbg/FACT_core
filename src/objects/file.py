@@ -14,7 +14,7 @@ class FileObject:  # pylint: disable=too-many-instance-attributes
     This is the base file objects. All files in FAF should be implemented as this object type.
     '''
 
-    def __init__(self, binary=None, file_name=None, file_path=None, scheduled_analysis=None):
+    def __init__(self, binary=None, file_name=None, file_path=None, scheduled_analysis=None, is_root=False):
         self.uid = None
         self.files_included = set()
         self.list_of_all_included_files = None
@@ -42,7 +42,9 @@ class FileObject:  # pylint: disable=too-many-instance-attributes
         else:
             self.file_path = None
         self.virtual_file_path = {}
-        self.is_firmware = False
+        self.is_root = is_root
+        if self.is_root:
+            self._update_root_id_and_virtual_path()
 
     def set_binary(self, binary):
         self.binary = make_bytes(binary)
@@ -89,17 +91,17 @@ class FileObject:  # pylint: disable=too-many-instance-attributes
     def add_included_file(self, file_object):
         file_object.parents.append(self.get_uid())
         file_object.root_uid = self.root_uid
-        file_object.add_virtual_file_path_if_none_exists(self.get_virtual_paths_for_one_uid(root_uid=self.root_uid), self.get_uid())
+        file_object.add_virtual_file_path_if_none_exist(self.get_virtual_paths_for_one_uid(root_uid=self.root_uid), self.get_uid())
         file_object.depth = self.depth + 1
         file_object.scheduled_analysis = self.scheduled_analysis
         self.files_included.add(file_object.get_uid())
 
-    def add_virtual_file_path_if_none_exists(self, parent_pathes, parent_uid):
+    def add_virtual_file_path_if_none_exist(self, parent_paths, parent_uid):
         if self.root_uid not in self.virtual_file_path.keys():
             self.virtual_file_path[self.root_uid] = []
-            for item in parent_pathes:
+            for item in parent_paths:
                 base_path = self.get_base_of_virtual_path(item)
-                if len(base_path) > 0:
+                if base_path:
                     base_path += "|"
                 self.virtual_file_path[self.root_uid].append("{}{}|{}".format(base_path, parent_uid, self.file_path))
 
@@ -118,14 +120,14 @@ class FileObject:  # pylint: disable=too-many-instance-attributes
             if req_root_uid is None:
                 return get_value_of_first_key(file_paths)
             return file_paths[req_root_uid]
-        except Exception:
+        except (KeyError, TypeError):
             logging.error('Error on virtual file path retrieval. This should be fixed')
             return ["insufficient information: firmware analysis not complete"]
 
     def get_virtual_file_paths(self):
         if self.virtual_file_path:
             return self.virtual_file_path
-        return {self.get_uid(): ['{}'.format(self.get_uid())]}
+        return {self.get_uid(): [self.get_uid()]}
 
     @staticmethod
     def get_root_of_virtual_path(virtual_path):
@@ -143,6 +145,10 @@ class FileObject:  # pylint: disable=too-many-instance-attributes
         if self.root_uid is not None:
             return self.root_uid
         return list(self.get_virtual_file_paths().keys())[0]
+
+    def _update_root_id_and_virtual_path(self):
+        self.root_uid = self.get_uid()
+        self.virtual_file_path = {self.get_uid(): [self.get_uid()]}
 
     def __str__(self):
         return "UID: {}\n Processed analysis: {}\n Files included: {}".format(self.get_uid(), list(self.processed_analysis.keys()), self.files_included)
