@@ -71,6 +71,7 @@ class MongoInterfaceCommon(MongoInterface):
     def build_firmware_metadata_dict(firmware: Firmware) -> dict:
         entry = {
             '_id': firmware.firmware_id,
+            'analysis_tags': firmware.analysis_tags,
             'device_class': firmware.device_class,
             'device_name': firmware.device_name,
             'device_part': firmware.device_part,
@@ -124,6 +125,12 @@ class MongoInterfaceCommon(MongoInterface):
             return list(result)[0]
         except IndexError:
             return None
+
+    def get_all_firmwares_for_uid(self, uid: str) -> List[Firmware]:
+        return [
+            self._convert_to_firmware(entry)
+            for entry in self.firmware_metadata.find({'uid': uid})
+        ]
 
     def perform_joined_firmware_query(self, query: dict = None, **kwargs) -> pymongo.cursor.Cursor:
         '''
@@ -200,19 +207,20 @@ class MongoInterfaceCommon(MongoInterface):
         return query
 
     @staticmethod
-    def _convert_to_firmware(entry) -> Firmware:
+    def _convert_to_firmware(entry: dict) -> Firmware:
         firmware = Firmware(
-            firmware_id=entry['_id'],
-            uid=entry['uid'],
-            device_name=entry['device_name'],
             device_class=entry['device_class'],
+            device_name=entry['device_name'],
+            firmware_id=entry['_id'],
+            release_date=convert_time_to_str(entry['release_date']),
+            uid=entry['uid'],
             vendor=entry['vendor'],
             version=entry['version'],
-            release_date=convert_time_to_str(entry['release_date']),
         )
-        firmware.tags = entry.get('tags', {})
+        firmware.analysis_tags = entry.get('analysis_tags', {})
         firmware.comments = entry.get('comments', [])
         firmware.device_part = entry.get('device_part', 'complete')
+        firmware.tags = entry.get('tags', {})
         return firmware
 
     def _convert_to_file_object(self, entry, analysis_filter=None):

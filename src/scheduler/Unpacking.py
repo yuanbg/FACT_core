@@ -10,7 +10,7 @@ from storage.db_interface_common import MongoInterfaceCommon
 from unpacker.unpack import Unpacker
 
 
-class UnpackingScheduler(object):
+class UnpackingScheduler:  # pylint: disable=too-many-instance-attributes
     '''
     This scheduler performs unpacking on firmware objects
     '''

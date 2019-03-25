@@ -235,6 +235,27 @@ class TestMongoInterface:
         self.db_interface_backend.add_file_object(self.test_fo)
         assert self.db_interface.is_file_object(self.test_fo.get_uid())
 
+    def test_update_firmware(self):
+        self.test_firmware.vendor = 'foo'
+        self.db_interface_backend.add_firmware(self.test_firmware)
+        assert self.db_interface.get_firmware(self.test_firmware.firmware_id).vendor == 'foo'
+        self.test_firmware.vendor = 'bar'
+        self.db_interface_backend.add_firmware(self.test_firmware)
+        assert self.db_interface.get_firmware(self.test_firmware.firmware_id).vendor == 'bar'
+
+    def test_get_all_firmwares_for_uid(self):
+        result = self.db_interface.get_all_firmwares_for_uid(self.test_firmware.uid)
+        assert result == []
+
+        self.db_interface_backend.add_firmware(self.test_firmware)
+        result = self.db_interface.get_all_firmwares_for_uid(self.test_firmware.uid)
+        assert len(result) == 1
+
+        self.test_firmware._firmware_id = 'changed_id'
+        self.db_interface_backend.add_firmware(self.test_firmware)
+        result = self.db_interface.get_all_firmwares_for_uid(self.test_firmware.uid)
+        assert len(result) == 2
+
 
 class TestSummary:
 

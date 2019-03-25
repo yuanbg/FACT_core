@@ -25,16 +25,13 @@ def add_tags_to_object(file_object, analysis_name):
     return file_object
 
 
-def update_tags(old_tags, plugin_name, tag_name, tag):
+def update_tags(old_tags: dict, plugin_name: str, tag_name: str, tag) -> dict:
     tag_is_stable, message = check_tag_integrity(tag)
 
     if not tag_is_stable:
         raise ValueError(message)
 
-    if plugin_name not in old_tags:
-        old_tags[plugin_name] = {tag_name: tag}
-
-    old_tags[plugin_name][tag_name] = tag
+    old_tags.setdefault(plugin_name, {})[tag_name] = tag
 
     return old_tags
 

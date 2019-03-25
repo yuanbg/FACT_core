@@ -1,14 +1,11 @@
 import logging
 import sys
-from time import time
-from typing import Union
+from typing import Union, List
 
 from pymongo.errors import PyMongoError
 
-from helperFunctions.dataConversion import convert_str_to_time
-from helperFunctions.object_storage import (
-    update_analysis_tags, update_included_files, update_virtual_file_path
-)
+from helperFunctions.compare_sets import remove_duplicates_from_list
+from helperFunctions.object_storage import update_analysis_tags, update_included_files, update_virtual_file_path
 from helperFunctions.tag import update_tags
 from objects.file import FileObject
 from objects.firmware import Firmware
@@ -17,81 +14,26 @@ from storage.db_interface_common import MongoInterfaceCommon
 
 class BackEndDbInterface(MongoInterfaceCommon):
 
-    def add_object(self, fo_fw: Union[FileObject, Firmware]):
-        if isinstance(fo_fw, Firmware):
-            self.add_firmware(fo_fw)
-        elif isinstance(fo_fw, FileObject):
-            self.add_file_object(fo_fw)
-        else:
-            logging.error('invalid object type: {} -> {}'.format(type(fo_fw), fo_fw))
-            return
-        self.release_unpacking_lock(fo_fw.uid)
+    def add_object(self, fo: FileObject):
+        self.add_file_object(fo)
+        self.release_unpacking_lock(fo.uid)
 
-    def update_object(self, new_object: Union[FileObject, Firmware], old_object: dict):
+    def update_object(self, new_object: FileObject, old_object: dict):
         update_dictionary = {
             'processed_analysis': self._update_processed_analysis(new_object, old_object),
             'files_included': update_included_files(new_object, old_object),
             'virtual_file_path': update_virtual_file_path(new_object, old_object),
             'analysis_tags': update_analysis_tags(new_object, old_object),
-            'parent_firmware_uids': list(set.union(set(old_object['parent_firmware_uids']),
-                                                   new_object.parent_firmware_uids)),
+            'parent_firmware_uids': remove_duplicates_from_list(old_object['parent_firmware_uids'], new_object.parent_firmware_uids),
+            'is_root': new_object.is_root,
         }
         self.file_objects.update_one({'_id': new_object.get_uid()}, {'$set': update_dictionary})
-
-    def update_firmware_metadata(self, firmware: Firmware):
-        update_dictionary = {
-            'version': firmware.version,
-            'device_name': firmware.device_name,
-            'device_part': firmware.part,
-            'device_class': firmware.device_class,
-            'vendor': firmware.vendor,
-            'release_date': convert_str_to_time(firmware.release_date),
-            'tags': firmware.tags,
-        }
-        self.firmware_metadata.update_one({'uid': firmware.uid}, {'$set': update_dictionary})
 
     def _update_processed_analysis(self, new_object: FileObject, old_object: dict) -> dict:
         old_pa = self.retrieve_analysis(old_object['processed_analysis'])
         for key in new_object.processed_analysis.keys():
             old_pa[key] = new_object.processed_analysis[key]
         return self.sanitize_analysis(analysis_dict=old_pa, uid=new_object.get_uid())
-
-    def add_firmware(self, firmware: Firmware):
-        old_object = self.file_objects.find_one({'_id': firmware.get_uid()})
-        if old_object:
-            logging.debug('Update old firmware!')
-            try:
-                self.update_object(new_object=firmware, old_object=old_object)
-                self.update_firmware_metadata(firmware)
-            except Exception as exception:
-                logging.error('[{}] Could not update firmware: {}'.format(type(exception), exception))
-        else:
-            logging.debug('Detected new firmware!')
-            fo_entry = self.build_file_object_dict(firmware)
-            metadata_entry = self.build_firmware_metadata_dict(firmware)
-            try:
-                self.file_objects.insert_one(fo_entry)
-                self.firmware_metadata.insert_one(metadata_entry)
-                logging.debug('firmware added to db: {}'.format(firmware.get_uid()))
-            except Exception as exception:
-                logging.error('Could not add firmware: {} - {}'.format(sys.exc_info()[0].__name__, exception))
-
-    @staticmethod
-    def build_firmware_metadata_dict(firmware: Firmware) -> dict:
-        entry = {
-            '_id': firmware.firmware_id,
-            'device_class': firmware.device_class,
-            'device_name': firmware.device_name,
-            'device_part': firmware.part,
-            'md5': firmware.md5,
-            'release_date': convert_str_to_time(firmware.release_date),
-            'submission_date': time(),
-            'tags': firmware.tags,
-            'uid': firmware.uid,
-            'vendor': firmware.vendor,
-            'version': firmware.version,
-        }
-        return entry
 
     def add_file_object(self, file_object: FileObject):
         old_object = self.file_objects.find_one({'_id': file_object.get_uid()})
@@ -120,7 +62,7 @@ class BackEndDbInterface(MongoInterfaceCommon):
             'file_name': file_object.file_name,
             'file_path': file_object.file_path,
             'files_included': list(file_object.files_included),
-            'is_firmware': file_object.is_firmware,
+            'is_root': file_object.is_root,
             'parent_firmware_uids': list(file_object.parent_firmware_uids),
             'parents': file_object.parents,
             'processed_analysis': analysis,
@@ -130,34 +72,35 @@ class BackEndDbInterface(MongoInterfaceCommon):
         }
         return entry
 
-    def _convert_to_firmware(self, entry, analysis_filter=None):
-        firmware = super()._convert_to_firmware(entry, analysis_filter=None)
-        firmware.set_file_path(entry['file_path'])
-        return firmware
-
     def _convert_to_file_object(self, entry, analysis_filter=None):
         file_object = super()._convert_to_file_object(entry, analysis_filter=None)
         file_object.set_file_path(entry['file_path'])
         return file_object
 
     def update_analysis_tags(self, uid, plugin_name, tag_name, tag):
-        firmware_object = self.get_object(uid=uid, analysis_filter=[])
+        file_object = self.get_object(uid=uid, analysis_filter=[])
+        if not file_object:
+            logging.warning('Object not found while trying to set tag: {}'.format(uid))
+        elif not file_object.is_root:
+            logging.warning('Propagating tag only allowed for firmware. Given: {}'.format(uid))
+        else:
+            firmware_list = self.get_all_firmwares_for_uid(uid)
+            for firmware in firmware_list:
+                self._update_analysis_tags_of_firmware(firmware, plugin_name, tag, tag_name)
+
+    def _update_analysis_tags_of_firmware(self, firmware, plugin_name, tag, tag_name):
         try:
-            tags = update_tags(firmware_object.analysis_tags, plugin_name, tag_name, tag)
+            tags = update_tags(firmware.analysis_tags, plugin_name, tag_name, tag)
         except ValueError as value_error:
             logging.error('Plugin {} tried setting a bad tag {}: {}'.format(plugin_name, tag_name, str(value_error)))
             return
         except AttributeError:
-            logging.error('Firmware not in database yet: {}'.format(uid))
+            logging.error('Could not set tag: object not in database yet: {}'.format(firmware.uid))
             return
-
-        if firmware_object.is_firmware:
-            try:
-                self.file_objects.update_one({'_id': uid}, {'$set': {'analysis_tags': tags}})
-            except (TypeError, ValueError, PyMongoError) as exception:
-                logging.error('Could not update firmware: {} - {}'.format(type(exception), str(exception)))
-        else:
-            logging.warning('Propagating tag only allowed for firmware. Given: {}')
+        try:
+            self.firmware_metadata.update_one({'_id': firmware.firmware_id}, {'$set': {'analysis_tags': tags}})
+        except (TypeError, ValueError, PyMongoError) as exception:
+            logging.error('Could not update firmware: {} - {}'.format(type(exception), str(exception)))
 
     def add_analysis(self, file_object: Union[FileObject, Firmware]):
         if isinstance(file_object, (Firmware, FileObject)):
