@@ -1,8 +1,8 @@
 import json
-import logging
-import sys
 from copy import deepcopy
-from typing import Union, Iterable
+from typing import Union, Iterable, List, Sequence, Tuple, Optional
+
+from pymongo.cursor import Cursor
 
 from helperFunctions.compare_sets import remove_duplicates_from_list
 from helperFunctions.dataConversion import get_value_of_first_key
@@ -18,45 +18,51 @@ class FrontEndDbInterface(MongoInterfaceCommon):
 
     READ_ONLY = True
 
-    def get_fo_data_for_uid_list(self, uid_iterable: Iterable[str], only_firmwares=False):
+    def get_meta_list_from_id_list(self, id_iterable: Iterable[str], only_firmwares=False):
         if only_firmwares:
-            return [self.get_joined_firmware_data(uid) for uid in uid_iterable]
-        return [self.get_joined_firmware_data(uid) or self.file_objects.find_one(uid) for uid in uid_iterable]
+            fo_data = [self.get_joined_firmware_data(id_) for id_ in id_iterable]
+        else:
+            fo_data = [self.get_joined_firmware_data(id_) or self.file_objects.find_one(id_) for id_ in id_iterable]
+        return self.get_meta_list(fo_data)
 
-    def get_meta_list(self, firmware_list=None):
+    def get_meta_list(self, fo_data: Union[List[dict], Cursor]) -> List[Tuple[str, str, dict, float]]:
         list_of_firmware_data = []
-        if firmware_list is None:
-            firmware_list = list(self.perform_reverse_joined_firmware_query())
-        for fo_entry in firmware_list:
+        for fo_entry in fo_data:
             if fo_entry:
                 tags = fo_entry.get('tags', {})
-                if fo_entry['processed_analysis']['unpacker']['file_system_flag']:
-                    unpacker = self.retrieve_analysis(deepcopy(fo_entry['processed_analysis']))['unpacker']['plugin_used']
-                else:
-                    unpacker = fo_entry['processed_analysis']['unpacker']['plugin_used']
+                unpacker = self._get_unpacker_from_db_entry(fo_entry)
                 tags[unpacker] = TagColor.LIGHT_BLUE
                 submission_date = fo_entry.get('submission_date', 0)
-                if fo_entry.get('is_firmware', False):
+                id_ = fo_entry['_id']
+                if self._is_firmware_id(id_):
                     hid = self._create_firmware_hid_from_entry(fo_entry)
                 else:
-                    hid = self.get_hid(fo_entry['_id'])
-                list_of_firmware_data.append((fo_entry['_id'], hid, tags, submission_date))
+                    hid = self._get_hid_fo(id_)
+                list_of_firmware_data.append((id_, hid, tags, submission_date))
         return list_of_firmware_data
+
+    def _get_unpacker_from_db_entry(self, entry):
+        if entry['processed_analysis']['unpacker']['file_system_flag']:
+            unpacker = self.retrieve_analysis(deepcopy(entry['processed_analysis']))['unpacker']['plugin_used']
+        else:
+            unpacker = entry['processed_analysis']['unpacker']['plugin_used']
+        return unpacker
 
     def get_hid(self, uid, root_uid=None):
         '''
         returns a human readable identifier (hid) for a given uid
         returns an empty string if uid is not in Database
         '''
-        hid = self._get_hid_firmware(uid)
-        if hid is None:
+        if self._is_firmware_id(uid):
+            hid = self._get_hid_firmware(uid)
+        else:
             hid = self._get_hid_fo(uid, root_uid)
-        if hid is None:
-            return ''
+        if not hid:
+            hid = ''
         return hid
 
-    def _get_hid_firmware(self, uid):
-        firmware = self.firmware_metadata.find_one({'uid': uid}, {'vendor': 1, 'device_name': 1, 'device_part': 1, 'version': 1, 'device_class': 1})
+    def _get_hid_firmware(self, id_):  # FIXME redundant?
+        firmware = self.firmware_metadata.find_one({'_id': id_}, {'vendor': 1, 'device_name': 1, 'device_part': 1, 'version': 1, 'device_class': 1})
         if firmware:
             return self._create_firmware_hid_from_entry(firmware)
         return None
@@ -67,7 +73,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
         return '{} {} -{} {} ({})'.format(
             firmware['vendor'], firmware['device_name'], part, firmware['version'], firmware['device_class'])
 
-    def _get_hid_fo(self, uid, root_uid):
+    def _get_hid_fo(self, uid, root_uid=None):
         file_object = self.file_objects.find_one({'_id': uid}, {'virtual_file_path': 1})
         if file_object is not None:
             return self._get_one_virtual_path_of_fo(file_object, root_uid)
@@ -97,10 +103,10 @@ class FrontEndDbInterface(MongoInterfaceCommon):
         entry = self.file_objects.find_one({'_id': uid}, {'file_name': 1})
         return entry['file_name']
 
-    def get_firmware_attribute_list(self, attribute, restrictions=None):
+    def get_firmware_attribute_list(self, attribute, restrictions: dict = None):
         attribute_list = {
             entry[attribute]
-            for entry in self.perform_reverse_joined_firmware_query(restrictions)
+            for entry in self.firmware_metadata.find(restrictions or {}, {attribute: 1})
         }
         return list(attribute_list)
 
@@ -112,7 +118,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
 
     def get_device_name_dict(self):
         device_name_dict = {}
-        for entry in self.perform_reverse_joined_firmware_query():
+        for entry in self.firmware_metadata.find({}, {'device_class': 1, 'device_name': 1, 'vendor': 1}):
             device_class, device_name, vendor = entry['device_class'], entry['device_name'], entry['vendor']
             device_name_dict.setdefault(device_class, {})
             device_name_dict[device_class].setdefault(vendor, [])
@@ -133,48 +139,41 @@ class FrontEndDbInterface(MongoInterfaceCommon):
         number_of_results = self.get_file_object_number(query)
         return len(uid_list) == number_of_results
 
-    def generic_search(self, search_dict, skip=0, limit=0, only_fo_parent_firmware=False):
-        try:
-            if isinstance(search_dict, str):
-                search_dict = json.loads(search_dict)
-
-            query = self.perform_reverse_joined_firmware_query(search_dict, project={'_id': 1}, sort={'vendor': 1}, skip=skip, limit=limit)
-            result = [match['_id'] for match in query]
-
-            if len(result) < limit or limit == 0:
-                max_firmware_results = self.get_firmware_number(query=search_dict)
-                skip = skip - max_firmware_results if skip > max_firmware_results else 0
-                limit = limit - len(result) if limit > 0 else 0
-                if not only_fo_parent_firmware:
-                    query = self.file_objects.find(search_dict, {'_id': 1}, skip=skip, limit=limit, sort=[('file_name', 1)])
-                    result.extend([match['_id'] for match in query])
-                else:  # only searching for parents of matching file objects
-                    query = self.file_objects.find(search_dict, {'virtual_file_path': 1})
-                    parent_uids = {uid for match in query for uid in match['virtual_file_path'].keys()}
-                    query_filter = {'$nor': [{'_id': {'$nin': list(parent_uids)}}, search_dict]}
-                    query = self.perform_reverse_joined_firmware_query(query_filter, project={'_id': 1}, sort={'vendor': 1}, skip=skip, limit=limit)
-                    parents = [match['_id'] for match in query]
-                    result += parents
-
-        except Exception as exception:
-            error_message = 'could not process search request: {} {}'.format(sys.exc_info()[0].__name__, exception)
-            logging.warning(error_message)
-            return error_message
+    def generic_search(self, query: dict, skip=0, limit=0, only_fo_parent_firmware=False) -> List[str]:
+        result = self._generic_search_firmware(query, skip, limit)
+        if len(result) < limit or limit == 0:
+            max_firmware_results = self.get_firmware_number(query)
+            skip = skip - max_firmware_results if skip > max_firmware_results else 0
+            limit = limit - len(result) if limit > 0 else 0
+            if not only_fo_parent_firmware:
+                result.extend(self._generic_search_files(query, skip, limit))
+            else:
+                result.extend(self._generic_search_parent_firmware(query, skip, limit))
         return remove_duplicates_from_list(result)
 
-    def get_other_versions_of_firmware(self, firmware_object: Firmware):
-        if not firmware_object.is_firmware:
-            return []
-        query = {'vendor': firmware_object.vendor, 'device_name': firmware_object.device_name, 'device_part': firmware_object.part}
-        search_result = self.firmware_metadata.find(query, {'uid': 1, 'version': 1})
-        result = [r for r in search_result if r['uid'] != firmware_object.get_uid()]
-        for entry in result:  # FIXME
-            entry['_id'] = entry.pop('uid')
+    def _generic_search_firmware(self, query, skip, limit):
+        search_result = self.firmware_metadata.find(query, {'_id': 1}, sort=[('vendor', 1)], skip=skip, limit=limit)
+        return [match['_id'] for match in search_result]
+
+    def _generic_search_files(self, query, skip, limit):
+        search_result = self.file_objects.find(query, {'_id': 1}, skip=skip, limit=limit, sort=[('file_name', 1)])
+        return [match['_id'] for match in search_result]
+
+    def _generic_search_parent_firmware(self, query, skip, limit):
+        search_result = self.file_objects.find(query, {'virtual_file_path': 1})
+        parent_uids = {uid for match in search_result for uid in match['virtual_file_path'].keys()}
+        query_filter = {'uid': {'$in': list(parent_uids)}}
+        return self._generic_search_firmware(query_filter, skip, limit)
+
+    def get_other_versions_of_firmware(self, firmware: Firmware):
+        query = {'vendor': firmware.vendor, 'device_name': firmware.device_name, 'device_part': firmware.device_part}
+        search_result = self.firmware_metadata.find(query, {'_id': 1, 'version': 1})
+        result = [r for r in search_result if r['_id'] != firmware.firmware_id]
         return result
 
-    def get_last_added_firmwares(self, limit_x=10):
+    def get_last_added_firmwares(self, limit=10):
         latest_firmwares = self.perform_reverse_joined_firmware_query(
-            {'submission_date': {'$gt': 1}}, sort={'submission_date': -1}, limit=limit_x
+            {'submission_date': {'$gt': 1}}, sort={'submission_date': -1}, limit=limit
         )
         return self.get_meta_list(latest_firmwares)
 
@@ -261,7 +260,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
 
     def rest_get_firmware_uids(self, offset, limit, query=None, recursive=False):
         if recursive:
-            return self.generic_search(search_dict=query, skip=offset, limit=limit, only_fo_parent_firmware=True)
+            return self.generic_search(query=query, skip=offset, limit=limit, only_fo_parent_firmware=True)
         uid_cursor = self.perform_reverse_joined_firmware_query(query, skip=offset, limit=limit)
         return [result['_id'] for result in uid_cursor]
 
@@ -271,3 +270,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
     def rest_get_object_uids(self, offset, limit, query):
         uid_cursor = self.file_objects.find(query, {'_id': 1}).skip(offset).limit(limit)
         return [result['_id'] for result in uid_cursor]
+
+    @staticmethod
+    def _is_firmware_id(id_: str) -> bool:
+        return id_.startswith('F_') and len(id_) == 34

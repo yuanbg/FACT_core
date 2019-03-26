@@ -163,7 +163,7 @@ class MongoInterfaceCommon(MongoInterface):
         '''
         query_copy = deepcopy(query)  # prevent side effects
         pipeline = [
-            {'$match': {'is_firmware': True}},
+            {'$match': {'is_root': True}},
             {'$lookup': {
                 'from': 'firmware_metadata',
                 'localField': '_id',

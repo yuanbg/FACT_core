@@ -14,7 +14,7 @@ from storage.fs_organizer import FS_Organizer
 from storage.db_interface_common import MongoInterfaceCommon
 
 
-class InterComBackEndBinding(object):
+class InterComBackEndBinding:
     '''
     Internal Communication Backend Binding
     '''
@@ -74,9 +74,9 @@ class InterComBackEndBinding(object):
         self._start_listener(InterComBackEndDeleteFile, no_operation)
 
     def _start_listener(self, communication_backend, do_after_function):
-        p = Process(target=self._backend_worker, args=(communication_backend, do_after_function))
-        p.start()
-        self.process_list.append(p)
+        process = Process(target=self._backend_worker, args=(communication_backend, do_after_function))
+        process.start()
+        self.process_list.append(process)
 
     def _backend_worker(self, communication_backend, do_after_function):
         interface = communication_backend(config=self.config)
@@ -182,14 +182,13 @@ class InterComBackEndDeleteFile(InterComListener):
         if self._entry_was_removed_from_db(task['_id']):
             logging.info('remove file: {}'.format(task['_id']))
             self.fs_organizer.delete_file(task['_id'])
-        return None
 
     def _entry_was_removed_from_db(self, uid):
         with ConnectTo(MongoInterfaceCommon, self.config) as db:
-            if db.existence_quick_check(uid):
+            if db.object_exists(uid):
                 logging.debug('file not removed, because database entry exists: {}'.format(uid))
                 return False
-            elif db.check_unpacking_lock(uid):
+            if db.check_unpacking_lock(uid):
                 logging.debug('file not removed, because it is processed by unpacker: {}'.format(uid))
                 return False
         return True

@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from helperFunctions.config import get_config_for_testing
 
 
@@ -16,7 +17,7 @@ class MockDbInterface:
     def __init__(self, config):
         self._objects = dict()
 
-    def existence_quick_check(self, uid):
+    def object_exists(self, uid):
         return uid in self._objects
 
     def add_object(self, fo_fw):
