@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from pickle import dumps
-from typing import List, Set
+from typing import List, Set, Optional
 
 
 def make_bytes(code):
@@ -59,17 +59,15 @@ def string_list_to_list(string_list):
 
 
 def unify_string_list(string_list):
-        uids = string_list_to_list(string_list)
-        return list_to_unified_string_list(uids)
+    uids = string_list_to_list(string_list)
+    return list_to_unified_string_list(uids)
 
 
-def get_value_of_first_key(input_dict):
-    key_list = list(input_dict.keys())
-    key_list.sort()
-    if len(key_list) > 0:
+def get_value_of_first_key(input_dict: dict) -> Optional[object]:
+    key_list = sorted(input_dict.keys())
+    if key_list:
         return input_dict[key_list[0]]
-    else:
-        return None
+    return None
 
 
 def none_to_none(input_data):
@@ -95,15 +93,15 @@ def remove_uneccessary_spaces(input_string):
     return tmp
 
 
-def convert_str_to_time(s):
+def convert_str_to_time(string: str) -> datetime:
     '''
     firmware release dates are entered in the form 'YYYY-MM-DD' and need to be converted to MongoDB date objects
     in order to be stored in the database
-    :param s: date string of the form 'YYYY-MM-DD'
+    :param string: date string of the form 'YYYY-MM-DD'
     :return: datetime object (compatible with pymongo)
     '''
     try:
-        return datetime.strptime(s, '%Y-%m-%d')
+        return datetime.strptime(string, '%Y-%m-%d')
     except ValueError:
         return datetime.fromtimestamp(0)
 

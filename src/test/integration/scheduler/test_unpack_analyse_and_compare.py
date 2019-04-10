@@ -4,7 +4,7 @@ from time import sleep
 import unittest
 from unittest.mock import patch
 
-from helperFunctions.dataConversion import unify_string_list
+from helperFunctions.data_conversion import unify_string_list
 from helperFunctions.fileSystem import get_test_data_dir
 from helperFunctions.web_interface import ConnectTo
 from multiprocessing import Event, Value

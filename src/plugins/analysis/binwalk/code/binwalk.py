@@ -6,7 +6,7 @@ from common_helper_process import execute_shell_command
 
 from analysis.PluginBase import AnalysisBasePlugin
 from helperFunctions.binwalk import iterate_valid_signature_lines
-from helperFunctions.dataConversion import make_unicode_string
+from helperFunctions.data_conversion import make_unicode_string
 
 
 class AnalysisPlugin(AnalysisBasePlugin):

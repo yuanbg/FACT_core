@@ -14,7 +14,7 @@ from common_helper_mongo.aggregate import (
     get_list_of_all_values_and_collect_information_of_additional_field
 )
 
-from helperFunctions.dataConversion import convert_time_to_str, get_dict_size, convert_str_to_time
+from helperFunctions.data_conversion import convert_time_to_str, get_dict_size, convert_str_to_time
 from objects.file import FileObject
 from objects.firmware import Firmware
 from storage.mongo_interface import MongoInterface

@@ -4,7 +4,7 @@ import os
 from base64 import standard_b64encode
 from copy import deepcopy
 
-from helperFunctions.dataConversion import unify_string_list
+from helperFunctions.data_conversion import unify_string_list
 from helperFunctions.fileSystem import get_test_data_dir
 from intercom.common_mongo_binding import InterComMongoInterface
 from objects.file import FileObject

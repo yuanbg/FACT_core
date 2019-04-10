@@ -2,7 +2,7 @@ import os
 
 from common_helper_files import get_dir_of_file
 
-from helperFunctions.dataConversion import remove_linebreaks_from_byte_string
+from helperFunctions.data_conversion import remove_linebreaks_from_byte_string
 from objects.file import FileObject
 from test.unit.analysis.analysis_plugin_test_class import AnalysisPluginTest
 from ..code.base64_decoder import AnalysisPlugin

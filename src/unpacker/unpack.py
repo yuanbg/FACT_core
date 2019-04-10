@@ -7,7 +7,7 @@ from common_helper_unpacking_classifier import (
     avg_entropy, get_binary_size_without_padding, is_compressed
 )
 from fact_helper_file import get_file_type_from_path
-from helperFunctions.dataConversion import (
+from helperFunctions.data_conversion import (
     make_list_from_dict, make_unicode_string
 )
 from helperFunctions.fileSystem import (

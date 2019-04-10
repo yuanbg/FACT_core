@@ -12,7 +12,7 @@ from typing import AnyStr, List
 
 from common_helper_files import human_readable_file_size
 
-from helperFunctions.dataConversion import make_unicode_string
+from helperFunctions.data_conversion import make_unicode_string
 from helperFunctions.web_interface import get_color_list
 from web_interface.security.authentication import user_has_privilege
 from web_interface.security.privileges import PRIVILEGES

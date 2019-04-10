@@ -1,11 +1,11 @@
 import json
 from copy import deepcopy
-from typing import Union, Iterable, List, Sequence, Tuple, Optional
+from typing import Union, Iterable, List, Tuple
 
 from pymongo.cursor import Cursor
 
 from helperFunctions.compare_sets import remove_duplicates_from_list
-from helperFunctions.dataConversion import get_value_of_first_key
+from helperFunctions.data_conversion import get_value_of_first_key
 from helperFunctions.database_structure import visualize_complete_tree
 from helperFunctions.file_tree import get_partial_virtual_path, FileTreeNode
 from helperFunctions.tag import TagColor
@@ -61,7 +61,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
             hid = ''
         return hid
 
-    def _get_hid_firmware(self, id_):  # FIXME redundant?
+    def _get_hid_firmware(self, id_):
         firmware = self.firmware_metadata.find_one({'_id': id_}, {'vendor': 1, 'device_name': 1, 'device_part': 1, 'version': 1, 'device_class': 1})
         if firmware:
             return self._create_firmware_hid_from_entry(firmware)

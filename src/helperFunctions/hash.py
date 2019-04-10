@@ -4,7 +4,7 @@ from hashlib import new, md5
 import lief
 import ssdeep
 
-from helperFunctions.dataConversion import make_bytes
+from helperFunctions.data_conversion import make_bytes
 from helperFunctions.debug import suppress_stdout
 
 

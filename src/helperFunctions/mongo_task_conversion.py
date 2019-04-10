@@ -1,10 +1,15 @@
 import logging
-import os
 import re
 import sys
+from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Optional
+
+from werkzeug.datastructures import FileStorage
+from werkzeug.wrappers import Request
 
 from helperFunctions.uid import create_uid
+from objects.file import FileObject
 from objects.firmware import Firmware
 
 OPTIONAL_FIELDS = ['tags', 'device_part']
@@ -22,7 +27,7 @@ def create_analysis_task(request):
     return task
 
 
-def get_file_name_and_binary_from_request(request):
+def get_file_name_and_binary_from_request(request: Request):
     try:
         file_name = request.files['file'].filename
     except (AttributeError, KeyError):
@@ -71,21 +76,34 @@ def _get_tag_list(tag_string):
     return tag_string.split(',')
 
 
-def convert_analysis_task_to_fw_obj(analysis_task):
-    fw = Firmware(scheduled_analysis=analysis_task['requested_analysis_systems'])
+def convert_analysis_task(analysis_task: dict):
+    fo = convert_analysis_task_to_fo(analysis_task)
+    fw = convert_analysis_task_to_fw(analysis_task, fo.get_uid())
+    return fo, fw
+
+
+def convert_analysis_task_to_fo(analysis_task) -> FileObject:
+    fo = FileObject(scheduled_analysis=analysis_task['requested_analysis_systems'], is_root=True)
     if 'binary' in analysis_task.keys():
-        fw.set_binary(analysis_task['binary'])
-        fw.file_name = analysis_task['file_name']
+        fo.set_binary(analysis_task['binary'])
+        fo.file_name = analysis_task['file_name']
     else:
         if 'file_name' in analysis_task.keys():
-            fw.file_name = analysis_task['file_name']
-        fw.overwrite_uid(analysis_task['uid'])
-    fw.set_device_name(analysis_task['device_name'])
-    fw.set_part_name(analysis_task['device_part'])
-    fw.set_firmware_version(analysis_task['version'])
-    fw.set_device_class(analysis_task['device_class'])
-    fw.set_vendor(analysis_task['vendor'])
-    fw.set_release_date(analysis_task['release_date'])
+            fo.file_name = analysis_task['file_name']
+        fo.overwrite_uid(analysis_task['uid'])
+    return fo
+
+
+def convert_analysis_task_to_fw(analysis_task: dict, uid: str) -> Firmware:
+    fw = Firmware(
+        uid=uid,
+        device_class=analysis_task['device_class'],
+        vendor=analysis_task['vendor'],
+        device_name=analysis_task['device_name'],
+        version=analysis_task['version'],
+        release_date=analysis_task['release_date']
+    )
+    fw.device_part = analysis_task['device_part']
     for tag in _get_tag_list(analysis_task['tags']):
         fw.set_tag(tag)
     return fw
@@ -98,20 +116,15 @@ def get_uid_of_analysis_task(analysis_task):
     return None
 
 
-def get_uploaded_file_binary(request_file):
-    if request_file:
-        tmp_dir = TemporaryDirectory(prefix='faf_upload_')
-        tmp_file_path = os.path.join(tmp_dir.name, 'upload.bin')
+def get_uploaded_file_binary(request_file: FileStorage) -> Optional[bytes]:
+    with TemporaryDirectory(prefix='faf_upload_') as tmp_dir:
+        tmp_file_path = Path(tmp_dir) / 'upload.bin'
         try:
-            request_file.save(tmp_file_path)
-            with open(tmp_file_path, 'rb') as f:
-                binary = f.read()
-            tmp_dir.cleanup()
+            request_file.save(str(tmp_file_path))
+            binary = tmp_file_path.read_bytes()
             return binary
-        except Exception:
+        except (OSError, AttributeError):
             return None
-    else:
-        return None
 
 
 def check_for_errors(analysis_task):
@@ -129,6 +142,6 @@ def is_sanitized_entry(entry):
         return True
     except TypeError:  # DB entry has type other than string (e.g. integer or float)
         return False
-    except Exception as e:
-        logging.error('Could not determine entry sanitization state: {} {}'.format(sys.exc_info()[0].__name__, e))
+    except Exception as exception:
+        logging.error('Could not determine entry sanitization state: {} {}'.format(sys.exc_info()[0].__name__, exception))
         return False

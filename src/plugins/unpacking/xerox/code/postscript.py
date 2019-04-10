@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from helperFunctions.dataConversion import make_bytes, remove_uneccessary_spaces, \
+from helperFunctions.data_conversion import make_bytes, remove_uneccessary_spaces, \
     make_unicode_string
 
 

@@ -3,7 +3,7 @@ from copy import deepcopy
 from compare.PluginBase import CompareBasePlugin
 from helperFunctions.compare_sets import intersection_of_list_of_lists, difference_of_lists, difference_of_sets, \
     remove_duplicates_from_list_of_lists, make_pairs_of_sets, collapse_pair_of_sets
-from helperFunctions.dataConversion import list_of_lists_to_list_of_sets, list_of_sets_to_list_of_lists, \
+from helperFunctions.data_conversion import list_of_lists_to_list_of_sets, list_of_sets_to_list_of_lists, \
     remove_included_sets_from_list_of_sets, list_to_unified_string_list
 from helperFunctions.hash import get_ssdeep_comparison, check_similarity_of_sets
 

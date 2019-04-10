@@ -7,7 +7,7 @@ from analysis.PluginBase import AnalysisBasePlugin
 from common_helper_files import get_dir_of_file, get_string_list_from_file
 from entropy import shannon_entropy  # pylint: disable=no-name-in-module
 from fact_helper_file import get_file_type_from_binary
-from helperFunctions.dataConversion import remove_linebreaks_from_byte_string
+from helperFunctions.data_conversion import remove_linebreaks_from_byte_string
 from helperFunctions.fileSystem import get_parent_dir
 from helperFunctions.strings import find_all_strings
 

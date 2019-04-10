@@ -1,4 +1,4 @@
-from helperFunctions.dataConversion import make_unicode_string
+from helperFunctions.data_conversion import make_unicode_string
 
 
 def get_matched_strings_dict(matched_string_list):

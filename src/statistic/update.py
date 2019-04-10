@@ -8,7 +8,7 @@ from common_helper_mongo import get_field_average, get_field_sum, get_objects_an
 from datetime import datetime
 from time import time
 
-from helperFunctions.dataConversion import build_time_dict
+from helperFunctions.data_conversion import build_time_dict
 from helperFunctions.merge_generators import sum_up_lists, sum_up_nested_lists, avg, merge_dict
 from helperFunctions.mongo_task_conversion import is_sanitized_entry
 from helperFunctions.statistic import calculate_total_files
