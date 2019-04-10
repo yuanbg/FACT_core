@@ -7,14 +7,12 @@ from queue import Empty
 from time import sleep, time
 from typing import List, Optional, Set, Tuple
 
-from helperFunctions.compare_sets import substring_is_in_list
+from helperFunctions.compare_sets import any_string_is_substring
 from helperFunctions.config import read_list_from_config
 from helperFunctions.merge_generators import shuffled
 from helperFunctions.parsing import bcolors
 from helperFunctions.plugin import import_plugins
-from helperFunctions.process import (
-    ExceptionSafeProcess, terminate_process_and_childs
-)
+from helperFunctions.process import ExceptionSafeProcess, terminate_process_and_childs
 from helperFunctions.tag import add_tags_to_object, check_tags
 from objects.file import FileObject
 from storage.db_interface_backend import BackEndDbInterface
@@ -261,8 +259,8 @@ class AnalysisScheduler:
         file_type = self._get_file_type_from_object_or_db(fw_object)
 
         if whitelist:
-            return not substring_is_in_list(file_type, whitelist)
-        return substring_is_in_list(file_type, blacklist)
+            return not any_string_is_substring(file_type, whitelist)
+        return any_string_is_substring(file_type, blacklist)
 
     def _get_file_type_from_object_or_db(self, fw_object: FileObject) -> Optional[str]:
         if 'file_type' not in fw_object.processed_analysis:

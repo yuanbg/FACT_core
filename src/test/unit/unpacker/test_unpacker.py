@@ -4,7 +4,7 @@ import os
 from tempfile import TemporaryDirectory
 import unittest
 
-from helperFunctions.dataConversion import make_list_from_dict
+from helperFunctions.data_conversion import make_list_from_dict
 from helperFunctions.fileSystem import get_test_data_dir
 from objects.file import FileObject
 from test.common_helper import create_test_file_object, DatabaseMock

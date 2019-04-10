@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
 
-from helperFunctions.dataConversion import make_bytes, make_unicode_string, make_dict_from_list, make_list_from_dict, list_of_lists_to_list_of_sets, \
+from helperFunctions.data_conversion import make_bytes, make_unicode_string, make_dict_from_list, make_list_from_dict, list_of_lists_to_list_of_sets, \
     unify_string_list, string_list_to_list, get_value_of_first_key, none_to_none, list_of_sets_to_list_of_lists, remove_included_sets_from_list_of_sets, \
     build_time_dict, _fill_in_time_gaps, remove_uneccessary_spaces, convert_time_to_str
 

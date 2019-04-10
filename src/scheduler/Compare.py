@@ -3,7 +3,7 @@ from multiprocessing import Value, Queue
 from queue import Empty
 
 from compare.compare import Compare
-from helperFunctions.dataConversion import string_list_to_list
+from helperFunctions.data_conversion import string_list_to_list
 from helperFunctions.parsing import bcolors
 from helperFunctions.process import ExceptionSafeProcess, terminate_process_and_childs
 from storage.db_interface_compare import CompareDbInterface

@@ -1,7 +1,7 @@
 from flask import request
 from flask_restful import Resource
 
-from helperFunctions.dataConversion import unify_string_list
+from helperFunctions.data_conversion import unify_string_list
 from helperFunctions.rest import success_message, error_message, convert_rest_request
 from helperFunctions.web_interface import ConnectTo
 from intercom.front_end_binding import InterComFrontEndBinding

@@ -23,7 +23,7 @@ from typing import Iterable
 
 import pymongo
 
-from helperFunctions.dataConversion import convert_time_to_str
+from helperFunctions.data_conversion import convert_time_to_str
 from helperFunctions.program_setup import program_setup
 from helperFunctions.web_interface import ConnectTo
 from objects.firmware import Firmware

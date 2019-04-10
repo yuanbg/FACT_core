@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from time import time
 
@@ -52,7 +51,7 @@ class MiscellaneousRoutes(ComponentBase):
                 sc.add_comment_to_object(uid, comment, author, round(time()))
             return redirect(url_for('analysis/<uid>', uid=uid))
         with ConnectTo(FrontEndDbInterface, config=self._config) as sc:
-            if not sc.existence_quick_check(uid):
+            if not sc.object_exists(uid):
                 error = True
         return render_template('add_comment.html', uid=uid, error=error)
 
