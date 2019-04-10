@@ -20,7 +20,7 @@ def install_pip(python_command):
             raise InstallationError('Error in pip installation for {}:\n{}'.format(python_command, output))
 
 
-def main(distribution):
+def main(distribution):  # pylint: disable=too-many-statements
     xenial = distribution == 'xenial'
 
     apt_install_packages('apt-transport-https')
@@ -31,10 +31,14 @@ def main(distribution):
     apt_autoremove_packages()
     apt_clean_system()
 
-    # update submodules
-    git_output, git_code = execute_shell_command_get_return_code('(cd ../../ && git submodule foreach "git pull")')
-    if git_code != 0:
-        raise InstallationError('Failed to update submodules\n{}'.format(git_output))
+    _, is_repository = execute_shell_command_get_return_code('git status')
+    if is_repository == 0:
+        # update submodules
+        git_output, git_code = execute_shell_command_get_return_code('(cd ../../ && git submodule foreach "git pull")')
+        if git_code != 0:
+            raise InstallationError('Failed to update submodules\n{}'.format(git_output))
+    else:
+        logging.warning('FACT is not set up using git. Note that *adding submodules* won\'t work!!')
 
     # make bin dir
     with suppress(FileExistsError):
@@ -58,7 +62,7 @@ def main(distribution):
 
     # install general python dependencys
     apt_install_packages('libmagic-dev')
-    apt_install_packages('libffi-dev', 'libfuzzy-dev')
+    apt_install_packages('libfuzzy-dev')
     pip3_install_packages('git+https://github.com/fkie-cad/fact_helper_file.git')
     pip3_install_packages('psutil')
     pip3_install_packages('pytest==3.5.1', 'pytest-cov', 'pytest-pep8', 'pylint', 'python-magic', 'xmltodict', 'yara-python==3.7.0', 'appdirs')

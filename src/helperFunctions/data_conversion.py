@@ -7,19 +7,17 @@ from typing import List, Set, Optional
 def make_bytes(code):
     if isinstance(code, bytes):
         return code
-    elif isinstance(code, str):
+    if isinstance(code, str):
         return code.encode('utf-8')
-    else:
-        return bytes(code)
+    return bytes(code)
 
 
 def make_unicode_string(code):
     if isinstance(code, str):
         return code.encode(errors='replace').decode()
-    elif isinstance(code, bytes):
+    if isinstance(code, bytes):
         return code.decode(errors='replace')
-    else:
-        return code.__str__()
+    return code.__str__()
 
 
 def make_dict_from_list(list_object):
@@ -50,17 +48,17 @@ def list_of_sets_to_list_of_lists(list_of_sets: List[Set]) -> List[List]:
     return [sorted(item) for item in list_of_sets]
 
 
-def list_to_unified_string_list(uid_list: List[str]) -> str:
+def convert_uid_list_to_compare_id(uid_list: List[str]) -> str:
     return ';'.join(sorted(uid_list))
 
 
-def string_list_to_list(string_list):
-    return string_list.split(';')
+def convert_compare_id_to_list(compare_id: str) -> List[str]:
+    return compare_id.split(';')
 
 
-def unify_string_list(string_list):
-    uids = string_list_to_list(string_list)
-    return list_to_unified_string_list(uids)
+def normalize_compare_id(compare_id: str) -> str:
+    uids = convert_compare_id_to_list(compare_id)
+    return convert_uid_list_to_compare_id(uids)
 
 
 def get_value_of_first_key(input_dict: dict) -> Optional[object]:
@@ -109,10 +107,9 @@ def convert_str_to_time(string: str) -> datetime:
 def convert_time_to_str(time_obj):
     if isinstance(time_obj, datetime):
         return time_obj.strftime('%Y-%m-%d')
-    elif isinstance(time_obj, str):
+    if isinstance(time_obj, str):
         return time_obj
-    else:
-        return '1970-01-01'
+    return '1970-01-01'
 
 
 def build_time_dict(query):
@@ -130,7 +127,7 @@ def build_time_dict(query):
 
 
 def _fill_in_time_gaps(time_dict):
-    if not len(time_dict) == 0:
+    if time_dict:
         start_year = min(time_dict.keys())
         start_month = min(time_dict[start_year].keys())
         end_year = max(time_dict.keys())
