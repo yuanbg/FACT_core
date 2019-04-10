@@ -8,7 +8,7 @@ from flask import render_template, request, redirect, url_for
 from flask_paginate import Pagination
 
 from helperFunctions.config import read_list_from_config
-from helperFunctions.dataConversion import make_unicode_string
+from helperFunctions.data_conversion import make_unicode_string
 from helperFunctions.mongo_task_conversion import get_file_name_and_binary_from_request
 from helperFunctions.web_interface import ConnectTo, apply_filters_to_query, filter_out_illegal_characters
 from helperFunctions.yara_binary_search import is_valid_yara_rule_file, get_yara_error
@@ -61,32 +61,41 @@ class DatabaseRoutes(ComponentBase):
 
     @roles_accepted(*PRIVILEGES['basic_search'])
     def _app_show_browse_database(self, query='{}', only_firmwares=False):
-        page, per_page = self._get_page_items()[0:2]
-        if request.args.get('query'):
-            query = request.args.get('query')
+        page, skip, limit = self._get_page_items()
         if request.args.get('only_firmwares'):
             only_firmwares = request.args.get('only_firmwares') == 'True'
-        query = apply_filters_to_query(request, query)
-        if request.args.get('date'):
-            query = self._add_date_to_query(query, request.args.get('date'))
+        query = self._compose_query(query)
         try:
-            firmware_list = self._search_database(query, skip=per_page * (page - 1), limit=per_page, only_firmwares=only_firmwares)
-            if self._query_has_only_one_result(firmware_list, query):
-                uid = firmware_list[0][0]
-                return redirect(url_for('analysis/<uid>', uid=uid))
+            firmware_list = self._search_database(query, skip=skip, limit=limit, only_firmwares=only_firmwares)
         except Exception as exception:
             error_message = 'Could not query database: {} {}'.format(sys.exc_info()[0].__name__, exception)
             logging.error(error_message)
             return render_template('error.html', message=error_message)
+        if self._query_has_only_one_result(firmware_list, query):
+            uid = firmware_list[0][0]
+            return redirect(url_for('analysis/<uid>', uid=uid))
 
         with ConnectTo(FrontEndDbInterface, self._config) as connection:
             total = connection.get_number_of_total_matches(query, only_firmwares)
             device_classes = connection.get_device_class_list()
             vendors = connection.get_vendor_list()
 
-        pagination = self._get_pagination(page=page, per_page=per_page, total=total, record_name='firmwares', )
-        return render_template('database/database_browse.html', firmware_list=firmware_list, page=page, per_page=per_page, pagination=pagination,
-                               device_classes=device_classes, vendors=vendors, current_class=str(request.args.get('device_class')), current_vendor=str(request.args.get('vendor')))
+        pagination = self._get_pagination(page=page, per_page=limit, total=total, record_name='firmwares')
+        return render_template(
+            'database/database_browse.html',
+            firmware_list=firmware_list,
+            page=page, per_page=limit, pagination=pagination,
+            device_classes=device_classes, vendors=vendors,
+            current_class=str(request.args.get('device_class')), current_vendor=str(request.args.get('vendor'))
+        )
+
+    def _compose_query(self, query):
+        if request.args.get('query'):
+            query = request.args.get('query')
+        query = apply_filters_to_query(request, query)
+        if request.args.get('date'):
+            query = self._add_date_to_query(query, request.args.get('date'))
+        return query
 
     @staticmethod
     def _query_has_only_one_result(result_list, query):
@@ -94,12 +103,9 @@ class DatabaseRoutes(ComponentBase):
 
     def _search_database(self, query, skip=0, limit=0, only_firmwares=False):
         with ConnectTo(FrontEndDbInterface, self._config) as connection:
-            result = connection.generic_search(query, skip, limit, only_fo_parent_firmware=only_firmwares)
-            if not isinstance(result, list):
-                raise Exception(result)
-            firmware_list = connection.get_fo_data_for_uid_list(result, only_firmwares=self._query_is_empty(query))
-            sorted_meta_list = sorted(connection.get_meta_list(firmware_list), key=lambda x: x[1].lower())
-        return sorted_meta_list
+            uid_list = connection.generic_search(query, skip, limit, only_fo_parent_firmware=only_firmwares)
+            meta_list = connection.get_meta_list_from_id_list(uid_list, only_firmwares=self._query_is_empty(query))
+        return sorted(meta_list, key=lambda x: x[1].lower())
 
     @staticmethod
     def _query_is_empty(query):
@@ -170,7 +176,7 @@ class DatabaseRoutes(ComponentBase):
             _, yara_rule_file = get_file_name_and_binary_from_request(search_request)
         elif search_request.form['textarea']:
             yara_rule_file = search_request.form['textarea'].encode()
-        firmware_uid = search_request.form.get('firmware_uid') if search_request.form.get('firmware_uid') else None
+        firmware_uid = search_request.form.get('firmware_uid', None)
         return yara_rule_file, firmware_uid
 
     def _firmware_is_in_db(self, firmware_uid: str) -> bool:
@@ -180,8 +186,8 @@ class DatabaseRoutes(ComponentBase):
     @roles_accepted(*PRIVILEGES['pattern_search'])
     def _app_show_binary_search_results(self):
         firmware_dict, error, yara_rules = None, None, None
-        if request.args.get('request_id'):
-            request_id = request.args.get('request_id')
+        request_id = request.args.get('request_id', None)
+        if request_id:
             with ConnectTo(InterComFrontEndBinding, self._config) as connection:
                 result, yara_rules = connection.get_binary_search_result(request_id)
             if isinstance(result, str):
@@ -191,7 +197,6 @@ class DatabaseRoutes(ComponentBase):
                 firmware_dict = self._build_firmware_dict_for_binary_search(result)
         else:
             error = 'No request ID found'
-            request_id = None
         return render_template('database/database_binary_search_results.html', result=firmware_dict, error=error,
                                request_id=request_id, yara_rules=yara_rules)
 
@@ -199,8 +204,8 @@ class DatabaseRoutes(ComponentBase):
         firmware_dict = {}
         with ConnectTo(FrontEndDbInterface, self._config) as connection:
             for rule in uid_dict:
-                firmware_data = connection.get_fo_data_for_uid_list(uid_dict[rule])
-                firmware_dict[rule] = sorted(connection.get_meta_list(firmware_data))
+                meta_list = connection.get_meta_list_from_id_list(uid_dict[rule])
+                firmware_dict[rule] = sorted(meta_list)
         return firmware_dict
 
     @roles_accepted(*PRIVILEGES['basic_search'])

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import binascii
 import json
 from time import sleep
@@ -7,8 +5,9 @@ from time import sleep
 import requests
 from flask import request, render_template, make_response, redirect
 
-from helperFunctions.dataConversion import remove_linebreaks_from_byte_string
-from helperFunctions.mongo_task_conversion import create_analysis_task, check_for_errors, convert_analysis_task_to_fw_obj
+from helperFunctions.data_conversion import remove_linebreaks_from_byte_string
+from helperFunctions.mongo_task_conversion import create_analysis_task, check_for_errors, convert_analysis_task_to_fo, \
+    convert_analysis_task_to_fw, convert_analysis_task
 from helperFunctions.web_interface import ConnectTo, get_radare_endpoint
 from intercom.front_end_binding import InterComFrontEndBinding
 from storage.db_interface_compare import CompareDbInterface
@@ -65,9 +64,11 @@ class IORoutes(ComponentBase):
             analysis_task = create_analysis_task(request)
             error = check_for_errors(analysis_task)
             if not error:
-                fw = convert_analysis_task_to_fw_obj(analysis_task)
+                fo, fw = convert_analysis_task(analysis_task)
                 with ConnectTo(InterComFrontEndBinding, self._config) as sc:
-                    sc.add_analysis_task(fw)
+                    sc.add_analysis_task(fo)
+                with ConnectTo(FrontEndDbInterface, self._config) as sc:
+                    sc.add_firmware(fw)
                 return render_template('upload/upload_successful.html', uid=analysis_task['uid'])
 
         with ConnectTo(FrontEndDbInterface, self._config) as sc:
@@ -85,36 +86,30 @@ class IORoutes(ComponentBase):
     @roles_accepted(*PRIVILEGES['download'])
     def _app_download_binary(self, uid):
         with ConnectTo(FrontEndDbInterface, self._config) as sc:
-            object_exists = sc.existence_quick_check(uid)
-        if not object_exists:
-            return render_template('uid_not_found.html', uid=uid)
-        else:
-            with ConnectTo(InterComFrontEndBinding, self._config) as sc:
-                result = sc.get_binary_and_filename(uid)
-            if result is None:
-                return render_template('error.html', message='timeout')
-            else:
-                binary, file_name = result
-                resp = make_response(binary)
-                resp.headers['Content-Disposition'] = 'attachment; filename={}'.format(file_name)
-                return resp
+            if not sc.object_exists(uid):
+                return render_template('uid_not_found.html', uid=uid)
+        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+            result = sc.get_binary_and_filename(uid)
+        if result is None:
+            return render_template('error.html', message='timeout')
+        binary, file_name = result
+        response = make_response(binary)
+        response.headers['Content-Disposition'] = 'attachment; filename={}'.format(file_name)
+        return response
 
     @roles_accepted(*PRIVILEGES['download'])
     def _app_download_tar(self, uid):
         with ConnectTo(FrontEndDbInterface, self._config) as sc:
-            object_exists = sc.existence_quick_check(uid)
-        if not object_exists:
-            return render_template('uid_not_found.html', uid=uid)
-        else:
-            with ConnectTo(InterComFrontEndBinding, self._config) as sc:
-                result = sc.get_repacked_binary_and_file_name(uid)
-            if result is None:
-                return render_template('error.html', message='timeout')
-            else:
-                binary, file_name = result
-                resp = make_response(binary)
-                resp.headers['Content-Disposition'] = 'attachment; filename={}'.format(file_name)
-                return resp
+            if not sc.object_exists(uid):
+                return render_template('uid_not_found.html', uid=uid)
+        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+            result = sc.get_repacked_binary_and_file_name(uid)
+        if result is None:
+            return render_template('error.html', message='timeout')
+        binary, file_name = result
+        resp = make_response(binary)
+        resp.headers['Content-Disposition'] = 'attachment; filename={}'.format(file_name)
+        return resp
 
     @roles_accepted(*PRIVILEGES['download'])
     def _download_ida_file(self, compare_id):
@@ -122,18 +117,17 @@ class IORoutes(ComponentBase):
             result = sc.get_compare_result(compare_id)
         if result is None:
             return render_template('error.html', message='timeout')
-        elif isinstance(result, str):
+        if isinstance(result, str):
             return render_template('error.html', message=result)
-        else:
-            binary = result['plugins']['Ida_Diff_Highlighting']['idb_binary']
-            resp = make_response(binary)
-            resp.headers['Content-Disposition'] = 'attachment; filename={}.idb'.format(compare_id[:8])
-            return resp
+        binary = result['plugins']['Ida_Diff_Highlighting']['idb_binary']
+        response = make_response(binary)
+        response.headers['Content-Disposition'] = 'attachment; filename={}.idb'.format(compare_id[:8])
+        return response
 
     @roles_accepted(*PRIVILEGES['download'])
     def _show_hex_dump(self, uid):
         with ConnectTo(FrontEndDbInterface, self._config) as sc:
-            object_exists = sc.existence_quick_check(uid)
+            object_exists = sc.object_exists(uid)
         if not object_exists:
             return render_template('uid_not_found.html', uid=uid)
         else:
@@ -153,7 +147,7 @@ class IORoutes(ComponentBase):
     def _show_radare(self, uid):
         host, post_path = get_radare_endpoint(self._config), '/v1/retrieve'
         with ConnectTo(FrontEndDbInterface, self._config) as sc:
-            object_exists = sc.existence_quick_check(uid)
+            object_exists = sc.object_exists(uid)
         if not object_exists:
             return render_template('uid_not_found.html', uid=uid)
         else:

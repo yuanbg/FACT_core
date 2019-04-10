@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 import logging
 from contextlib import suppress
 
 from flask import render_template, request, redirect, url_for, session, render_template_string
 from flask_paginate import Pagination
 
-from helperFunctions.dataConversion import string_list_to_list, unify_string_list, list_to_unified_string_list
+from helperFunctions.data_conversion import string_list_to_list, unify_string_list, list_to_unified_string_list
 from helperFunctions.web_interface import ConnectTo, get_template_as_string
 from intercom.front_end_binding import InterComFrontEndBinding
 from storage.db_interface_compare import CompareDbInterface
@@ -33,7 +31,7 @@ class CompareRoutes(ComponentBase):
         download_link = self._create_ida_download_if_existing(result, compare_id)
         if result is None:
             return render_template('compare/wait.html', compare_id=compare_id)
-        elif isinstance(result, dict):
+        if isinstance(result, dict):
             uid_list = string_list_to_list(compare_id)
             plugin_views, plugins_without_view = self._get_compare_plugin_views(result)
             compare_view = self._get_compare_view(plugin_views)
@@ -89,8 +87,7 @@ class CompareRoutes(ComponentBase):
     def _insert_plugin_into_view_at_index(plugin, view, index):
         if index < 0:
             return view
-        else:
-            return view[:index] + plugin + view[index:]
+        return view[:index] + plugin + view[index:]
 
     @roles_accepted(*PRIVILEGES['submit_analysis'])
     def _app_show_start_compare(self):

@@ -5,14 +5,11 @@ import os
 from common_helper_files import get_binary_from_file
 from flask import render_template, render_template_string, request
 from flask_login.utils import current_user
-from helperFunctions.dataConversion import none_to_none
+from helperFunctions.data_conversion import none_to_none
 from helperFunctions.fileSystem import get_src_dir
-from helperFunctions.mongo_task_conversion import (
-    check_for_errors, convert_analysis_task_to_fw_obj, create_re_analyze_task
-)
-from helperFunctions.web_interface import (
-    ConnectTo, get_template_as_string, overwrite_default_plugins
-)
+from helperFunctions.mongo_task_conversion import check_for_errors, convert_analysis_task_to_fo, create_re_analyze_task
+from helperFunctions.web_interface import ConnectTo, get_template_as_string, overwrite_default_plugins
+
 from intercom.front_end_binding import InterComFrontEndBinding
 from objects.firmware import Firmware
 from storage.db_interface_admin import AdminDbInterface
@@ -106,7 +103,7 @@ class AnalysisRoutes(ComponentBase):
                 return render_template('upload/upload_successful.html', uid=uid)
 
         with ConnectTo(FrontEndDbInterface, self._config) as sc:
-            old_firmware = sc.get_firmware(uid=uid, analysis_filter=[])
+            old_firmware = sc.get_firmware(uid, analysis_filter=[])
             if old_firmware is None:
                 return render_template('uid_not_found.html', uid=uid)
 
@@ -136,7 +133,7 @@ class AnalysisRoutes(ComponentBase):
         )
 
     def _schedule_re_analysis_task(self, uid, analysis_task, re_do):
-        fw = convert_analysis_task_to_fw_obj(analysis_task)
+        fw = convert_analysis_task_to_fo(analysis_task)
         if re_do:
             with ConnectTo(AdminDbInterface, self._config) as sc:
                 sc.delete_firmware(uid, delete_root_file=False)

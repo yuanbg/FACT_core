@@ -4,7 +4,7 @@ from base64 import standard_b64decode
 from flask import request
 from flask_restful import Resource
 
-from helperFunctions.mongo_task_conversion import convert_analysis_task_to_fw_obj
+from helperFunctions.mongo_task_conversion import convert_analysis_task_to_fo
 from helperFunctions.object_conversion import create_meta_dict
 from helperFunctions.rest import get_paging, get_query, success_message, error_message, convert_rest_request, get_update, get_recursive, get_summary_flag
 from helperFunctions.web_interface import ConnectTo
@@ -24,39 +24,45 @@ class RestFirmware(Resource):
     @roles_accepted(*PRIVILEGES['view_analysis'])
     def get(self, uid=None):
         if not uid:
-            paging, success = get_paging(request.args)
-            if not success:
-                return error_message(paging, self.URL, request_data=request.args)
-            offset, limit = paging
+            return self._get_firmwares()
+        return self._get_firmware_from_uid(uid)
 
-            try:
-                recursive = get_recursive(request.args)
-                query = get_query(request.args)
-            except ValueError as value_error:
-                return error_message(str(value_error), self.URL, request_data=dict(query=request.args.get('query'), recursive=request.args.get('recursive')))
-            if recursive and not query:
-                return error_message('recursive search is only permissible with non-empty query', self.URL, request_data=dict(query=request.args.get('query'), recursive=request.args.get('recursive')))
-
-            try:
-                with ConnectTo(FrontEndDbInterface, self.config) as connection:
-                    uids = connection.rest_get_firmware_uids(offset=offset, limit=limit, query=query, recursive=recursive)
-
-                return success_message(dict(uids=uids), self.URL, dict(offset=offset, limit=limit, query=query, recursive=recursive))
-            except Exception:
-                return error_message('Unknown exception on request', self.URL, dict(offset=offset, limit=limit, query=query, recursive=recursive))
+    def _get_firmware_from_uid(self, uid):
+        summary = get_summary_flag(request.args)
+        if summary:
+            with ConnectTo(FrontEndDbInterface, self.config) as connection:
+                firmware = connection.get_complete_object_including_all_summaries(uid)
         else:
-            summary = get_summary_flag(request.args)
-            if summary:
-                with ConnectTo(FrontEndDbInterface, self.config) as connection:
-                    firmware = connection.get_complete_object_including_all_summaries(uid)
-            else:
-                with ConnectTo(FrontEndDbInterface, self.config) as connection:
-                    firmware = connection.get_firmware(uid)
-            if not firmware or not isinstance(firmware, Firmware):
-                return error_message('No firmware with UID {} found'.format(uid), self.URL, dict(uid=uid))
+            with ConnectTo(FrontEndDbInterface, self.config) as connection:
+                firmware = connection.get_firmware(uid)
+        if not firmware or not isinstance(firmware, Firmware):
+            return error_message('No firmware with UID {} found'.format(uid), self.URL, dict(uid=uid))
+        fitted_firmware = self._fit_firmware(firmware)
+        return success_message(dict(firmware=fitted_firmware), self.URL, request_data=dict(uid=uid))
 
-            fitted_firmware = self._fit_firmware(firmware)
-            return success_message(dict(firmware=fitted_firmware), self.URL, request_data=dict(uid=uid))
+    def _get_firmwares(self):
+        paging, success = get_paging(request.args)
+        if not success:
+            return error_message(paging, self.URL, request_data=request.args)
+        offset, limit = paging
+        try:
+            recursive = get_recursive(request.args)
+            query = get_query(request.args)
+        except ValueError as value_error:
+            return error_message(str(value_error), self.URL,
+                                 request_data=dict(query=request.args.get('query'), recursive=request.args.get('recursive')))
+        if recursive and not query:
+            return error_message('recursive search is only permissible with non-empty query', self.URL,
+                                 request_data=dict(query=request.args.get('query'), recursive=request.args.get('recursive')))
+        try:
+            with ConnectTo(FrontEndDbInterface, self.config) as connection:
+                uids = connection.rest_get_firmware_uids(offset=offset, limit=limit, query=query, recursive=recursive)
+
+            return success_message(dict(uids=uids), self.URL,
+                                   dict(offset=offset, limit=limit, query=query, recursive=recursive))
+        except Exception:
+            return error_message('Unknown exception on request', self.URL,
+                                 dict(offset=offset, limit=limit, query=query, recursive=recursive))
 
     @roles_accepted(*PRIVILEGES['submit_analysis'])
     def put(self, uid=None):
@@ -87,7 +93,7 @@ class RestFirmware(Resource):
                 return dict(error_message='{} not found'.format(field))
 
         data['binary'] = standard_b64decode(data['binary'])
-        firmware_object = convert_analysis_task_to_fw_obj(data)
+        firmware_object = convert_analysis_task_to_fo(data)
         with ConnectTo(InterComFrontEndBinding, self.config) as intercom:
             intercom.add_analysis_task(firmware_object)
         data.pop('binary')
