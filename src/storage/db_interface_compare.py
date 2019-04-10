@@ -64,7 +64,11 @@ class CompareDbInterface(MongoInterfaceCommon):
         return comp_id
 
     def page_compare_results(self, skip=0, limit=0):
-        db_entries = self.compare_results.find({'submission_date': {'$gt': 1}}, {'general.hid': 1, 'submission_date': 1}, skip=skip, limit=limit, sort=[('submission_date', -1)])
+        db_entries = self.compare_results.find(
+            {'submission_date': {'$gt': 1}},
+            {'general.hid': 1, 'submission_date': 1},
+            skip=skip, limit=limit, sort=[('submission_date', -1)]
+        )
         all_previous_results = [(item['_id'], item['general']['hid'], item['submission_date']) for item in db_entries]
         return [compare for compare in all_previous_results if not self.object_existence_quick_check(compare[0])]
 

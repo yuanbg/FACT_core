@@ -1,6 +1,7 @@
-import gc
+# pylint: disable=attribute-defined-outside-init,protected-access
 from time import time
-import unittest
+
+import gc
 
 from helperFunctions.config import get_config_for_testing
 from storage.MongoMgr import MongoMgr
@@ -11,25 +12,25 @@ from storage.db_interface_compare import CompareDbInterface
 from test.common_helper import create_test_firmware
 
 
-class TestCompare(unittest.TestCase):
+class TestCompare:
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls._config = get_config_for_testing()
         cls.mongo_server = MongoMgr(config=cls._config)
 
-    def setUp(self):
+    def setup_method(self):
         self.db_interface = MongoInterfaceCommon(config=self._config)
         self.db_interface_backend = BackEndDbInterface(config=self._config)
         self.db_interface_compare = CompareDbInterface(config=self._config)
         self.db_interface_admin = AdminDbInterface(config=self._config)
 
-        self.fw_one = create_test_firmware()
-        self.fw_two = create_test_firmware()
-        self.fw_two.set_binary(b'another firmware')
+        self.fw_one, self.root_fo_1 = create_test_firmware()
+        self.fw_two, self.root_fo_2 = create_test_firmware(bin_path='container/test.7z', version='0.2')
         self.compare_dict = self._create_compare_dict()
+        self.compare_id = '{};{}'.format(self.root_fo_1.get_uid(), self.root_fo_2.get_uid())
 
-    def tearDown(self):
+    def teardown_method(self):
         self.db_interface_compare.shutdown()
         self.db_interface_admin.shutdown()
         self.db_interface_backend.shutdown()
@@ -38,79 +39,88 @@ class TestCompare(unittest.TestCase):
         gc.collect()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         cls.mongo_server.shutdown()
 
     def _create_compare_dict(self):
-        comp_dict = {'general': {'hid': {self.fw_one.get_uid(): 'foo', self.fw_two.get_uid(): 'bar'}}, 'plugins': {}}
-        comp_dict['general']['virtual_file_path'] = {self.fw_one.get_uid(): 'dev_one_name', self.fw_two.get_uid(): 'dev_two_name'}
-        return comp_dict
+        return {
+            'general': {
+                'hid': {self.root_fo_1.get_uid(): 'foo', self.root_fo_2.get_uid(): 'bar'},
+                'virtual_file_path': {self.root_fo_1.get_uid(): 'dev_one_name', self.root_fo_2.get_uid(): 'dev_two_name'}
+            },
+            'plugins': {}
+        }
 
     def test_add_and_get_compare_result(self):
-        self.db_interface_backend.add_firmware(self.fw_one)
-        self.db_interface_backend.add_firmware(self.fw_two)
+        self.db_interface_backend.add_file_object(self.root_fo_1)
+        self.db_interface_backend.add_file_object(self.root_fo_2)
         self.db_interface_compare.add_compare_result(self.compare_dict)
-        retrieved = self.db_interface_compare.get_compare_result('{};{}'.format(self.fw_one.get_uid(), self.fw_two.get_uid()))
-        self.assertEqual(retrieved['general']['virtual_file_path'][self.fw_one.get_uid()], 'dev_one_name',
-                         'content of retrieval not correct')
+        retrieved = self.db_interface_compare.get_compare_result(self.compare_id)
+        assert retrieved['general']['virtual_file_path'][self.root_fo_1.get_uid()] == 'dev_one_name', 'content of retrieval not correct'
 
     def test_get_not_existing_compare_result(self):
-        self.db_interface_backend.add_firmware(self.fw_one)
-        self.db_interface_backend.add_firmware(self.fw_two)
-        result = self.db_interface_compare.get_compare_result('{};{}'.format(self.fw_one.get_uid(), self.fw_two.get_uid()))
-        self.assertIsNone(result, 'result not none')
+        self.db_interface_backend.add_file_object(self.root_fo_1)
+        self.db_interface_backend.add_file_object(self.root_fo_2)
+        result = self.db_interface_compare.get_compare_result('{};{}'.format(self.root_fo_1.get_uid(), self.root_fo_2.get_uid()))
+        assert result is None, 'result not none'
 
     def test_calculate_compare_result_id(self):
         comp_id = self.db_interface_compare._calculate_compare_result_id(self.compare_dict)
-        self.assertEqual(comp_id, '{};{}'.format(self.fw_one.get_uid(), self.fw_two.get_uid()))
+        assert comp_id == '{};{}'.format(self.root_fo_1.get_uid(), self.root_fo_2.get_uid())
 
-    def test_calculate_compare_result_id__incomplete_entries(self):
+    def test_calculate_compare_result_id_incomple(self):
         compare_dict = {'general': {'stat_1': {'a': None}, 'stat_2': {'b': None}}}
         comp_id = self.db_interface_compare._calculate_compare_result_id(compare_dict)
-        self.assertEqual('a;b', comp_id)
+        assert comp_id == 'a;b'
 
     def test_object_existence_quick_check(self):
-        self.db_interface_backend.add_firmware(self.fw_one)
-        self.assertIsNone(self.db_interface_compare.object_existence_quick_check(self.fw_one.get_uid()), 'existing_object not found')
-        self.assertEqual(
-            self.db_interface_compare.object_existence_quick_check('{};none_existing_object'.format(self.fw_one.get_uid())),
-            'none_existing_object not found in database',
-            'error message not correct'
-        )
+        self.db_interface_backend.add_file_object(self.root_fo_1)
+        assert self.db_interface_compare.object_existence_quick_check(self.root_fo_1.get_uid()) is None, 'existing_object not found'
+        result = self.db_interface_compare.object_existence_quick_check('{};none_existing_object'.format(self.root_fo_1.get_uid()))
+        assert result == 'none_existing_object not found in database', 'error message not correct'
 
     def test_get_compare_result_of_none_existing_uid(self):
-        self.db_interface_backend.add_firmware(self.fw_one)
-        result = self.db_interface_compare.get_compare_result('{};none_existing_uid'.format(self.fw_one.get_uid()))
-        self.assertEqual(result, 'none_existing_uid not found in database', 'no result not found error')
+        self.db_interface_backend.add_file_object(self.root_fo_1)
+        result = self.db_interface_compare.get_compare_result('{};none_existing_uid'.format(self.root_fo_1.get_uid()))
+        assert result == 'none_existing_uid not found in database', 'no result not found error'
 
     def test_get_latest_comparisons(self):
-        self.db_interface_backend.add_firmware(self.fw_one)
-        self.db_interface_backend.add_firmware(self.fw_two)
+        self.db_interface_backend.add_file_object(self.root_fo_1)
+        self.db_interface_backend.add_file_object(self.root_fo_2)
         before = time()
         self.db_interface_compare.add_compare_result(self.compare_dict)
         result = self.db_interface_compare.page_compare_results(limit=10)
         for id_, hids, submission_date in result:
-            self.assertIn(self.fw_one.get_uid(), hids)
-            self.assertIn(self.fw_two.get_uid(), hids)
-            self.assertIn(self.fw_one.get_uid(), id_)
-            self.assertIn(self.fw_two.get_uid(), id_)
-            self.assertTrue(before <= submission_date <= time())
+            assert self.root_fo_1.get_uid() in hids
+            assert self.root_fo_2.get_uid() in hids
+            assert self.root_fo_1.get_uid() in id_
+            assert self.root_fo_2.get_uid() in id_
+            assert before <= submission_date <= time()
 
     def test_get_latest_comparisons_removed_firmware(self):
         self.db_interface_backend.add_firmware(self.fw_one)
         self.db_interface_backend.add_firmware(self.fw_two)
+        self.db_interface_backend.add_file_object(self.root_fo_1)
+        self.db_interface_backend.add_file_object(self.root_fo_2)
         self.db_interface_compare.add_compare_result(self.compare_dict)
         result = self.db_interface_compare.page_compare_results(limit=10)
-        self.assertNotEqual(result, [], 'A compare result should be available')
+        assert result != [], 'A compare result should be available'
 
         self.db_interface_admin.delete_firmware(self.fw_two.firmware_id)
         result = self.db_interface_compare.page_compare_results(limit=10)
-        self.assertEqual(result, [], 'No compare result should be available')
+        assert result == [], 'No compare result should be available'
 
     def test_get_total_number_of_results(self):
-        self.db_interface_backend.add_firmware(self.fw_one)
-        self.db_interface_backend.add_firmware(self.fw_two)
+        self.db_interface_backend.add_file_object(self.root_fo_1)
+        self.db_interface_backend.add_file_object(self.root_fo_2)
         self.db_interface_compare.add_compare_result(self.compare_dict)
 
         number = self.db_interface_compare.get_total_number_of_results()
-        self.assertEqual(number, 1, 'no compare result found in database')
+        assert number == 1, 'no compare result found in database'
+
+    def test_compare_result_is_in_db(self):
+        assert not self.db_interface_compare.compare_result_is_in_db(self.compare_id)
+        self.db_interface_compare.add_compare_result(self.compare_dict)
+        self.db_interface_backend.add_file_object(self.root_fo_1)
+        self.db_interface_backend.add_file_object(self.root_fo_2)
+        assert self.db_interface_compare.compare_result_is_in_db(self.compare_id)
