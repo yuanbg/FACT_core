@@ -10,8 +10,7 @@ import gridfs
 import pymongo
 from common_helper_files import get_safe_name
 from common_helper_mongo.aggregate import (
-    get_list_of_all_values,
-    get_list_of_all_values_and_collect_information_of_additional_field
+    get_list_of_all_values, get_list_of_all_values_and_collect_information_of_additional_field
 )
 
 from helperFunctions.data_conversion import convert_time_to_str, get_dict_size, convert_str_to_time
@@ -25,8 +24,8 @@ class MongoInterfaceCommon(MongoInterface):
     def _setup_database_mapping(self):
         main_database = self.config['data_storage']['main_database']
         self.main = self.client[main_database]
-        self.file_objects = self.main.file_objects  # type:  pymongo.collection.Collection
-        self.firmware_metadata = self.main.firmware_metadata  # type:  pymongo.collection.Collection
+        self.file_objects = self.main.file_objects  # type: pymongo.collection.Collection
+        self.firmware_metadata = self.main.firmware_metadata  # type: pymongo.collection.Collection
         self.locks = self.main.locks
         # sanitize stuff
         self.report_threshold = int(self.config['data_storage']['report_threshold'])
@@ -44,6 +43,10 @@ class MongoInterfaceCommon(MongoInterface):
 
     def is_file_object(self, uid: str) -> bool:
         return self.file_objects.count_documents({'_id': uid}) > 0
+
+    @staticmethod
+    def is_firmware_id(id_: str) -> bool:
+        return id_.startswith('F_') and len(id_) == 34
 
     def update_firmware_metadata(self, firmware: Firmware):
         update_dictionary = self.build_firmware_metadata_dict(firmware)

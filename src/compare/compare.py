@@ -1,19 +1,21 @@
 import logging
-from contextlib import suppress
+from typing import List, Optional
 
 from helperFunctions.plugin import import_plugins
+from objects.file import FileObject
 from objects.firmware import Firmware
 from storage.binary_service import BinaryService
+from storage.db_interface_compare import CompareDbInterface
 
 
-class Compare(object):
+class Compare:
     '''
     This Module compares firmware images
     '''
 
     compare_plugins = {}
 
-    def __init__(self, config=None, db_interface=None):
+    def __init__(self, config=None, db_interface: CompareDbInterface = None):
         '''
         Constructor
         '''
@@ -22,52 +24,49 @@ class Compare(object):
         self._setup_plugins()
         logging.info('Plug-ins available: {}'.format(list(self.compare_plugins.keys())))
 
-    def compare(self, uid_list):
-        logging.info('Compare in progress: {}'.format(uid_list))
+    def compare(self, id_list):
+        logging.info('Compare in progress: {}'.format(id_list))
         bs = BinaryService(config=self.config)
 
-        fo_list = []
-        for uid in uid_list:
+        fo_list, fw_list = [], []
+        for id_ in id_list:
             try:
+                if self.db_interface.is_firmware_id(id_):
+                    fw = self.db_interface.get_firmware(id_)
+                    uid = fw.uid
+                else:
+                    fw = None
+                    uid = id_
                 fo = self.db_interface.get_complete_object_including_all_summaries(uid)
                 fo.binary = bs.get_binary_and_file_name(fo.uid)[0]
                 fo_list.append(fo)
+                fw_list.append(fw)
             except Exception as exception:
                 return exception
 
-        return self.compare_objects(fo_list)
+        return self.compare_objects(fo_list, fw_list)
 
-    def compare_objects(self, fo_list):
-        tmp = {}
-        tmp['general'] = self._create_general_section_dict(fo_list)
-        tmp['plugins'] = self._execute_compare_plugins(fo_list)
-        return tmp
-
-    def _create_general_section_dict(self, object_list):
-        general = {}
-        for fo in object_list:
-            if isinstance(fo, Firmware):
-                fo.root_uid = fo.get_uid()
-                self._add_content_to_general_dict(general, 'device_name', fo.get_uid(), fo.device_name)
-                self._add_content_to_general_dict(general, 'device_part', fo.get_uid(), fo.part)
-                self._add_content_to_general_dict(general, 'device_class', fo.get_uid(), fo.device_class)
-                self._add_content_to_general_dict(general, 'vendor', fo.get_uid(), fo.vendor)
-                self._add_content_to_general_dict(general, 'version', fo.get_uid(), fo.version)
-                self._add_content_to_general_dict(general, 'release_date', fo.get_uid(), fo.release_date)
-            else:
-                self._add_content_to_general_dict(general, 'firmwares_including_this_file', fo.get_uid(), list(fo.get_virtual_file_paths().keys()))
-            self._add_content_to_general_dict(general, 'hid', fo.get_uid(), fo.get_hid())
-            self._add_content_to_general_dict(general, 'size', fo.get_uid(), fo.size)
-            self._add_content_to_general_dict(general, 'virtual_file_path', fo.get_uid(), fo.get_virtual_paths_for_one_uid())
-            self._add_content_to_general_dict(general, 'number_of_files', fo.get_uid(), len(fo.list_of_all_included_files))
-        return general
+    def compare_objects(self, fo_list: List[FileObject], fw_list: List[Optional[Firmware]]) -> dict:
+        return {
+            'general': self._create_general_section_dict(fo_list, fw_list),
+            'plugins': self._execute_compare_plugins(fo_list)
+        }
 
     @staticmethod
-    def _add_content_to_general_dict(general_dict, feature, uid, content):
-        with suppress(Exception):
-            if feature not in general_dict:
-                general_dict[feature] = {}
-            general_dict[feature][uid] = content
+    def _create_general_section_dict(fo_list: List[FileObject], fw_list: List[Optional[Firmware]]) -> dict:
+        general = {}
+        for fo, fw in zip(fo_list, fw_list):
+            if fw:
+                fo.root_uid = fw.uid
+                for attribute in ['device_name', 'device_part', 'device_class', 'vendor', 'version', 'release_date']:
+                    general.setdefault(attribute, {})[fw.uid] = getattr(fw, attribute)
+            else:
+                general.setdefault('firmwares_including_this_file', {})[fo.get_uid()] = list(fo.get_virtual_file_paths())
+            general.setdefault('hid', {})[fo.get_uid()] = fo.get_hid()
+            general.setdefault('size', {})[fo.get_uid()] = fo.size
+            general.setdefault('virtual_file_path', {})[fo.get_uid()] = fo.get_virtual_paths_for_one_uid()
+            general.setdefault('number_of_files', {})[fo.get_uid()] = len(fo.list_of_all_included_files)
+        return general
 
 # --- plug-in system ---
 

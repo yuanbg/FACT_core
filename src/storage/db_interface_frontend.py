@@ -34,7 +34,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
                 tags[unpacker] = TagColor.LIGHT_BLUE
                 submission_date = fo_entry.get('submission_date', 0)
                 id_ = fo_entry['_id']
-                if self._is_firmware_id(id_):
+                if self.is_firmware_id(id_):
                     hid = self._create_firmware_hid_from_entry(fo_entry)
                 else:
                     hid = self._get_hid_fo(id_)
@@ -53,7 +53,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
         returns a human readable identifier (hid) for a given uid
         returns an empty string if uid is not in Database
         '''
-        if self._is_firmware_id(uid):
+        if self.is_firmware_id(uid):
             hid = self._get_hid_firmware(uid)
         else:
             hid = self._get_hid_fo(uid, root_uid)
@@ -270,7 +270,3 @@ class FrontEndDbInterface(MongoInterfaceCommon):
     def rest_get_object_uids(self, offset, limit, query):
         uid_cursor = self.file_objects.find(query, {'_id': 1}).skip(offset).limit(limit)
         return [result['_id'] for result in uid_cursor]
-
-    @staticmethod
-    def _is_firmware_id(id_: str) -> bool:
-        return id_.startswith('F_') and len(id_) == 34

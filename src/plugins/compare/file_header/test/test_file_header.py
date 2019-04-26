@@ -1,17 +1,17 @@
 from flask import Markup
 
-from test.unit.compare.compare_plugin_test_class import ComparePluginTest  # pylint: disable=wrong-import-order
+from test.unit.compare.compare_plugin_test_class import TestComparePlugin  # pylint: disable=wrong-import-order
 from ..code.file_header import ComparePlugin
 
 
-class TestComparePluginFileHeader(ComparePluginTest):
+class TestComparePluginFileHeader(TestComparePlugin):
     PLUGIN_NAME = 'File_Header'
 
     def setup_plugin(self):
         return ComparePlugin(self, config=self.config, plugin_path=None)
 
     def test_compare(self):
-        result = self.c_plugin.compare_function([self.fw_one, self.fw_two, self.fw_three])
+        result = self.c_plugin.compare_function([self.root_fo_one, self.root_fo_two, self.root_fo_three])
 
         assert all(key in result for key in ['hexdiff', 'ascii', 'offsets']), 'not all result keys given'
         assert all(isinstance(result[key], Markup) for key in ['hexdiff', 'ascii', 'offsets']), 'partial results should be flask.Markup strings'

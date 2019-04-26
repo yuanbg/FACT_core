@@ -1,6 +1,5 @@
+# pylint: disable=unused-argument,no-self-use,protected-access,wrong-import-order,attribute-defined-outside-init
 import gc
-import unittest
-
 import pytest
 
 from compare.PluginBase import CompareBasePlugin
@@ -15,64 +14,65 @@ def no_compare_views(monkeypatch):
     monkeypatch.setattr(CompareBasePlugin, '_sync_view', value=lambda s, p: None)
 
 
-class MockDbInterface(object):
+class MockDbInterface:
 
     def __init__(self):
-        self.fw = create_test_firmware()
+        self.fw, self.root_fo = create_test_firmware()
         self.fo = create_test_file_object()
         self.fo.processed_analysis['file_hashes'] = {'ssdeep': get_ssdeep(self.fo.binary)}
-        self.fw.add_included_file(self.fo)
-        self.fw.processed_analysis['file_hashes'] = {'ssdeep': get_ssdeep(self.fw.binary)}
+        self.root_fo.add_included_file(self.fo)
+        self.root_fo.processed_analysis['file_hashes'] = {'ssdeep': get_ssdeep(self.root_fo.binary)}
 
     def get_object(self, uid, analysis_filter=None):
-        if uid == self.fw.get_uid():
+        if uid == self.fw.uid:
             return self.fw
-        elif uid == 'error':
+        if uid == 'error':
             return None
-        else:
-            return self.fo
+        return self.fo
 
     def get_ssdeep_hash(self, uid):
         return ''
 
 
-class TestCompare(unittest.TestCase):
+class TestCompare:
 
-    def setUp(self):
+    def setup_method(self):
         self.config = get_config_for_testing()
-        self.fw_one = create_test_firmware(device_name='dev_1', all_files_included_set=True)
-        self.fw_one.processed_analysis['file_hashes'] = {'ssdeep': get_ssdeep(self.fw_one.binary)}
-        self.fw_two = create_test_firmware(device_name='dev_2', bin_path='container/test.7z', all_files_included_set=True)
-        self.fw_two.processed_analysis['file_hashes'] = {'ssdeep': get_ssdeep(self.fw_two.binary)}
+        self.fw_one, self.root_fo_one = create_test_firmware(device_name='dev_1', all_files_included_set=True)
+        self.root_fo_one.processed_analysis['file_hashes'] = {'ssdeep': get_ssdeep(self.root_fo_one.binary)}
+        self.fw_two, self.root_fo_two = create_test_firmware(device_name='dev_2', bin_path='container/test.7z', all_files_included_set=True)
+        self.root_fo_two.processed_analysis['file_hashes'] = {'ssdeep': get_ssdeep(self.root_fo_two.binary)}
         self.compare_system = Compare(db_interface=MockDbInterface(), config=self.config)
 
-    def tearDown(self):
+    def teardown_method(self):
         gc.collect()
 
     def test_compare_objects(self):
-        result = self.compare_system.compare_objects([self.fw_one, self.fw_two])
-        self.assertIsInstance(result, dict, 'Result is not a dict')
-        self.assertIn('general', result, 'general part is missing')
-        self.assertIsInstance(result['general'], dict, 'general part is not a dict')
-        self.assertIn('plugins', result, 'plugin part is missing')
-        self.assertIsInstance(result['plugins'], dict, 'plugins part is not a dict')
+        result = self.compare_system.compare_objects(
+            [self.root_fo_one, self.root_fo_two], [self.fw_one, self.fw_two])
+        assert isinstance(result, dict), 'Result is not a dict'
+        assert 'general' in result, 'general part is missing'
+        assert isinstance(result['general'], dict), 'general part is not a dict'
+        assert 'plugins' in result, 'plugin part is missing'
+        assert isinstance(result['plugins'], dict), 'plugins part is not a dict'
 
     def test_compare_error_none_existing_fo(self):
         result = self.compare_system.compare(['error'])
-        self.assertIsInstance(result, Exception, 'result has wrong type')
+        assert isinstance(result, Exception), 'result has wrong type'
 
     def test_create_general_section_dict(self):
-        result = self.compare_system._create_general_section_dict([self.fw_one, self.fw_two])
-        self.assertIsInstance(result, dict, 'result is not a dict')
-        self.assertEqual(result['device_name'][self.fw_one.get_uid()], 'dev_1')
-        self.assertEqual(result['device_name'][self.fw_two.get_uid()], 'dev_2')
-        self.assertEqual(result['device_class'][self.fw_one.get_uid()], 'Router')
-        self.assertEqual(result['vendor'][self.fw_one.get_uid()], 'test_vendor')
-        self.assertEqual(result['version'][self.fw_one.get_uid()], '0.1')
-        self.assertEqual(result['release_date'][self.fw_one.get_uid()], '1970-01-01')
-        self.assertEqual(result['size'][self.fw_one.get_uid()], len(self.fw_one.binary))
-        self.assertEqual(result['virtual_file_path'][self.fw_one.get_uid()], [self.fw_one.get_uid()])
+        result = self.compare_system._create_general_section_dict(
+            [self.root_fo_one, self.root_fo_two], [self.fw_one, self.fw_two])
+        assert isinstance(result, dict), 'result is not a dict'
+        assert result['device_name'][self.fw_one.uid] == 'dev_1'
+        assert result['device_name'][self.fw_two.uid] == 'dev_2'
+        assert result['device_class'][self.fw_one.uid] == 'Router'
+        assert result['vendor'][self.fw_one.uid] == 'test_vendor'
+        assert result['version'][self.fw_one.uid] == '0.1'
+        assert result['release_date'][self.fw_one.uid] == '1970-01-01'
+        assert result['size'][self.fw_one.uid] == len(self.root_fo_one.binary)
+        assert result['virtual_file_path'][self.fw_one.uid] == [self.fw_one.uid]
 
     def test_plugin_system(self):
-        self.assertGreater(len(self.compare_system.compare_plugins), 0, 'no compare plugin found')
-        self.assertIn('File_Coverage', self.compare_system.compare_plugins, 'File Coverage module not found')
+        assert len(self.compare_system.compare_plugins) > 0, 'no compare plugin found'
+        assert 'File_Coverage' in self.compare_system.compare_plugins, 'File Coverage module not found'
