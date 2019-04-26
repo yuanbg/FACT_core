@@ -46,7 +46,7 @@ class CompareDbInterface(MongoInterfaceCommon):
     def check_objects_exist(self, compare_id):
         uids = convert_compare_id_to_list(compare_id)
         for uid in uids:
-            if not self.existence_quick_check(uid):
+            if not self.object_exists(uid):
                 raise FactCompareException('{} not found in database'.format(uid))
 
     def compare_result_is_in_db(self, compare_id):
