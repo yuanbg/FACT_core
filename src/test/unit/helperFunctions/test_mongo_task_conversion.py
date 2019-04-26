@@ -4,9 +4,9 @@ from pathlib import Path
 import pytest
 
 from helperFunctions.mongo_task_conversion import (
-    _get_tag_list, check_for_errors, convert_analysis_task_to_fo, get_uid_of_analysis_task, get_uploaded_file_binary,
-    is_sanitized_entry,
-    convert_analysis_task_to_fw)
+    _get_tag_list, check_for_errors, convert_analysis_task_to_fo, convert_analysis_task_to_fw, get_uid_of_analysis_task,
+    get_uploaded_file_binary, is_sanitized_entry,
+)
 from objects.file import FileObject
 from objects.firmware import Firmware
 

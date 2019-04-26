@@ -1,6 +1,5 @@
 import logging
 import re
-import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional
@@ -143,5 +142,5 @@ def is_sanitized_entry(entry):
     except TypeError:  # DB entry has type other than string (e.g. integer or float)
         return False
     except Exception as exception:
-        logging.error('Could not determine entry sanitization state: {} {}'.format(sys.exc_info()[0].__name__, exception))
+        logging.error('Could not determine entry sanitization state: {} {}'.format(type(exception).__name__, exception))
         return False
