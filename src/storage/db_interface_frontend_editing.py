@@ -1,4 +1,5 @@
 from storage.db_interface_common import MongoInterfaceCommon
+from pymongo.collection import Collection
 
 
 class FrontendEditingDbInterface(MongoInterfaceCommon):
@@ -11,16 +12,21 @@ class FrontendEditingDbInterface(MongoInterfaceCommon):
         )
 
     def add_element_to_array_in_field(self, uid, field, element):
-        self.file_objects.update_one(
+        self._get_collection(uid).update_one(
             {'$or': [{'uid': uid}, {'_id': uid}]},
             {'$push': {field: element}}
         )
 
+    def delete_comment(self, uid, timestamp):
+        self.remove_element_from_array_in_field(uid, 'comments', {'time': timestamp})
+
     def remove_element_from_array_in_field(self, uid, field, condition):
-        self.file_objects.update_one(
+        self._get_collection(uid).update_one(
             {'$or': [{'uid': uid}, {'_id': uid}]},
             {'$pull': {field: condition}}
         )
 
-    def delete_comment(self, uid, timestamp):
-        self.remove_element_from_array_in_field(uid, 'comments', {'time': timestamp})
+    def _get_collection(self, id_: str) -> Collection:
+        if self.is_firmware_id(id_):
+            return self.firmware_metadata
+        return self.file_objects

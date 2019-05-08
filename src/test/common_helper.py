@@ -3,6 +3,7 @@ import json
 import os
 from base64 import standard_b64encode
 from copy import deepcopy
+from typing import Tuple
 
 from helperFunctions.data_conversion import normalize_compare_id
 from helperFunctions.fileSystem import get_test_data_dir
@@ -23,8 +24,9 @@ class CommonDbInterfaceMock(MongoInterfaceCommon):
         return {}
 
 
-def create_test_firmware(device_class='Router', device_name='test_router', vendor='test_vendor',
-                         bin_path='container/test.zip', all_files_included_set=False, version='0.1'):
+def create_test_firmware(
+        device_class='Router', device_name='test_router', vendor='test_vendor', bin_path='container/test.zip',
+        all_files_included_set=False, version='0.1') -> Tuple[Firmware, FileObject]:
     root_fo = FileObject(file_path=os.path.join(get_test_data_dir(), bin_path), is_root=True)
     fw = Firmware(device_name=device_name, device_class=device_class, vendor=vendor, version=version,
                   release_date='1970-01-01', uid=root_fo.get_uid())

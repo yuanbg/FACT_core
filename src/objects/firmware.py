@@ -21,6 +21,7 @@ class Firmware:  # pylint: disable=too-many-instance-attributes,too-many-argumen
         self.tags = {}
         self.analysis_tags = {}
         self.uid = uid
+        self.comments = []
         self._firmware_id = firmware_id
         self._hid = None
 

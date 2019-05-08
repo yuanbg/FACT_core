@@ -1,12 +1,17 @@
 import json
 import os
 import re
+from typing import TypeVar, Union, Type
 
 from common_helper_files import get_binary_from_file
 
 from helperFunctions.fileSystem import get_template_dir
 from passlib.context import CryptContext
 
+from intercom.front_end_binding import InterComFrontEndBinding
+from storage.db_interface_common import MongoInterfaceCommon
+from storage.db_interface_frontend import FrontEndDbInterface
+from storage.db_interface_frontend_editing import FrontendEditingDbInterface
 
 SPECIAL_CHARACTERS = 'ÄäÀàÁáÂâÃãÅåǍǎĄąĂăÆæĀāÇçĆćĈĉČčĎđĐďðÈèÉéÊêËëĚěĘęĖėĒēĜĝĢģĞğĤĥÌìÍíÎîÏïıĪīĮįĴĵĶķĹĺĻļŁłĽľÑñŃńŇňŅņÖöÒòÓóÔôÕõŐőØøŒœŔŕŘřẞßŚśŜŝŞşŠšȘș' \
                      'ŤťŢţÞþȚțÜüÙùÚúÛûŰűŨũŲųŮůŪūŴŵÝýŸÿŶŷŹźŽžŻż'
@@ -50,11 +55,13 @@ def filter_out_illegal_characters(string):
 
 
 class ConnectTo:
-    def __init__(self, connected_interface, config):
+    Interface = TypeVar('Interface')
+
+    def __init__(self, connected_interface: Type[Interface], config):
         self.interface = connected_interface
         self.config = config
 
-    def __enter__(self):
+    def __enter__(self) -> Interface:
         self.connection = self.interface(self.config)
         return self.connection
 
