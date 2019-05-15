@@ -311,9 +311,9 @@ class MongoInterfaceCommon(MongoInterface):
             list_of_all_included_files = get_list_of_all_values(
                 self.file_objects, '$_id', match={'virtual_file_path.{}'.format(fo.get_uid()): {'$exists': 'true'}})
         if list_of_all_included_files is None:
-            fo.list_of_all_included_files = list(self.get_set_of_all_included_files(fo))
-        fo.list_of_all_included_files.sort()
-        return fo.list_of_all_included_files
+            list_of_all_included_files = list(self.get_set_of_all_included_files(fo))
+        list_of_all_included_files.sort()
+        return list_of_all_included_files
 
     def get_set_of_all_included_files(self, fo: FileObject):
         '''
