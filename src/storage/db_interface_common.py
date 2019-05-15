@@ -75,6 +75,7 @@ class MongoInterfaceCommon(MongoInterface):
         entry = {
             '_id': firmware.firmware_id,
             'analysis_tags': firmware.analysis_tags,
+            'comments': firmware.comments,
             'device_class': firmware.device_class,
             'device_name': firmware.device_name,
             'device_part': firmware.device_part,

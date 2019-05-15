@@ -179,7 +179,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
 
     def get_latest_comments(self, limit=10):
         comments = []
-        for collection in [self.file_objects]:
+        for collection in [self.file_objects, self.firmware_metadata]:
             db_entries = collection.aggregate([
                 {'$match': {'comments': {'$not': {'$size': 0}}}},
                 {'$project': {'_id': 1, 'comments': 1}},
