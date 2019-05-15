@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Union, List
+from typing import Union
 
 from pymongo.errors import PyMongoError
 

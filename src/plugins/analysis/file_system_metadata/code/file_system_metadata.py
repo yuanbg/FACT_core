@@ -213,8 +213,8 @@ class FsMetadataDbInterface(MongoInterfaceCommon):
         for parent_uid in self.get_parent_uids_from_virtual_path(file_object):
             if self.object_exists(parent_uid):
                 parent_fo = self.get_object(parent_uid)
-                if 'file_type' in parent_fo.processed_analysis and \
-                        parent_fo.processed_analysis['file_type']['mime'] in self.RELEVANT_FILE_TYPES:
+                if ('file_type' in parent_fo.processed_analysis
+                        and parent_fo.processed_analysis['file_type']['mime'] in self.RELEVANT_FILE_TYPES):
                     return True
         return False
 

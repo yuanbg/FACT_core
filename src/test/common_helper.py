@@ -54,8 +54,9 @@ def create_test_file_object(bin_path='get_files_test/testfile1'):
     return fo
 
 
-TEST_FW = create_test_firmware(device_class='test class', device_name='test device', vendor='test vendor')
-TEST_FW_2 = create_test_firmware(device_class='test_class', device_name='test_firmware_2', vendor='test vendor', bin_path='container/test.7z')
+TEST_FW, TEST_ROOT_FO = create_test_firmware(device_class='test class', device_name='test device', vendor='test vendor')
+TEST_FW_2, TEST_ROOT_FO_2 = create_test_firmware(
+    device_class='test_class', device_name='test_firmware_2', vendor='test vendor', bin_path='container/test.7z')
 TEST_TEXT_FILE = create_test_file_object()
 
 
@@ -68,10 +69,10 @@ class MockFileObject:
 
 
 class DatabaseMock:  # pylint: disable=too-many-public-methods
-    # FIXME
-    # fw_uid = TEST_FW.get_uid()
-    # fo_uid = TEST_TEXT_FILE.get_uid()
-    # fw2_uid = TEST_FW_2.get_uid()
+    # FIXME  (probably?)
+    fw_uid = TEST_FW.uid
+    fo_uid = TEST_TEXT_FILE.get_uid()
+    fw2_uid = TEST_FW_2.uid
 
     def __init__(self, config=None):
         self.tasks = []
@@ -104,8 +105,8 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
         return result
 
     def get_object(self, uid, analysis_filter=None):
-        if uid == TEST_FW.get_uid():
-            result = deepcopy(TEST_FW)
+        if uid == TEST_ROOT_FO.get_uid():
+            result = deepcopy(TEST_ROOT_FO)
             result.processed_analysis = {
                 'file_type': {'mime': 'application/octet-stream', 'full': 'test text'},
                 'mandatory_plugin': 'mandatory result',
@@ -119,7 +120,7 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
             }
             return result
         if uid == self.fw2_uid:
-            result = deepcopy(TEST_FW_2)
+            result = deepcopy(TEST_ROOT_FO_2)
             result.processed_analysis = {
                 'file_type': {'mime': 'filesystem/cramfs', 'full': 'test text'},
                 'mandatory_plugin': 'mandatory result',

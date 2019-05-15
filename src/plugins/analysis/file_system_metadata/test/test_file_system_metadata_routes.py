@@ -1,3 +1,4 @@
+# pylint: disable=no-self-use,no-member,wrong-import-order
 from base64 import b64encode
 
 from flask import Flask
@@ -16,20 +17,21 @@ from ..code.file_system_metadata import AnalysisPlugin
 class DbInterfaceMock:
     def __init__(self, config):
         self.config = config
-        self.fw = create_test_firmware()
-        self.fw.processed_analysis[AnalysisPlugin.NAME] = {'files': {b64_encode('some_file'): {'test_result': 'test_value'}}}
+        self.fw, self.root_fo = create_test_firmware()
+        self.root_fo.processed_analysis[AnalysisPlugin.NAME] = {'files': {b64_encode('some_file'): {'test_result': 'test_value'}}}
         self.fo = create_test_file_object()
-        self.fo.virtual_file_path['some_uid'] = ['some_uid|{}|/{}'.format(self.fw.get_uid(), 'some_file')]
+        self.fo.virtual_file_path['some_uid'] = ['some_uid|{}|/{}'.format(self.root_fo.get_uid(), 'some_file')]
 
     def get_object(self, uid):
-        if uid == self.fw.get_uid():
-            return self.fw
+        if uid == self.root_fo.get_uid():
+            return self.root_fo
         if uid == 'foo':
             return self.fo
         if uid == 'bar':
             fo = create_test_file_object()
             fo.virtual_file_path = {'some_uid': ['a|b|c']}
             return fo
+        return None
 
     def shutdown(self):
         pass
@@ -42,16 +44,16 @@ class TestFileSystemMetadataRoutesStatic(TestCase):
         routes.FsMetadataDbInterface.__bases__ = (DbInterfaceMock,)
 
     def test_get_results_from_parent_fos(self):
-        fw = create_test_firmware()
+        _, root_fo = create_test_firmware()
         fo = create_test_file_object()
         file_name = 'folder/file'
         encoded_name = b64_encode(file_name)
 
-        fw.processed_analysis[AnalysisPlugin.NAME] = {'files': {encoded_name: {'result': 'value'}}}
-        fo.virtual_file_path['some_uid'] = ['some_uid|{}|/{}'.format(fw.get_uid(), file_name)]
+        root_fo.processed_analysis[AnalysisPlugin.NAME] = {'files': {encoded_name: {'result': 'value'}}}
+        fo.virtual_file_path['some_uid'] = ['some_uid|{}|/{}'.format(root_fo.get_uid(), file_name)]
 
         results = {}
-        routes.FsMetadataRoutesDbInterface.get_results_from_parent_fos(fw, fo, results)
+        routes.FsMetadataRoutesDbInterface.get_results_from_parent_fos(root_fo, fo, results)
 
         assert results != {}, 'result should not be empty'
         assert file_name in results, 'files missing from result'
@@ -60,18 +62,18 @@ class TestFileSystemMetadataRoutesStatic(TestCase):
         assert results[file_name]['result'] == 'value', 'wrong value of analysis result'
 
     def test_get_results_from_parent_fos__multiple_vfps_in_one_fw(self):
-        fw = create_test_firmware()
+        _, root_fo = create_test_firmware()
         fo = create_test_file_object()
         file_names = ['file_a', 'file_b', 'file_c']
 
-        fw.processed_analysis[AnalysisPlugin.NAME] = {'files': {b64_encode(f): {'result': 'value'} for f in file_names}}
+        root_fo.processed_analysis[AnalysisPlugin.NAME] = {'files': {b64_encode(f): {'result': 'value'} for f in file_names}}
 
         vfp = fo.virtual_file_path['some_uid'] = []
-        for f in file_names:
-            vfp.append('some_uid|{}|/{}'.format(fw.get_uid(), f))
+        for file_name in file_names:
+            vfp.append('some_uid|{}|/{}'.format(root_fo.get_uid(), file_name))
 
         results = {}
-        routes.FsMetadataRoutesDbInterface.get_results_from_parent_fos(fw, fo, results)
+        routes.FsMetadataRoutesDbInterface.get_results_from_parent_fos(root_fo, fo, results)
 
         assert results is not None
         assert results != {}, 'result should not be empty'
