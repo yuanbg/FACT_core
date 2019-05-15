@@ -15,7 +15,7 @@ from helperFunctions.statistic import calculate_total_files
 from storage.db_interface_statistic import StatisticDbUpdater
 
 
-class StatisticUpdater(object):
+class StatisticUpdater:
     '''
     This class handles statistic generation
     '''
@@ -234,8 +234,10 @@ class StatisticUpdater(object):
     def _get_unpacking_stats(self):
         stats = {}
         stats['used_unpackers'] = self._get_objects_and_count_of_occurrence_firmware_and_file_db('$processed_analysis.unpacker.plugin_used')
-        stats['packed_file_types'] = self._get_objects_and_count_of_occurrence_single_db(self.db.file_objects, '$processed_analysis.file_type.mime', match={'processed_analysis.unpacker.summary': 'packed'})
-        stats['data_loss_file_types'] = self._get_objects_and_count_of_occurrence_firmware_and_file_db('$processed_analysis.file_type.mime', match={'processed_analysis.unpacker.summary': 'data lost'})
+        stats['packed_file_types'] = self._get_objects_and_count_of_occurrence_single_db(
+            self.db.file_objects, '$processed_analysis.file_type.mime', match={'processed_analysis.unpacker.summary': 'packed'})
+        stats['data_loss_file_types'] = self._get_objects_and_count_of_occurrence_firmware_and_file_db(
+            '$processed_analysis.file_type.mime', match={'processed_analysis.unpacker.summary': 'data lost'})
         fo_packing_stats = dict(self._get_objects_and_count_of_occurrence_single_db(self.db.file_objects, '$processed_analysis.unpacker.summary', unwind=True))
         firmware_packing_stats = dict(self._get_objects_and_count_of_occurrence_single_db(self.db.file_objects, '$processed_analysis.unpacker.summary', unwind=True))
         stats['overall_unpack_ratio'] = self._get_ratio(fo_packing_stats, firmware_packing_stats, ['unpacked', 'packed'])
@@ -345,7 +347,6 @@ class StatisticUpdater(object):
             for entry in query_result
             if entry['_id'] not in ['summary', 'analysis_date', 'file_system_flag', 'plugin_version', 'tags', 'skipped', 'system_version']
         ]}
-
 
 # ---- internal stuff
 

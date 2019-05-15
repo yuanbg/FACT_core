@@ -307,10 +307,11 @@ class MongoInterfaceCommon(MongoInterface):
     # --- summary recreation
 
     def get_list_of_all_included_files(self, fo: FileObject):
+        list_of_all_included_files = None
         if fo.is_root:  # FIXME in unpacker?; TODO check what happens if a root_fo is inside another fo
-            fo.list_of_all_included_files = get_list_of_all_values(
+            list_of_all_included_files = get_list_of_all_values(
                 self.file_objects, '$_id', match={'virtual_file_path.{}'.format(fo.get_uid()): {'$exists': 'true'}})
-        if fo.list_of_all_included_files is None:
+        if list_of_all_included_files is None:
             fo.list_of_all_included_files = list(self.get_set_of_all_included_files(fo))
         fo.list_of_all_included_files.sort()
         return fo.list_of_all_included_files

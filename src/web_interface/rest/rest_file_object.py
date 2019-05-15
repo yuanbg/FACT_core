@@ -1,8 +1,9 @@
 from flask_restful import Resource, request
 
-from helperFunctions.object_conversion import create_meta_dict
+from helperFunctions.object_conversion import create_fo_meta_dict
 from helperFunctions.rest import get_paging, get_query, success_message, error_message
 from helperFunctions.web_interface import ConnectTo
+from objects.file import FileObject
 from storage.db_interface_frontend import FrontEndDbInterface
 from web_interface.security.decorator import roles_accepted
 from web_interface.security.privileges import PRIVILEGES
@@ -44,7 +45,7 @@ class RestFileObject(Resource):
             return success_message(dict(file_object=fitted_file_object), self.URL, request_data=dict(uid=uid))
 
     @staticmethod
-    def _fit_file_object(file_object):
-        meta = create_meta_dict(file_object)
+    def _fit_file_object(file_object: FileObject) -> dict:
+        meta = create_fo_meta_dict(file_object)
         analysis = file_object.processed_analysis
         return dict(meta_data=meta, analysis=analysis)

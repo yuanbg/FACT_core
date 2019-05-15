@@ -5,8 +5,11 @@ from flask import request
 from flask_restful import Resource
 
 from helperFunctions.mongo_task_conversion import convert_analysis_task_to_fo
-from helperFunctions.object_conversion import create_meta_dict
-from helperFunctions.rest import get_paging, get_query, success_message, error_message, convert_rest_request, get_update, get_recursive, get_summary_flag
+from helperFunctions.object_conversion import create_fw_meta_dict
+from helperFunctions.rest import (
+    convert_rest_request, error_message, get_paging, get_query, get_recursive, get_summary_flag, get_update,
+    success_message,
+)
 from helperFunctions.web_interface import ConnectTo
 from intercom.front_end_binding import InterComFrontEndBinding
 from objects.firmware import Firmware
@@ -101,8 +104,8 @@ class RestFirmware(Resource):
         return dict(uid=firmware_object.get_uid())
 
     @staticmethod
-    def _fit_firmware(firmware):
-        meta = create_meta_dict(firmware)
+    def _fit_firmware(firmware: Firmware):
+        meta = create_fw_meta_dict(firmware)
         analysis = firmware.processed_analysis
         return dict(meta_data=meta, analysis=analysis)
 
