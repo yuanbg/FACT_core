@@ -9,9 +9,7 @@ from typing import Optional, Set, List
 import gridfs
 import pymongo
 from common_helper_files import get_safe_name
-from common_helper_mongo.aggregate import (
-    get_list_of_all_values, get_list_of_all_values_and_collect_information_of_additional_field
-)
+from common_helper_mongo.aggregate import get_list_of_all_values, get_all_value_combinations_of_fields
 
 from helperFunctions.data_conversion import convert_time_to_str, get_dict_size, convert_str_to_time
 from objects.file import FileObject
@@ -345,9 +343,9 @@ class MongoInterfaceCommon(MongoInterface):
             return None
         if not fo.is_root:
             return self._collect_summary(fo.list_of_all_included_files, selected_analysis)
-        summary = get_list_of_all_values_and_collect_information_of_additional_field(
-            self.file_objects, '$processed_analysis.{}.summary'.format(selected_analysis), '$_id', unwind=True,
-            match={'virtual_file_path.{}'.format(fo.get_uid()): {'$exists': 'true'}})
+        summary = get_all_value_combinations_of_fields(
+            self.file_objects, '$processed_analysis.{}.summary'.format(selected_analysis), '$_id',
+            unwind=True, match={'virtual_file_path.{}'.format(fo.get_uid()): {'$exists': 'true'}})
         fo_summary = self._get_summary_of_one(fo, selected_analysis)
         self._update_summary(summary, fo_summary)
         return summary
