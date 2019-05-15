@@ -15,9 +15,10 @@ class DbInterfaceMock:
     def __init__(self, config):
         self.config = config
 
-        self.fw = create_test_firmware()
+        self.fw, self.root_fo = create_test_firmware()
         self.fw.uid = 'parent_uid'
-        self.fw.processed_analysis[AnalysisPlugin.NAME] = {
+        self.root_fo.uid = 'parent_uid'
+        self.root_fo.processed_analysis[AnalysisPlugin.NAME] = {
             'files': {
                 'foo': {'executable': False},
                 'bar': {
@@ -33,11 +34,11 @@ class DbInterfaceMock:
         }
 
         self.fo = create_test_file_object()
-        self.fo.virtual_file_path['parent_uid'] = ['parent_uid|{}|/{}'.format(self.fw.get_uid(), 'some_file')]
+        self.fo.virtual_file_path['parent_uid'] = ['parent_uid|{}|/{}'.format(self.fw.uid, 'some_file')]
 
     def get_object(self, uid):
         if uid == 'parent_uid':
-            return self.fw
+            return self.root_fo
         if uid in ['foo', 'bar', 'error-outside', 'error-inside']:
             return self.fo
         return None
@@ -73,18 +74,18 @@ class TestQemuExecRoutesStatic(TestCase):
         assert 'parent2' in result
 
     def test_get_results_from_parent_fo(self):
-        parent = create_test_firmware()
+        _, root_fo = create_test_firmware()
         analysis_result = {'executable': False}
-        parent.processed_analysis[AnalysisPlugin.NAME] = {'files': {'foo': analysis_result}}
+        root_fo.processed_analysis[AnalysisPlugin.NAME] = {'files': {'foo': analysis_result}}
 
-        result = routes._get_results_from_parent_fo(parent, 'foo')
+        result = routes._get_results_from_parent_fo(root_fo, 'foo')
         assert result == analysis_result
 
     def test_get_results_from_parent_fo__no_results(self):
-        parent = create_test_firmware()
-        parent.processed_analysis[AnalysisPlugin.NAME] = {}
+        _, root_fo = create_test_firmware()
+        root_fo.processed_analysis[AnalysisPlugin.NAME] = {}
 
-        result = routes._get_results_from_parent_fo(parent, 'foo')
+        result = routes._get_results_from_parent_fo(root_fo, 'foo')
         assert result is None
 
 
