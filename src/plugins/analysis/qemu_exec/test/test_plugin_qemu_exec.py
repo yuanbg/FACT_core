@@ -149,13 +149,13 @@ class TestPluginQemuExec(AnalysisPluginTest):
 
     def test_process_included_files(self):
         self.analysis_plugin.OPTIONS = ['-h']
-        test_fw = create_test_firmware()
+        _, test_root_fo = create_test_firmware()
         test_uid = '6b4142fa7e0a35ff6d10e18654be8ac5b778c3b5e2d3d345d1a01c2bcbd51d33_676340'
-        test_fw.processed_analysis[self.analysis_plugin.NAME] = result = {'files': {}}
+        test_root_fo.processed_analysis[self.analysis_plugin.NAME] = result = {'files': {}}
         file_list = [('/test_mips_static', '-MIPS32-')]
 
         self.analysis_plugin.root_path = Path(TEST_DATA_DIR)
-        self.analysis_plugin._process_included_files(file_list, test_fw)
+        self.analysis_plugin._process_included_files(file_list, test_root_fo)
         assert result is not None
         assert 'files' in result
         assert test_uid in result['files']
@@ -164,10 +164,10 @@ class TestPluginQemuExec(AnalysisPluginTest):
     @pytest.mark.usefixtures('docker_is_running')
     def test_process_object(self):
         self.analysis_plugin.OPTIONS = ['-h']
-        test_fw = self._set_up_fw_for_process_object()
+        test_fo = self._set_up_fo_for_process_object()
 
-        self.analysis_plugin.process_object(test_fw)
-        result = test_fw.processed_analysis[self.analysis_plugin.NAME]
+        self.analysis_plugin.process_object(test_fo)
+        result = test_fo.processed_analysis[self.analysis_plugin.NAME]
         assert 'files' in result
         assert len(result['files']) == 4
         assert any(result['files'][uid]['executable'] for uid in result['files'])
@@ -175,21 +175,21 @@ class TestPluginQemuExec(AnalysisPluginTest):
     @pytest.mark.usefixtures('docker_is_running')
     def test_process_object__with_extracted_folder(self):
         self.analysis_plugin.OPTIONS = ['-h']
-        test_fw = self._set_up_fw_for_process_object(path=TEST_DATA_DIR_2)
+        test_fo = self._set_up_fo_for_process_object(path=TEST_DATA_DIR_2)
         test_file_uid = '68bbef24a7083ca2f5dc93f1738e62bae73ccbd184ea3e33d5a936de1b23e24c_8020'
 
-        self.analysis_plugin.process_object(test_fw)
-        result = test_fw.processed_analysis[self.analysis_plugin.NAME]
+        self.analysis_plugin.process_object(test_fo)
+        result = test_fo.processed_analysis[self.analysis_plugin.NAME]
         assert 'files' in result
         assert len(result['files']) == 3
         assert result['files'][test_file_uid]['executable'] is True
 
     @pytest.mark.usefixtures('docker_is_running')
     def test_process_object__error(self):
-        test_fw = self._set_up_fw_for_process_object(path=TEST_DATA_DIR / 'usr')
+        test_fo = self._set_up_fo_for_process_object(path=TEST_DATA_DIR / 'usr')
 
-        self.analysis_plugin.process_object(test_fw)
-        result = test_fw.processed_analysis[self.analysis_plugin.NAME]
+        self.analysis_plugin.process_object(test_fo)
+        result = test_fo.processed_analysis[self.analysis_plugin.NAME]
 
         assert 'files' in result
         assert any(result['files'][uid]['executable'] for uid in result['files']) is False
@@ -203,10 +203,10 @@ class TestPluginQemuExec(AnalysisPluginTest):
     @pytest.mark.usefixtures('docker_is_running')
     @pytest.mark.usefixtures('execute_docker_error')
     def test_process_object__timeout(self):
-        test_fw = self._set_up_fw_for_process_object()
+        test_fo = self._set_up_fo_for_process_object()
 
-        self.analysis_plugin.process_object(test_fw)
-        result = test_fw.processed_analysis[self.analysis_plugin.NAME]
+        self.analysis_plugin.process_object(test_fo)
+        result = test_fo.processed_analysis[self.analysis_plugin.NAME]
 
         assert 'files' in result
         assert all(
@@ -221,35 +221,35 @@ class TestPluginQemuExec(AnalysisPluginTest):
 
     @pytest.mark.usefixtures('docker_is_running')
     def test_process_object__no_files(self):
-        test_fw = create_test_firmware()
-        test_fw.files_included = []
+        _, test_root_fo = create_test_firmware()
+        test_root_fo.files_included = []
 
-        self.analysis_plugin.process_object(test_fw)
-        assert self.analysis_plugin.NAME in test_fw.processed_analysis
-        assert test_fw.processed_analysis[self.analysis_plugin.NAME] == {'summary': []}
+        self.analysis_plugin.process_object(test_root_fo)
+        assert self.analysis_plugin.NAME in test_root_fo.processed_analysis
+        assert test_root_fo.processed_analysis[self.analysis_plugin.NAME] == {'summary': []}
 
     @pytest.mark.usefixtures('docker_is_running')
     def test_process_object__included_binary(self):
-        test_fw = create_test_firmware()
-        test_fw.processed_analysis['file_type']['mime'] = self.analysis_plugin.FILE_TYPES[0]
+        _, test_root_fo = create_test_firmware()
+        test_root_fo.processed_analysis['file_type']['mime'] = self.analysis_plugin.FILE_TYPES[0]
 
-        self.analysis_plugin.process_object(test_fw)
-        assert self.analysis_plugin.NAME in test_fw.processed_analysis
-        assert 'parent_flag' in test_fw.processed_analysis[self.analysis_plugin.NAME]
-        assert test_fw.processed_analysis[self.analysis_plugin.NAME]['parent_flag'] is True
+        self.analysis_plugin.process_object(test_root_fo)
+        assert self.analysis_plugin.NAME in test_root_fo.processed_analysis
+        assert 'parent_flag' in test_root_fo.processed_analysis[self.analysis_plugin.NAME]
+        assert test_root_fo.processed_analysis[self.analysis_plugin.NAME]['parent_flag'] is True
 
     @pytest.mark.usefixtures('docker_is_not_running')
     def test_process_object__docker_not_running(self):
-        test_fw = create_test_firmware()
-        test_fw.files_included = ['foo', 'bar']
-        self.analysis_plugin.process_object(test_fw)
-        assert self.analysis_plugin.NAME not in test_fw.processed_analysis
+        _, test_root_fo = create_test_firmware()
+        test_root_fo.files_included = ['foo', 'bar']
+        self.analysis_plugin.process_object(test_root_fo)
+        assert self.analysis_plugin.NAME not in test_root_fo.processed_analysis
 
-    def _set_up_fw_for_process_object(self, path: Path = TEST_DATA_DIR):
-        test_fw = create_test_firmware()
-        test_fw.files_included = ['foo', 'bar']
+    def _set_up_fo_for_process_object(self, path: Path = TEST_DATA_DIR):
+        _, test_root_fo = create_test_firmware()
+        test_root_fo.files_included = ['foo', 'bar']
         self.analysis_plugin.unpacker.set_tmp_dir(MockTmpDir(path))
-        return test_fw
+        return test_root_fo
 
 
 def test_get_docker_output__static():
@@ -445,8 +445,8 @@ class TestQemuExecUnpacker(TestCase):
         qemu_exec.BinaryServiceDbInterface = MockBinaryService
 
     def test_unpack_fo(self):
-        test_fw = create_test_firmware()
-        tmp_dir = self.unpacker.unpack_fo(test_fw)
+        _, test_root_fo = create_test_firmware()
+        tmp_dir = self.unpacker.unpack_fo(test_root_fo)
 
         try:
             assert self.name_prefix in tmp_dir.name
@@ -457,10 +457,10 @@ class TestQemuExecUnpacker(TestCase):
             tmp_dir.cleanup()
 
     def test_unpack_fo__no_file_path(self):
-        test_fw = create_test_firmware()
-        test_fw.file_path = None
+        _, test_root_fo = create_test_firmware()
+        test_root_fo.file_path = None
 
-        tmp_dir = self.unpacker.unpack_fo(test_fw)
+        tmp_dir = self.unpacker.unpack_fo(test_root_fo)
 
         try:
             assert self.name_prefix in tmp_dir.name
@@ -471,19 +471,19 @@ class TestQemuExecUnpacker(TestCase):
             tmp_dir.cleanup()
 
     def test_unpack_fo__path_not_found(self):
-        test_fw = create_test_firmware()
-        test_fw.file_path = 'foo/bar'
-        tmp_dir = self.unpacker.unpack_fo(test_fw)
+        _, test_root_fo = create_test_firmware()
+        test_root_fo.file_path = 'foo/bar'
+        tmp_dir = self.unpacker.unpack_fo(test_root_fo)
 
         assert tmp_dir is None
         with suppress(AttributeError):
             tmp_dir.cleanup()
 
     def test_unpack_fo__binary_not_found(self):
-        test_fw = create_test_firmware()
-        test_fw.uid = 'foo'
-        test_fw.file_path = None
-        tmp_dir = self.unpacker.unpack_fo(test_fw)
+        _, test_root_fo = create_test_firmware()
+        test_root_fo.uid = 'foo'
+        test_root_fo.file_path = None
+        tmp_dir = self.unpacker.unpack_fo(test_root_fo)
 
         assert tmp_dir is None
         with suppress(AttributeError):
