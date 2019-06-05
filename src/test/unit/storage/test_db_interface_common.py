@@ -1,3 +1,5 @@
+# pylint: disable=protected-access,wrong-import-order
+
 import pytest
 
 from test.common_helper import CommonDbInterfaceMock
@@ -43,5 +45,5 @@ OLD_DATA_FORMAT = {
 ])
 def test_convert_to_firmware(input_data, expected):
     test_interface = CommonDbInterfaceMock()
-    result = test_interface._convert_to_firmware(input_data, analysis_filter=None)
-    assert result.part == expected
+    result = test_interface._convert_to_firmware(input_data)
+    assert result.device_part == expected

@@ -69,7 +69,6 @@ class MockFileObject:
 
 
 class DatabaseMock:  # pylint: disable=too-many-public-methods
-    # FIXME  (probably?)
     fw_uid = TEST_FW.uid
     fo_uid = TEST_TEXT_FILE.get_uid()
     fw2_uid = TEST_FW_2.uid
@@ -103,6 +102,20 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
             if entry['file_name'] == 'test_fo':
                 result.append(fo_entry)
         return result
+
+    def get_meta_list_from_id_list(self, uid_list, only_firmwares=False):
+        fw_entry = ('test_fw_uid', 'test firmware', {'unpacker': 'unpacker-tag'})
+        fo_entry = ('test_fo_uid', 'test file object', {'unpacker': 'unpacker-tag'})
+        result = []
+        for uid in uid_list:
+            if uid == TEST_FW.firmware_id:
+                result.append(fw_entry)
+            if uid == TEST_TEXT_FILE.get_uid() and not only_firmwares:
+                result.append(fo_entry)
+        return result
+
+    def get_number_of_total_matches(self, *_):
+        return 10
 
     def get_object(self, uid, analysis_filter=None):
         if uid == TEST_ROOT_FO.get_uid():
@@ -176,7 +189,7 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
         return True
 
     def add_comment_to_object(self, uid, comment, author, time):
-        TEST_FW.comments.append(
+        TEST_ROOT_FO.comments.append(
             {'time': str(time), 'author': author, 'comment': comment}
         )
 
@@ -191,14 +204,14 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
         result = []
         if isinstance(query, dict):
             query = json.dumps(query)
-        if self.fw_uid in query or query == '{}':
-            result.append(self.fw_uid)
-        if self.fo_uid in query or query == '{}':
+        if TEST_FW.firmware_id in query or query == '{}':
+            result.append(TEST_FW.firmware_id)
+        if self.fo_uid in query:
             if not only_fo_parent_firmware:
                 result.append(self.fo_uid)
             else:
                 if self.fw_uid not in result:
-                    result.append(self.fw_uid)
+                    result.append(TEST_FW.firmware_id)
         return result
 
     def add_analysis_task(self, task):

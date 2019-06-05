@@ -38,6 +38,7 @@ class DatabaseRoutes(ComponentBase):
             per_page = int(per_page)
         offset = (page - 1) * per_page
         return page, per_page, offset
+        # page, skip, limit
 
     @staticmethod
     def _get_pagination(**kwargs):
@@ -61,7 +62,7 @@ class DatabaseRoutes(ComponentBase):
 
     @roles_accepted(*PRIVILEGES['basic_search'])
     def _app_show_browse_database(self, query='{}', only_firmwares=False):
-        page, skip, limit = self._get_page_items()
+        page, limit, skip = self._get_page_items()
         if request.args.get('only_firmwares'):
             only_firmwares = request.args.get('only_firmwares') == 'True'
         query = self._compose_query(query)

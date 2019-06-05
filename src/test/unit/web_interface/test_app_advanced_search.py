@@ -17,7 +17,7 @@ class TestAppAdvancedSearch(WebInterfaceTest):
 
     def test_advanced_search_firmware(self):
         rv = self.test_client.post('/database/advanced_search', content_type='multipart/form-data', follow_redirects=True,
-                                   data={"advanced_search": '{{"_id": "{}"}}'.format(TEST_FW.get_uid())})
+                                   data={"advanced_search": '{{"_id": "{}"}}'.format(TEST_FW.firmware_id)})
         assert b"test_fw_uid" in rv.data
         assert b"test_fo_uid" not in rv.data
 
