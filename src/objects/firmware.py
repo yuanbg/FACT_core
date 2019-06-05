@@ -60,4 +60,4 @@ class Firmware:  # pylint: disable=too-many-instance-attributes,too-many-argumen
         return self._firmware_id
 
     def __repr__(self):
-        return 'Firmware({device_class} {vendor} {device_name} {version})'.format(**self.__dict__)
+        return 'Firmware({device_class} {vendor} {device_name} v. {version})'.format(**self.__dict__)
