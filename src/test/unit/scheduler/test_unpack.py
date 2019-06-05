@@ -1,19 +1,21 @@
+# pylint: disable=protected-access,wrong-import-order,attribute-defined-outside-init
+
 from configparser import ConfigParser
-import gc
 from multiprocessing import Queue
 from tempfile import TemporaryDirectory
 from time import sleep
-import unittest
+
+import gc
 
 from helperFunctions.fileSystem import get_test_data_dir
-from objects.firmware import Firmware
+from objects.file import FileObject
 from scheduler.Unpacking import UnpackingScheduler
 from test.common_helper import DatabaseMock
 
 
-class TestUnpackScheduler(unittest.TestCase):
+class TestUnpackScheduler:
 
-    def setUp(self):
+    def setup_method(self):
         self.tmp_dir = TemporaryDirectory()
         self.config = ConfigParser()
         self.config.add_section('unpack')
@@ -28,7 +30,7 @@ class TestUnpackScheduler(unittest.TestCase):
         self.tmp_queue = Queue()
         self.sched = None
 
-    def tearDown(self):
+    def teardown_method(self):
         if self.sched:
             self.sched.shutdown()
         self.tmp_dir.cleanup()
@@ -37,29 +39,28 @@ class TestUnpackScheduler(unittest.TestCase):
 
     def test_unpack_a_container_including_another_container(self):
         self._start_scheduler()
-        test_fw = Firmware(file_path='{}/container/test_zip.tar.gz'.format(get_test_data_dir()))
+        test_fw = FileObject(file_path='{}/container/test_zip.tar.gz'.format(get_test_data_dir()))
         self.sched.add_task(test_fw)
         outer_container = self.tmp_queue.get(timeout=5)
-        self.assertEqual(len(outer_container.files_included), 2, 'not all childs of root found')
-        self.assertIn('ab4153d747f530f9bc3a4b71907386f50472ea5ae975c61c0bacd918f1388d4b_227', outer_container.files_included, 'included container not extracted. Unpacker tar.gz modul broken?')
-        included_files = [self.tmp_queue.get(timeout=5)]
-        included_files.append(self.tmp_queue.get(timeout=5))
+        assert len(outer_container.files_included) == 2, 'not all childs of root found'
+        assert 'ab4153d747f530f9bc3a4b71907386f50472ea5ae975c61c0bacd918f1388d4b_227' in outer_container.files_included, 'included container not extracted. Unpacker tar.gz modul broken?'
+        included_files = [self.tmp_queue.get(timeout=5), self.tmp_queue.get(timeout=5)]
         for item in included_files:
             if item.get_uid() == 'ab4153d747f530f9bc3a4b71907386f50472ea5ae975c61c0bacd918f1388d4b_227':
-                self.assertEqual(len(item.files_included), 1, 'number of files in included container not correct')
+                assert len(item.files_included) == 1, 'number of files in included container not correct'
             else:
-                self.assertEqual(item.get_uid(), 'faa11db49f32a90b51dfc3f0254f9fd7a7b46d0b570abd47e1943b86d554447a_28', 'none container file not rescheduled')
+                assert item.get_uid() == 'faa11db49f32a90b51dfc3f0254f9fd7a7b46d0b570abd47e1943b86d554447a_28', 'none container file not rescheduled'
 
     def test_get_combined_analysis_workload(self):
         self._start_scheduler()
         result = self.sched._get_combined_analysis_workload()
-        self.assertEqual(result, 3, 'workload calculation not correct')
+        assert result == 3, 'workload calculation not correct'
 
     def test_throttle(self):
         self.config.set('ExpertSettings', 'unpack_throttle_limit', '-1')
         self._start_scheduler()
         sleep(0.5)
-        self.assertEqual(self.sched.throttle_condition.value, 1, 'throttle not functional')
+        assert self.sched.throttle_condition.value == 1, 'throttle not functional'
 
     def _start_scheduler(self):
         self.sched = UnpackingScheduler(config=self.config, post_unpack=self._mock_callback, analysis_workload=self._mock_get_analysis_workload, db_interface=DatabaseMock())
