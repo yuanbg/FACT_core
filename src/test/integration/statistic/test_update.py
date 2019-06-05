@@ -1,12 +1,13 @@
 # pylint: disable=protected-access,no-self-use,attribute-defined-outside-init,wrong-import-order
+
 import gc
 
 from helperFunctions.config import get_config_for_testing
 from helperFunctions.statistic import calculate_total_files
 from statistic.update import StatisticUpdater
-from storage.MongoMgr import MongoMgr
 from storage.db_interface_statistic import StatisticDbViewer
-from test.common_helper import get_database_names, clean_test_database
+from storage.MongoMgr import MongoMgr
+from test.common_helper import clean_test_database, get_database_names
 
 
 class TestStatistic:
@@ -60,7 +61,7 @@ class TestStatistic:
 
     def test_filter_sanitized_entries(self):
         test_list = [['valid', 1], ['sanitized_81abfc7a79c8c1ed85f6b9fc2c5d9a3edc4456c4aecb9f95b4d7a2bf9bf652da_1', 1]]
-        result = self.updater._filter_sanitzized_objects(test_list)
+        result = self.updater._filter_sanitized_objects(test_list)
         assert result == [['valid', 1]]
 
     def test_find_most_frequent_architecture(self):
@@ -192,7 +193,7 @@ class TestStatistic:
         assert self.updater.get_stats_nx(result, stats) is None
 
     def test_fetch_mitigations(self):
-        assert self.updater._get_exploit_mitigations_stats() == {'exploit_mitigations': []}
+        assert self.updater.get_exploit_mitigations_stats() == {'exploit_mitigations': []}
 
     def test_known_vulnerabilities_works(self):
-        assert self.updater._get_known_vulnerabilities_stats() == {'known_vulnerabilities': []}
+        assert self.updater.get_known_vulnerabilities_stats() == {'known_vulnerabilities': []}
