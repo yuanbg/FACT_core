@@ -110,7 +110,7 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
         for uid in uid_list:
             if uid == TEST_FW.firmware_id:
                 result.append(fw_entry)
-            if uid == TEST_TEXT_FILE.get_uid() and not only_firmwares:
+            if uid in [TEST_TEXT_FILE.get_uid(), 'test_uid'] and not only_firmwares:
                 result.append(fo_entry)
         return result
 
