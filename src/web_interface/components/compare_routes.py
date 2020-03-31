@@ -1,4 +1,8 @@
 import logging
+import lief
+
+from collections import namedtuple
+
 from contextlib import suppress
 
 from flask import redirect, render_template, render_template_string, request, session, url_for
@@ -184,8 +188,9 @@ class CompareRoutes(ComponentBase):
             file1 = db.get_file_object(uid1)
             file2 = db.get_file_object(uid2)
         # TODO: actual file comparison
-        file1_data = {'uid': file1.uid, 'unique_strings': ['foo']}
-        file2_data = {'uid': file2.uid, 'unique_strings': ['bar']}
+        file1_elf, file2_elf = get_elf_data(file1, file2)
+        file1_data = {'uid': file1.uid, 'unique_strings': file1_elf.strings}
+        file2_data = {'uid': file2.uid, 'unique_strings': file2_elf.strings}
         return render_template('compare/file_pair_comparison.html', file1=file1_data, file2=file2_data)
 
 
@@ -193,3 +198,26 @@ def get_comparison_uid_list_from_session():
     if 'uids_for_comparison' not in session or not isinstance(session['uids_for_comparison'], list):
         session['uids_for_comparison'] = []
     return session['uids_for_comparison']
+
+
+def get_elf_data(file1, file2):
+    ELF = namedtuple('ELF', 'header, imported_libs, imported_functions, exported_functions, strings')
+    binary1 = lief.parse(file1)
+    binary2 = lief.parse(file2)
+    lib1, lib2 = get_unique_sets(binary1.libraries, binary2.libraries)
+    i_fun1, i_fun2 = get_unique_sets([function.name for function in binary1.imported_functions],
+                                     [function.name for function in binary2.imported_functions])
+    e_fun1, e_fun2 = get_unique_sets([function.name for function in binary1.exported_functions],
+                                     [function.name for function in binary2.exported_functions])
+    s1, s2 = get_unique_sets(binary1.get_strings(), binary2.get_strings())
+    elf1 = ELF(binary1.header, lib1, i_fun1, e_fun1, s1)
+    elf2 = ELF(binary2.header, lib2, i_fun2, e_fun2, s2)
+    return elf1, elf2
+
+
+def get_unique_sets(list1, list2):
+    l1 = set(list1)
+    l2 = set(list2)
+    out1 = l1 - l2
+    out2 = l2 - l1
+    return out1, out2
