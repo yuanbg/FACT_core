@@ -25,6 +25,7 @@ class CompareRoutes(ComponentBase):
         self._app.add_url_rule('/comparison/add/<uid>', 'comparison/add/<uid>', self._add_to_compare_basket)
         self._app.add_url_rule('/comparison/remove/<analysis_uid>/<compare_uid>', 'comparison/remove/<analysis_uid>/<compare_uid>', self._remove_from_compare_basket)
         self._app.add_url_rule('/comparison/remove_all/<analysis_uid>', 'comparison/remove_all/<analysis_uid>', self._remove_all_from_compare_basket)
+        self._app.add_url_rule('/file_pair_comparison/<uid1>/<uid2>', 'file_pair_comparison/<uid1>/<uid2>', self._compare_file_pair)
 
     @roles_accepted(*PRIVILEGES['compare'])
     def _app_show_compare_result(self, compare_id):
@@ -176,6 +177,16 @@ class CompareRoutes(ComponentBase):
         compare_uid_list.clear()
         session.modified = True
         return redirect(url_for('analysis/<uid>', uid=analysis_uid))
+
+    @roles_accepted(*PRIVILEGES['compare'])
+    def _compare_file_pair(self, uid1, uid2):
+        with ConnectTo(CompareDbInterface, self._config) as db:
+            file1 = db.get_file_object(uid1)
+            file2 = db.get_file_object(uid2)
+        # TODO: actual file comparison
+        file1_data = {'uid': file1.uid, 'unique_strings': ['foo']}
+        file2_data = {'uid': file2.uid, 'unique_strings': ['bar']}
+        return render_template('compare/file_pair_comparison.html', file1=file1_data, file2=file2_data)
 
 
 def get_comparison_uid_list_from_session():

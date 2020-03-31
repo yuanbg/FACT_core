@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% set active_page = "Database" %}
+
+
+{% block body %}
+
+    <div class="row">
+        <h2>Comparison of {{ file1.uid }} and {{ file2.uid }}</h2>
+        <table class="table table-bordered table-hover">
+            <tr class="success">
+                <th>File</th>
+                <th>{{ file1.uid }}</th>
+                <th>{{ file2.uid }}</th>
+            </tr>
+            <!--   Fill this table with file info     -->
+            <tr>
+                <td>Unique Strings:</td>
+                <td>{{ file1.unique_strings | nice_list | safe }}</td>
+                <td>{{ file2.unique_strings | nice_list | safe }}</td>
+            </tr>
+        </table>
+    </div>
+
+{% endblock %}
