@@ -1,10 +1,9 @@
 import logging
-import lief
-
 from collections import namedtuple
-
 from contextlib import suppress
+from difflib import HtmlDiff
 
+import lief
 from flask import redirect, render_template, render_template_string, request, session, url_for
 from flask_paginate import Pagination
 
@@ -188,7 +187,13 @@ class CompareRoutes(ComponentBase):
         bs = BinaryService(self._config)
         file1_fd, file_1_name = bs.get_binary_and_file_name(uid1)
         file2_fd, file_2_name = bs.get_binary_and_file_name(uid2)
-        # TODO: actual file comparison
+
+        is_text_file = True  # TODO find file type
+        if is_text_file:
+            table = HtmlDiff(wrapcolumn=100).make_table(file1_fd.decode().splitlines(), file2_fd.decode().splitlines())
+            table = table.replace('class="diff"', 'class="table table-bordered diff"')
+            return render_template("compare/text_file_comparison.html", table=table, file1=file_1_name, file2=file_2_name)
+
         file1_elf, file2_elf = get_elf_data(file1_fd, file2_fd)
         file1_data = {'uid': uid1,
                       'name': file_1_name,

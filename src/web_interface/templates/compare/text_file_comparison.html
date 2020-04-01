@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% set active_page = "Database" %}
+
+
+{% block head %}
+
+    <style type="text/css">
+        table.diff {font-family:Courier;}
+        .diff_header {background-color:#e0e0e0}
+        td.diff_header {text-align:right; width: 0;}
+        .diff_next {background-color:#c0c0c0; width: 0;}
+        .diff_add {background-color:#aaffaa}
+        .diff_chg {background-color:#ffff77}
+        .diff_sub {background-color:#ffaaaa}
+    </style>
+
+{% endblock %}
+
+
+{% block body %}
+
+    <div class="row">
+        <div class="col-lg-offset-2 col-xs-8">
+            <h2>Comparison of {{ file1 }} and {{ file2 }}</h2>
+            {{ table | safe }}
+        </div>
+    </div>
+
+{% endblock %}
