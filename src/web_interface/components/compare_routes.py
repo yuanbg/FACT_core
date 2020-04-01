@@ -14,6 +14,7 @@ from helperFunctions.dataConversion import (
 )
 from helperFunctions.web_interface import get_template_as_string
 from intercom.front_end_binding import InterComFrontEndBinding
+from storage.binary_service import BinaryService
 from storage.db_interface_compare import CompareDbInterface, FactCompareException
 from storage.db_interface_view_sync import ViewReader
 from web_interface.components.component_base import ComponentBase
@@ -184,13 +185,25 @@ class CompareRoutes(ComponentBase):
 
     @roles_accepted(*PRIVILEGES['compare'])
     def _compare_file_pair(self, uid1, uid2):
-        with ConnectTo(CompareDbInterface, self._config) as db:
-            file1 = db.get_file_object(uid1)
-            file2 = db.get_file_object(uid2)
+        bs = BinaryService(self._config)
+        file1_fd, file_1_name = bs.get_binary_and_file_name(uid1)
+        file2_fd, file_2_name = bs.get_binary_and_file_name(uid2)
         # TODO: actual file comparison
-        file1_elf, file2_elf = get_elf_data(file1, file2)
-        file1_data = {'uid': file1.uid, 'unique_strings': file1_elf.strings}
-        file2_data = {'uid': file2.uid, 'unique_strings': file2_elf.strings}
+        file1_elf, file2_elf = get_elf_data(file1_fd, file2_fd)
+        file1_data = {'uid': uid1,
+                      'name': file_1_name,
+                      'header': file1_elf.header,
+                      'imported_libs': file1_elf.imported_libs,
+                      'imported_functions': file1_elf.imported_functions,
+                      'exported_functions': file1_elf.exported_functions,
+                      'unique_strings': file1_elf.strings}
+        file2_data = {'uid': uid2,
+                      'name': file_2_name,
+                      'header': file2_elf.header,
+                      'imported_libs': file2_elf.imported_libs,
+                      'imported_functions': file2_elf.imported_functions,
+                      'exported_functions': file2_elf.exported_functions,
+                      'unique_strings': file2_elf.strings}
         return render_template('compare/file_pair_comparison.html', file1=file1_data, file2=file2_data)
 
 

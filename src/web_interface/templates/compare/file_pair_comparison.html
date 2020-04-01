@@ -13,7 +13,32 @@
                 <th>{{ file1.uid }}</th>
                 <th>{{ file2.uid }}</th>
             </tr>
+            <tr>
+                <td>Name:</td>
+                <td>{{ file1.name }}</td>
+                <td>{{ file2.name }}</td>
+            </tr>
             <!--   Fill this table with file info     -->
+            <tr>
+                <td>Header:</td>
+                <td>{{ file1.header | nice_list | safe }}</td>
+                <td>{{ file2.header | nice_list | safe }}</td>
+            </tr>
+            <tr>
+                <td>Imported Libraries:</td>
+                <td>{{ file1.imported_libs | nice_list | safe }}</td>
+                <td>{{ file2.imported_libs | nice_list | safe }}</td>
+            </tr>
+            <tr>
+                <td>Imported Functions:</td>
+                <td>{{ file1.imported_functions | nice_list | safe }}</td>
+                <td>{{ file2.imported_functions | nice_list | safe }}</td>
+            </tr>
+            <tr>
+                <td>Exported Functions:</td>
+                <td>{{ file1.exported_functions | nice_list | safe }}</td>
+                <td>{{ file2.exported_functions | nice_list | safe }}</td>
+            </tr>
             <tr>
                 <td>Unique Strings:</td>
                 <td>{{ file1.unique_strings | nice_list | safe }}</td>
