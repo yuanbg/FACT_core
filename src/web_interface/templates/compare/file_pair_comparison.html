@@ -21,8 +21,10 @@
             <!--   Fill this table with file info     -->
             <tr>
                 <td>Header:</td>
-                <td>{{ file1.header | nice_list | safe }}</td>
-                <td>{{ file2.header | nice_list | safe }}</td>
+                {% autoescape false %}
+                <td>{{ file1.header | replace('\n', '<br>') }}</td>
+                <td>{{ file2.header | replace('\n', '<br>') }}</td>
+                {% endautoescape %}
             </tr>
             <tr>
                 <td>Imported Libraries:</td>
