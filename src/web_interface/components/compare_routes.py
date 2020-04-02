@@ -4,6 +4,7 @@ from contextlib import suppress
 from difflib import HtmlDiff
 
 import lief
+import magic
 from flask import redirect, render_template, render_template_string, request, session, url_for
 from flask_paginate import Pagination
 
@@ -187,9 +188,8 @@ class CompareRoutes(ComponentBase):
         bs = BinaryService(self._config)
         file1_fd, file_1_name = bs.get_binary_and_file_name(uid1)
         file2_fd, file_2_name = bs.get_binary_and_file_name(uid2)
-
-        is_text_file = True  # TODO find file type
-        if is_text_file:
+        
+        if is_ascii(file1_fd) and is_ascii(file2_fd):
             table = HtmlDiff(wrapcolumn=100).make_table(file1_fd.decode().splitlines(), file2_fd.decode().splitlines())
             table = table.replace('class="diff"', 'class="table table-bordered diff"')
             return render_template("compare/text_file_comparison.html", table=table, file1=file_1_name, file2=file_2_name)
@@ -212,6 +212,12 @@ class CompareRoutes(ComponentBase):
         return render_template('compare/file_pair_comparison.html', file1=file1_data, file2=file2_data)
 
 
+def is_ascii(file):
+    if lief.is_elf(file) or magic.from_buffer(file).find('ASCII') == -1:
+        return False
+    return True
+
+
 def get_comparison_uid_list_from_session():
     if 'uids_for_comparison' not in session or not isinstance(session['uids_for_comparison'], list):
         session['uids_for_comparison'] = []
@@ -223,19 +229,19 @@ def get_elf_data(file1, file2):
     binary1 = lief.parse(file1)
     binary2 = lief.parse(file2)
     lib1, lib2 = get_unique_sets(binary1.libraries, binary2.libraries)
-    i_fun1, i_fun2 = get_unique_sets([function.name for function in binary1.imported_functions],
-                                     [function.name for function in binary2.imported_functions])
-    e_fun1, e_fun2 = get_unique_sets([function.name for function in binary1.exported_functions],
-                                     [function.name for function in binary2.exported_functions])
-    s1, s2 = get_unique_sets(binary1.get_strings(), binary2.get_strings())
-    elf1 = ELF(binary1.header, lib1, i_fun1, e_fun1, s1)
-    elf2 = ELF(binary2.header, lib2, i_fun2, e_fun2, s2)
+    improted_functions1, imported_functions2 = get_unique_sets([function.name for function in binary1.imported_functions],
+                                                               [function.name for function in binary2.imported_functions])
+    exported_functions1, exported_functions2 = get_unique_sets([function.name for function in binary1.exported_functions],
+                                                               [function.name for function in binary2.exported_functions])
+    strings1, strings2 = get_unique_sets(binary1.get_strings(), binary2.get_strings())
+    elf1 = ELF(binary1.header, lib1, improted_functions1, exported_functions1, strings1)
+    elf2 = ELF(binary2.header, lib2, imported_functions2, exported_functions2, strings2)
     return elf1, elf2
 
 
 def get_unique_sets(list1, list2):
-    l1 = set(list1)
-    l2 = set(list2)
-    out1 = l1 - l2
-    out2 = l2 - l1
+    set1 = set(list1)
+    set2 = set(list2)
+    out1 = set1 - set2
+    out2 = set2 - set1
     return out1, out2
