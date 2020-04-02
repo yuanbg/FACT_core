@@ -4,7 +4,6 @@ from contextlib import suppress
 from difflib import HtmlDiff
 
 import lief
-import magic
 from flask import redirect, render_template, render_template_string, request, session, url_for
 from flask_paginate import Pagination
 
@@ -189,7 +188,7 @@ class CompareRoutes(ComponentBase):
         file1_fd, file_1_name = bs.get_binary_and_file_name(uid1)
         file2_fd, file_2_name = bs.get_binary_and_file_name(uid2)
         
-        if is_ascii(file1_fd) and is_ascii(file2_fd):
+        if self.is_ascii(uid1, uid2):
             table = HtmlDiff(wrapcolumn=100).make_table(file1_fd.decode().splitlines(), file2_fd.decode().splitlines())
             table = table.replace('class="diff"', 'class="table table-bordered diff"')
             return render_template("compare/text_file_comparison.html", table=table, file1=file_1_name, file2=file_2_name)
@@ -211,11 +210,13 @@ class CompareRoutes(ComponentBase):
                       'unique_strings': file2_elf.strings}
         return render_template('compare/file_pair_comparison.html', file1=file1_data, file2=file2_data)
 
-
-def is_ascii(file):
-    if lief.is_elf(file) or magic.from_buffer(file).find('ASCII') == -1:
+    def is_ascii(self, uid1, uid2):
+        with ConnectTo(CompareDbInterface, self._config) as db:
+            mime1 = db.get_object(uid1).processed_analysis['file_type']['full']
+            mime2 = db.get_object(uid2).processed_analysis['file_type']['full']
+        if mime1 == mime2 and mime1 == 'ASCII text':
+            return True
         return False
-    return True
 
 
 def get_comparison_uid_list_from_session():
