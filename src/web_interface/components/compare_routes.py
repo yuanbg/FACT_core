@@ -233,17 +233,58 @@ def get_elf_data(file1, file2):
     binary2 = lief.parse(file2)
     if binary1 is None or binary2 is None:
         return binary1, binary2
+    h1, h2 = get_Header_diff(binary1.header, binary2.header)
     lib1, lib2 = get_unique_sets(binary1.libraries, binary2.libraries)
     improted_functions1, imported_functions2 = get_unique_sets([function.name for function in binary1.imported_functions],
                                                                [function.name for function in binary2.imported_functions])
     exported_functions1, exported_functions2 = get_unique_sets([function.name for function in binary1.exported_functions],
                                                                [function.name for function in binary2.exported_functions])
     strings1, strings2 = get_unique_sets(binary1.get_strings(), binary2.get_strings())
-    elf1 = ELF(binary1.header, lib1, improted_functions1, exported_functions1, strings1)
-    elf2 = ELF(binary2.header, lib2, imported_functions2, exported_functions2, strings2)
+    elf1 = ELF(h1, lib1, improted_functions1, exported_functions1, strings1)
+    elf2 = ELF(h2, lib2, imported_functions2, exported_functions2, strings2)
     return elf1, elf2
 
 
+def get_Header_diff(head1, head2):
+    template = ['Class:',
+                'Endianness:',
+                'Version:',
+                'OS/ABI::',
+                'ABI Version:',
+                'Machine type:',
+                'File type:',
+                'Object file version:',
+                'Entry Point:',
+                'Program header offset:',
+                'Section header offset:',
+                'Processor Flag:',
+                'Header size:',
+                'Size of program header:',
+                'Number of program header:',
+                'Size of section header:',
+                'Number of section headers:',
+                'Section Name Table idx:']
+    mapping = [6, 8, 10, 12, 15, 18, 21, 25, 28, 32, 36, 39, 42, 48, 53, 58, 63, 68]  
+    h1 = head1.__str__().split()
+    h2 = head2.__str__().split()
+    magic1 = ''.join(h1[1:5])
+    magic2 = ''.join(h2[1:5])
+    if magic1 == magic2:
+        out1 = '<li><span style="background-color:#008000">Magic:{}</span></li>'.format(magic1)
+        out2 = '<li><span style="background-color:#008000">Magic:{}</span></li>'.format(magic2)
+    else:
+        out1 = '<li>Magic:{}</li>'.format(magic1)
+        out2 = '<li>Magic:{}</li>'.format(magic2)
+    for index, string in enumerate(template):
+        if h1[mapping[index]] == h2[mapping[index]]:
+            out1 += '<li><span style="background-color:#008000">{}{}</span></li>'.format(string, h1[mapping[index]])
+            out2 += '<li><span style="background-color:#008000">{}{}</span></li>'.format(string, h2[mapping[index]])
+        else:
+            out1 += '<li>{}{}</li>'.format(string, h1[mapping[index]])
+            out2 += '<li>{}{}</li>'.format(string, h2[mapping[index]])
+    return out1, out2
+        
+           
 def get_unique_sets(list1, list2):
     set1 = set(list1)
     set2 = set(list2)
