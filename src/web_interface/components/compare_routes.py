@@ -188,7 +188,7 @@ class CompareRoutes(ComponentBase):
         file1_fd, file_1_name = bs.get_binary_and_file_name(uid1)
         file2_fd, file_2_name = bs.get_binary_and_file_name(uid2)
         
-        if self.is_ascii(uid1, uid2):
+        if self.is_text_file(uid1, uid2):
             table = HtmlDiff(wrapcolumn=100).make_table(file1_fd.decode().splitlines(), file2_fd.decode().splitlines())
             table = table.replace('class="diff"', 'class="table table-bordered diff"')
             return render_template("compare/text_file_comparison.html", table=table, file1=file_1_name, file2=file_2_name)
@@ -210,11 +210,11 @@ class CompareRoutes(ComponentBase):
                       'unique_strings': file2_elf.strings}
         return render_template('compare/file_pair_comparison.html', file1=file1_data, file2=file2_data)
 
-    def is_ascii(self, uid1, uid2):
+    def is_text_file(self, uid1, uid2):
         with ConnectTo(CompareDbInterface, self._config) as db:
-            mime1 = db.get_object(uid1).processed_analysis['file_type']['full']
-            mime2 = db.get_object(uid2).processed_analysis['file_type']['full']
-        if mime1 == mime2 and mime1 == 'ASCII text':
+            mime1 = db.get_object(uid1).processed_analysis['file_type']['MIME']
+            mime2 = db.get_object(uid2).processed_analysis['file_type']['MIME']
+        if mime1 == mime2 and mime1 == 'text/plain':
             return True
         return False
 
@@ -229,6 +229,8 @@ def get_elf_data(file1, file2):
     ELF = namedtuple('ELF', 'header, imported_libs, imported_functions, exported_functions, strings')
     binary1 = lief.parse(file1)
     binary2 = lief.parse(file2)
+    if binary1 is None or binary2 is None:
+        return render_template('compare/error.html', error='Both files must be of the same type (ELF)!')
     lib1, lib2 = get_unique_sets(binary1.libraries, binary2.libraries)
     improted_functions1, imported_functions2 = get_unique_sets([function.name for function in binary1.imported_functions],
                                                                [function.name for function in binary2.imported_functions])
