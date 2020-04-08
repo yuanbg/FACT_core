@@ -8,41 +8,55 @@
     <div class="row">
         <h2>Comparison of {{ file1.uid }} and {{ file2.uid }}</h2>
         <table class="table table-bordered table-hover">
-            <tr class="success">
-                <th>File</th>
+            <tr>
+                <td colspan="2">Files</td>
+            </tr>
+            <tr class="success" >
                 <th>{{ file1.uid }}</th>
                 <th>{{ file2.uid }}</th>
             </tr>
             <tr>
-                <td>Name:</td>
+                <td colspan="2">Name</td>
+            </tr>
+            <tr>
                 <td>{{ file1.name }}</td>
                 <td>{{ file2.name }}</td>
             </tr>
             <!--   Fill this table with file info     -->
-            <tr>
-                <td>Header:</td>
+            <tr data-toggle="collapse" data-target="#collapse1" class="clickable">
+                <td colspan="2">Header</td>
+            </tr>
+            <tr id="collapse1" class="collapse">
                 {% autoescape false %}
                 <td>{{ file1.header | replace('\n', '<br>') }}</td>
                 <td>{{ file2.header | replace('\n', '<br>') }}</td>
                 {% endautoescape %}
             </tr>
-            <tr>
-                <td>Imported Libraries:</td>
+            <<tr data-toggle="collapse" data-target="#collapse2" class="clickable">
+                <td colspan="2">Imported Libraries</td>
+            </tr>
+            <tr id="collapse2" class="collapse">
                 <td>{{ file1.imported_libs | nice_list | safe }}</td>
                 <td>{{ file2.imported_libs | nice_list | safe }}</td>
             </tr>
-            <tr>
-                <td>Imported Functions:</td>
+            <tr data-toggle="collapse" data-target="#collapse3" class="clickable">
+                <td colspan="2">Imported Functions</td>
+            </tr>
+            <tr id="collapse3" class="collapse">
                 <td>{{ file1.imported_functions | nice_list | safe }}</td>
                 <td>{{ file2.imported_functions | nice_list | safe }}</td>
             </tr>
-            <tr>
-                <td>Exported Functions:</td>
+            <tr data-toggle="collapse" data-target="#collapse4" class="clickable">
+                <td colspan="2">Exported Functions</td>
+            </tr>
+            <tr id="collapse4" class="collapse">
                 <td>{{ file1.exported_functions | nice_list | safe }}</td>
                 <td>{{ file2.exported_functions | nice_list | safe }}</td>
             </tr>
-            <tr>
-                <td>Unique Strings:</td>
+            <<tr data-toggle="collapse" data-target="#collapse5" class="clickable">
+                <td colspan="2">Unique Strings</td>
+            </tr>
+            <tr id="collapse5" class="collapse">
                 <td>{{ file1.unique_strings | nice_list | safe }}</td>
                 <td>{{ file2.unique_strings | nice_list | safe }}</td>
             </tr>
