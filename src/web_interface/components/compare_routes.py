@@ -194,6 +194,8 @@ class CompareRoutes(ComponentBase):
             return render_template("compare/text_file_comparison.html", table=table, file1=file_1_name, file2=file_2_name)
 
         file1_elf, file2_elf = get_elf_data(file1_fd, file2_fd)
+        if file1_elf is None or file2_elf is None:
+            return render_template('compare/error.html', error='Both files must be of the same type (ELF)!')
         file1_data = {'uid': uid1,
                       'name': file_1_name,
                       'header': file1_elf.header,
@@ -212,8 +214,8 @@ class CompareRoutes(ComponentBase):
 
     def is_text_file(self, uid1, uid2):
         with ConnectTo(CompareDbInterface, self._config) as db:
-            mime1 = db.get_object(uid1).processed_analysis['file_type']['MIME']
-            mime2 = db.get_object(uid2).processed_analysis['file_type']['MIME']
+            mime1 = db.get_object(uid1).processed_analysis['file_type']['mime']
+            mime2 = db.get_object(uid2).processed_analysis['file_type']['mime']
         if mime1 == mime2 and mime1 == 'text/plain':
             return True
         return False
@@ -230,7 +232,7 @@ def get_elf_data(file1, file2):
     binary1 = lief.parse(file1)
     binary2 = lief.parse(file2)
     if binary1 is None or binary2 is None:
-        return render_template('compare/error.html', error='Both files must be of the same type (ELF)!')
+        return binary1, binary2
     lib1, lib2 = get_unique_sets(binary1.libraries, binary2.libraries)
     improted_functions1, imported_functions2 = get_unique_sets([function.name for function in binary1.imported_functions],
                                                                [function.name for function in binary2.imported_functions])
