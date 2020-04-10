@@ -52,10 +52,17 @@
                 <td>{{ file1.exported_functions | nice_list | safe }}</td>
                 <td>{{ file2.exported_functions | nice_list | safe }}</td>
             </tr>
-            <<tr data-toggle="collapse" data-target="#collapse5" class="clickable success">
-                <td colspan="2">Unique Strings</td>
+            <tr data-toggle="collapse" data-target="#collapse5" class="clickable success">
+                <td colspan="2">Software Components</td>
             </tr>
             <tr id="collapse5" class="collapse">
+                <td>{{ file1.software_components | nice_list | safe }}</td>
+                <td>{{ file2.software_components | nice_list | safe }}</td>
+            </tr>
+            <tr data-toggle="collapse" data-target="#collapse6" class="clickable success">
+                <td colspan="2">Unique Strings</td>
+            </tr>
+            <tr id="collapse6" class="collapse">
                 <td>{{ file1.unique_strings | nice_list | safe }}</td>
                 <td>{{ file2.unique_strings | nice_list | safe }}</td>
             </tr>
