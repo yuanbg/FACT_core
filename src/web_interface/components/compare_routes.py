@@ -241,13 +241,13 @@ def get_elf_data(file1, file2):
         exported_functions1 = [function.name for function in binary1.exported_functions]
         strings1 = binary1.get_strings()
     if binary2:
-        h2 = binary1.header
-        lib2 = binary1.libraries
-        imported_functions2 = [function.name for function in binary1.imported_functions]
-        exported_functions2 = [function.name for function in binary1.exported_functions]
-        strings1 = binary1.get_strings()
+        h2 = binary2.header
+        lib2 = binary2.libraries
+        imported_functions2 = [function.name for function in binary2.imported_functions]
+        exported_functions2 = [function.name for function in binary2.exported_functions]
+        strings2 = binary2.get_strings()
     if h1 and h2:
-        h1, h2 = get_header_diff(binary1.header, binary2.header)
+        h1, h2 = get_header_diff(h1, h2)
     lib1, lib2 = get_unique_sets(lib1, lib2)
     imported_functions1, imported_functions2 = get_unique_sets(imported_functions1, imported_functions2)
     exported_functions1, exported_functions2 = get_unique_sets(exported_functions1, exported_functions2)
@@ -305,8 +305,9 @@ def get_header_diff(head1, head2):
         
            
 def get_unique_sets(list1, list2):
-    set1 = set(list1)
-    set2 = set(list2)
-    out1 = set1 - set2
-    out2 = set2 - set1
-    return out1, out2
+    if list1 and list2:
+        set1 = set(list1)
+        set2 = set(list2)
+        list1 = set1 - set2
+        list2 = set2 - set1
+    return list1, list2
