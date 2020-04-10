@@ -188,7 +188,7 @@ class CompareRoutes(ComponentBase):
         file1_fd, file_1_name = bs.get_binary_and_file_name(uid1)
         file2_fd, file_2_name = bs.get_binary_and_file_name(uid2)
         
-        if self.is_text_file(uid1, uid2):
+        if self.is_text_file(uid1) and self.is_text_file(uid2):
             table = HtmlDiff(wrapcolumn=100).make_table(file1_fd.decode().splitlines(), file2_fd.decode().splitlines())
             table = table.replace('class="diff"', 'class="table table-bordered diff"')
             return render_template("compare/text_file_comparison.html", table=table, file1=file_1_name, file2=file_2_name)
@@ -212,12 +212,10 @@ class CompareRoutes(ComponentBase):
                       'unique_strings': file2_elf.strings}
         return render_template('compare/file_pair_comparison.html', file1=file1_data, file2=file2_data)
 
-    def is_text_file(self, uid1, uid2):
+    def is_text_file(self, uid):
         with ConnectTo(CompareDbInterface, self._config) as db:
-            mime1 = db.get_object(uid1).processed_analysis['file_type']['mime']
-            mime2 = db.get_object(uid2).processed_analysis['file_type']['mime']
-        if mime1 == mime2 and mime1 == 'text/plain':
-            return True
+            if db.get_object(uid).processed_analysis['file_type']['mime'] == 'text/plain':
+                return True
         return False
 
 
@@ -231,21 +229,42 @@ def get_elf_data(file1, file2):
     ELF = namedtuple('ELF', 'header, imported_libs, imported_functions, exported_functions, strings')
     binary1 = lief.parse(file1)
     binary2 = lief.parse(file2)
-    if binary1 is None or binary2 is None:
-        return binary1, binary2
-    h1, h2 = get_Header_diff(binary1.header, binary2.header)
-    lib1, lib2 = get_unique_sets(binary1.libraries, binary2.libraries)
-    improted_functions1, imported_functions2 = get_unique_sets([function.name for function in binary1.imported_functions],
-                                                               [function.name for function in binary2.imported_functions])
-    exported_functions1, exported_functions2 = get_unique_sets([function.name for function in binary1.exported_functions],
-                                                               [function.name for function in binary2.exported_functions])
-    strings1, strings2 = get_unique_sets(binary1.get_strings(), binary2.get_strings())
-    elf1 = ELF(h1, lib1, improted_functions1, exported_functions1, strings1)
+    h1, h2 = None, None
+    lib1, lib2 = None, None
+    imported_functions1, imported_functions2 = None, None
+    exported_functions1, exported_functions2 = None, None
+    strings1, strings2 = get_strings(file1), get_strings(file2)
+    if binary1:
+        h1 = binary1.header
+        lib1 = binary1.libraries
+        imported_functions1 = [function.name for function in binary1.imported_functions]
+        exported_functions1 = [function.name for function in binary1.exported_functions]
+        strings1 = binary1.get_strings()
+    if binary2:
+        h2 = binary1.header
+        lib2 = binary1.libraries
+        imported_functions2 = [function.name for function in binary1.imported_functions]
+        exported_functions2 = [function.name for function in binary1.exported_functions]
+        strings1 = binary1.get_strings()
+    if h1 and h2:
+        h1, h2 = get_header_diff(binary1.header, binary2.header)
+    lib1, lib2 = get_unique_sets(lib1, lib2)
+    imported_functions1, imported_functions2 = get_unique_sets(imported_functions1, imported_functions2)
+    exported_functions1, exported_functions2 = get_unique_sets(exported_functions1, exported_functions2)
+    strings1, strings2 = get_unique_sets(strings1, strings2)
+    elf1 = ELF(h1, lib1, imported_functions1, exported_functions1, strings1)
     elf2 = ELF(h2, lib2, imported_functions2, exported_functions2, strings2)
     return elf1, elf2
 
 
-def get_Header_diff(head1, head2):
+def get_strings(file):
+    try:
+        return file.decode().splitlines()
+    except UnicodeDecodeError:
+        return None
+
+
+def get_header_diff(head1, head2):
     template = ['Class:',
                 'Endianness:',
                 'Version:',
