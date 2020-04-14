@@ -204,7 +204,7 @@ class CompareRoutes(ComponentBase):
                       'imported_libs': file1_elf.imported_libs,
                       'imported_functions': file1_elf.imported_functions,
                       'exported_functions': file1_elf.exported_functions,
-                      'sofware_components' : self.get_software_components(uid1),
+                      'software_components': self.get_software_components(uid1),
                       'unique_strings': file1_elf.strings}
         file2_data = {'uid': uid2,
                       'name': file_2_name,
@@ -212,7 +212,7 @@ class CompareRoutes(ComponentBase):
                       'imported_libs': file2_elf.imported_libs,
                       'imported_functions': file2_elf.imported_functions,
                       'exported_functions': file2_elf.exported_functions,
-                      'sofware_components' : self.get_software_components(uid2),
+                      'software_components': self.get_software_components(uid2),
                       'unique_strings': file2_elf.strings}
         return render_template('compare/file_pair_comparison.html', file1=file1_data, file2=file2_data)
 
@@ -284,6 +284,7 @@ def get_header_diff(head1, head2):
     if header2:
         header2 = ''.join(header2)
     return header1, header2
+
 
 def get_head_list(head):
     header = head.__str__().split()
