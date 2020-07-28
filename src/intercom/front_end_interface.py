@@ -45,7 +45,7 @@ class InterComFrontEndInterface(InterComMongoInterface):
     def add_binary_search_request(self, yara_rule_binary, firmware_uid=None):
         serialized_request = pickle.dumps((yara_rule_binary, firmware_uid))
         request_id = generate_task_id(yara_rule_binary)
-        self.connections["binary_search_task"]['fs'].put(serialized_request, filename="{}".format(request_id))
+        self.connections["binary_search_task"]['fs'].put(serialized_request, filename=request_id)
         return request_id
 
     def get_binary_search_result(self, request_id):
@@ -55,7 +55,7 @@ class InterComFrontEndInterface(InterComMongoInterface):
     def _request_response_listener(self, input_data, request_connection, response_connection):
         serialized_request = pickle.dumps(input_data)
         request_id = generate_task_id(input_data)
-        self.connections[request_connection]['fs'].put(serialized_request, filename="{}".format(request_id))
+        self.connections[request_connection]['fs'].put(serialized_request, filename=request_id)
         logging.debug('Request sent: {} -> {}'.format(request_connection, request_id))
         sleep(1)
         return self._response_listener(response_connection, request_id)

@@ -9,6 +9,8 @@ from intercom.back_end_dispatcher import (
     InterComBackEndRawDownloadTask, InterComBackEndReAnalyzeTask, InterComBackEndSingleFileTask,
     InterComBackEndTarRepackTask
 )
+from intercom.back_end_interface import InterComBackEndInterface
+from intercom.front_end_dispatcher import InterComFrontEndWebhookTask
 from intercom.front_end_interface import InterComFrontEndInterface
 from storage.fs_organizer import FS_Organizer
 from storage.MongoMgr import MongoMgr
@@ -34,15 +36,16 @@ class TestInterComTaskCommunication(unittest.TestCase):
         cls.mongo_server = MongoMgr(config=cls.config)
 
     def setUp(self):
-        self.frontend = InterComFrontEndInterface(config=self.config)
-        self.backend = None
+        self.listener = None
+        self.interface = None
 
     def tearDown(self):
-        for item in self.frontend.connections.keys():
-            self.frontend.client.drop_database(self.frontend.connections[item]['name'])
-        if self.backend:
-            self.backend.shutdown()
-        self.frontend.shutdown()
+        if self.interface:
+            for item in self.interface.connections.keys():
+                self.interface.client.drop_database(self.interface.connections[item]['name'])
+            self.interface.shutdown()
+        if self.listener:
+            self.listener.shutdown()
         gc.collect()
 
     @classmethod
@@ -50,29 +53,36 @@ class TestInterComTaskCommunication(unittest.TestCase):
         cls.mongo_server.shutdown()
         cls.tmp_dir.cleanup()
 
+
+class TestInterComFrontendToBackend(TestInterComTaskCommunication):
+
+    def setUp(self):
+        self.interface = InterComFrontEndInterface(config=self.config)
+        self.listener = None
+
     def test_analysis_task(self):
-        self.backend = InterComBackEndAnalysisTask(config=self.config)
+        self.listener = InterComBackEndAnalysisTask(config=self.config)
         test_fw = create_test_firmware()
         test_fw.file_path = None
-        self.frontend.add_analysis_task(test_fw)
-        task = self.backend.get_next_task()
+        self.interface.add_analysis_task(test_fw)
+        task = self.listener.get_next_task()
         self.assertEqual(task.uid, test_fw.uid, 'uid not correct')
         self.assertIsNotNone(task.file_path, 'file_path not set')
         self.assertTrue(os.path.exists(task.file_path), 'file does not exist')
 
     def test_single_file_task(self):
-        self.backend = InterComBackEndSingleFileTask(config=self.config)
+        self.listener = InterComBackEndSingleFileTask(config=self.config)
         test_fw = create_test_firmware()
         test_fw.file_path = None
         test_fw.scheduled_analysis = ['binwalk']
-        self.frontend.add_single_file_task(test_fw)
-        task = self.backend.get_next_task()
+        self.interface.add_single_file_task(test_fw)
+        task = self.listener.get_next_task()
 
         assert task.uid == test_fw.uid, 'uid not transported correctly'
         assert task.scheduled_analysis
 
     def test_re_analyze_task(self):
-        self.backend = InterComBackEndReAnalyzeTask(config=self.config)
+        self.listener = InterComBackEndReAnalyzeTask(config=self.config)
         fs_organizer = FS_Organizer(config=self.config)
         test_fw = create_test_firmware()
         fs_organizer.store_file(test_fw)
@@ -80,8 +90,8 @@ class TestInterComTaskCommunication(unittest.TestCase):
         original_binary = test_fw.binary
         test_fw.file_path = None
         test_fw.binary = None
-        self.frontend.add_re_analyze_task(test_fw)
-        task = self.backend.get_next_task()
+        self.interface.add_re_analyze_task(test_fw)
+        task = self.listener.get_next_task()
         self.assertEqual(task.uid, test_fw.uid, 'uid not correct')
         self.assertIsNotNone(task.file_path, 'file path not set')
         self.assertEqual(task.file_path, original_file_path)
@@ -89,20 +99,20 @@ class TestInterComTaskCommunication(unittest.TestCase):
         self.assertEqual(task.binary, original_binary, 'binary content not correct')
 
     def test_compare_task(self):
-        self.backend = InterComBackEndCompareTask(config=self.config)
-        self.frontend.add_compare_task('valid_id', force=False)
-        result = self.backend.get_next_task()
+        self.listener = InterComBackEndCompareTask(config=self.config)
+        self.interface.add_compare_task('valid_id', force=False)
+        result = self.listener.get_next_task()
         self.assertEqual(result, ('valid_id', False))
 
     def test_analysis_plugin_publication(self):
-        self.backend = InterComBackEndAnalysisPlugInsPublisher(config=self.config, analysis_service=AnalysisServiceMock())
-        plugins = self.frontend.get_available_analysis_plugins()
+        self.listener = InterComBackEndAnalysisPlugInsPublisher(config=self.config, analysis_service=AnalysisServiceMock())
+        plugins = self.interface.get_available_analysis_plugins()
         self.assertEqual(len(plugins), 1, 'Not all plug-ins found')
         self.assertEqual(plugins, {'dummy': 'dummy description'}, 'content not correct')
 
     def test_analysis_plugin_publication_not_available(self):
         with self.assertRaises(Exception):
-            self.frontend.get_available_analysis_plugins()
+            self.interface.get_available_analysis_plugins()
 
     @mock.patch('intercom.front_end_interface.generate_task_id')
     @mock.patch('intercom.back_end_dispatcher.BinaryService')
@@ -110,13 +120,13 @@ class TestInterComTaskCommunication(unittest.TestCase):
         binary_service_mock().get_binary_and_file_name.return_value = (b'test', 'test.txt')
         generate_task_id_mock.return_value = 'valid_uid_0.0'
 
-        result = self.frontend.get_binary_and_filename('valid_uid')
+        result = self.interface.get_binary_and_filename('valid_uid')
         self.assertIsNone(result, 'should be none because of timeout')
 
-        self.backend = InterComBackEndRawDownloadTask(config=self.config)
-        task = self.backend.get_next_task()
+        self.listener = InterComBackEndRawDownloadTask(config=self.config)
+        task = self.listener.get_next_task()
         self.assertEqual(task, 'valid_uid', 'task not correct')
-        result = self.frontend.get_binary_and_filename('valid_uid_0.0')
+        result = self.interface.get_binary_and_filename('valid_uid_0.0')
         self.assertEqual(result, (b'test', 'test.txt'), 'retrieved binary not correct')
 
     @mock.patch('intercom.front_end_interface.generate_task_id')
@@ -125,11 +135,26 @@ class TestInterComTaskCommunication(unittest.TestCase):
         binary_service_mock().get_repacked_binary_and_file_name.return_value = (b'test', 'test.tar')
         generate_task_id_mock.return_value = 'valid_uid_0.0'
 
-        result = self.frontend.get_repacked_binary_and_file_name('valid_uid')
+        result = self.interface.get_repacked_binary_and_file_name('valid_uid')
         self.assertIsNone(result, 'should be none because of timeout')
 
-        self.backend = InterComBackEndTarRepackTask(config=self.config)
-        task = self.backend.get_next_task()
+        self.listener = InterComBackEndTarRepackTask(config=self.config)
+        task = self.listener.get_next_task()
         self.assertEqual(task, 'valid_uid', 'task not correct')
-        result = self.frontend.get_repacked_binary_and_file_name('valid_uid_0.0')
+        result = self.interface.get_repacked_binary_and_file_name('valid_uid_0.0')
         self.assertEqual(result, (b'test', 'test.tar'), 'retrieved binary not correct')
+
+
+class TestInterComBackendToFrontend(TestInterComTaskCommunication):
+
+    def setUp(self):
+        self.interface = InterComBackEndInterface(config=self.config)
+        self.listener = None
+
+    def test_webhook_task(self):
+        self.listener = InterComFrontEndWebhookTask(config=self.config)
+        test_url = 'https://foo.bar'
+        self.interface.send_webhook_message(test_url, 'deadbeef_123456')
+        task = self.listener.get_next_task()
+
+        assert task == test_url

@@ -32,6 +32,7 @@ from helperFunctions.config import get_config_dir
 from helperFunctions.fileSystem import get_src_dir
 from helperFunctions.program_setup import program_setup, was_started_by_start_fact
 from install.frontend import COMPOSE_VENV
+from intercom.front_end_dispatcher import InterComFrontEndDispatcher
 from statistic.work_load import WorkLoadStatistic
 
 PROGRAM_NAME = 'FACT Frontend'
@@ -80,6 +81,7 @@ if __name__ == '__main__':
     start_docker()
 
     work_load_stat = WorkLoadStatistic(config=CONFIG, component='frontend')
+    intercom = InterComFrontEndDispatcher(config=CONFIG)
 
     with tempfile.NamedTemporaryFile() as fp:
         fp.write(pickle.dumps(ARGS))
@@ -93,6 +95,7 @@ if __name__ == '__main__':
                 break
 
         work_load_stat.shutdown()
+        intercom.shutdown()
         _shutdown_uwsgi_server(uwsgi_process)
 
     stop_docker()

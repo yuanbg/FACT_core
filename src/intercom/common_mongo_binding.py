@@ -1,5 +1,6 @@
 import logging
 import pickle
+from abc import ABC, abstractmethod
 from multiprocessing import Value
 from multiprocessing.context import Process
 from time import sleep, time
@@ -23,20 +24,21 @@ class InterComMongoInterface(MongoInterface):
     '''
 
     INTERCOM_CONNECTION_TYPES = [
-        'test',
-        'analysis_task',
         'analysis_plugins',
-        're_analyze_task',
-        'update_task',
+        'analysis_task',
+        'binary_search_task',
+        'binary_search_task_resp',
         'compare_task',
         'file_delete_task',
         'raw_download_task',
         'raw_download_task_resp',
+        're_analyze_task',
+        'single_file_task',
         'tar_repack_task',
         'tar_repack_task_resp',
-        'binary_search_task',
-        'binary_search_task_resp',
-        'single_file_task'
+        'test',
+        'update_task',
+        'web_hook_task',
     ]
 
     def _setup_database_mapping(self):
@@ -108,7 +110,7 @@ class InterComListenerAndResponder(InterComListener):
         return task
 
 
-class InterComDispatcher:
+class InterComDispatcher(ABC):
     def __init__(self, config=None):
         self.config = config
         self.poll_delay = self.config['ExpertSettings'].getfloat('intercom_poll_delay')
@@ -138,6 +140,7 @@ class InterComDispatcher:
         interface.shutdown()
         logging.debug('{} listener stopped'.format(type(interface).__name__))
 
+    @abstractmethod
     def startup(self):
         '''
         needs to be implemented in derived classes

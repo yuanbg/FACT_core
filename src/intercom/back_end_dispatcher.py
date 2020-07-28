@@ -26,7 +26,7 @@ class InterComBackEndDispatcher(InterComDispatcher):
         self.analysis_service = analysis_service
         if not testing:
             self.startup()
-        logging.info('InterCom started')
+        logging.info('InterCom BackEnd Dispatcher started')
 
     def startup(self):
         InterComBackEndAnalysisPlugInsPublisher(config=self.config, analysis_service=self.analysis_service)
