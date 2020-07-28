@@ -9,7 +9,7 @@ from helperFunctions.dataConversion import (
     convert_compare_id_to_list, convert_uid_list_to_compare_id, normalize_compare_id
 )
 from helperFunctions.web_interface import get_template_as_string
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_compare import CompareDbInterface, FactCompareException
 from storage.db_interface_view_sync import ViewReader
 from web_interface.components.component_base import ComponentBase
@@ -112,7 +112,7 @@ class CompareRoutes(ComponentBase):
         except FactCompareException as exception:
             return render_template('compare/error.html', error=exception.get_message())
 
-        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self._config) as sc:
             sc.add_compare_task(compare_id, force=redo)
         return render_template('compare/wait.html', compare_id=compare_id)
 

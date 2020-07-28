@@ -2,7 +2,7 @@ from flask_restful import Resource
 
 from helperFunctions.database import ConnectTo
 from helperFunctions.rest import error_message, success_message
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_statistic import StatisticDbViewer
 from web_interface.security.decorator import roles_accepted
 from web_interface.security.privileges import PRIVILEGES
@@ -22,7 +22,7 @@ class RestStatus(Resource):
             for component in components:
                 status[component] = stats_db.get_statistic(component)
 
-        with ConnectTo(InterComFrontEndBinding, self.config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self.config) as sc:
             plugins = sc.get_available_analysis_plugins()
 
         if not status:

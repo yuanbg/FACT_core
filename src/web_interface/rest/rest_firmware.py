@@ -12,7 +12,7 @@ from helperFunctions.rest import (
     convert_rest_request, error_message, get_inverted_flag, get_paging, get_query, get_recursive_flag, get_summary_flag,
     get_update, success_message
 )
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from objects.firmware import Firmware
 from storage.db_interface_frontend import FrontEndDbInterface
 from web_interface.security.decorator import roles_accepted
@@ -45,7 +45,7 @@ class RestFirmware(Resource):
 
         data['binary'] = standard_b64decode(data['binary'])
         firmware_object = convert_analysis_task_to_fw_obj(data)
-        with ConnectTo(InterComFrontEndBinding, self.config) as intercom:
+        with ConnectTo(InterComFrontEndInterface, self.config) as intercom:
             intercom.add_analysis_task(firmware_object)
         data.pop('binary')
 
@@ -69,7 +69,7 @@ class RestFirmware(Resource):
 
         firmware.scheduled_analysis = update
 
-        with ConnectTo(InterComFrontEndBinding, self.config) as intercom:
+        with ConnectTo(InterComFrontEndInterface, self.config) as intercom:
             supported_plugins = intercom.get_available_analysis_plugins().keys()
             for item in update:
                 if item not in supported_plugins:

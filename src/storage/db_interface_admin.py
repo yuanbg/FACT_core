@@ -1,6 +1,6 @@
 import logging
 
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_common import MongoInterfaceCommon
 
 
@@ -10,7 +10,7 @@ class AdminDbInterface(MongoInterfaceCommon):
 
     def __init__(self, config=None):
         super().__init__(config=config)
-        self.intercom = InterComFrontEndBinding(config=config)
+        self.intercom = InterComFrontEndInterface(config=config)
 
     def shutdown(self):
         self.intercom.shutdown()

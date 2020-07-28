@@ -7,7 +7,7 @@ from flask import jsonify, render_template
 from helperFunctions.database import ConnectTo
 from helperFunctions.dataConversion import none_to_none
 from helperFunctions.file_tree import FileTreeNode, get_correct_icon_for_mime, remove_virtual_path_from_root
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_compare import CompareDbInterface
 from storage.db_interface_frontend import FrontEndDbInterface
 from storage.db_interface_statistic import StatisticDbViewer
@@ -152,7 +152,7 @@ class AjaxRoutes(ComponentBase):
     def _ajax_get_binary(self, mime_type, uid):
         mime_type = mime_type.replace('_', '/')
         div = '<div style="display: block; border: 1px solid; border-color: #dddddd; padding: 5px; text-align: center">'
-        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self._config) as sc:
             binary = sc.get_binary_and_filename(uid)[0]
         if 'text/' in mime_type:
             return '<pre style="white-space: pre-wrap">{}</pre>'.format(html.escape(bytes_to_str_filter(binary)))

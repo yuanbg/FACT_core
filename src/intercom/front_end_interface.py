@@ -5,9 +5,10 @@ from time import sleep, time
 from intercom.common_mongo_binding import InterComMongoInterface, generate_task_id
 
 
-class InterComFrontEndBinding(InterComMongoInterface):
+class InterComFrontEndInterface(InterComMongoInterface):
     '''
-    Internal Communication FrontEnd Binding
+    Internal Communication FrontEnd Interface
+    sends requests from the frontend through the intercom to the backend dispatcher
     '''
 
     def add_analysis_task(self, fw):

@@ -14,7 +14,7 @@ from helperFunctions.mongo_task_conversion import get_file_name_and_binary_from_
 from helperFunctions.uid import is_uid
 from helperFunctions.web_interface import apply_filters_to_query, filter_out_illegal_characters
 from helperFunctions.yara_binary_search import get_yara_error, is_valid_yara_rule_file
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_frontend import FrontEndDbInterface
 from storage.db_interface_frontend_editing import FrontendEditingDbInterface
 from web_interface.components.component_base import ComponentBase
@@ -184,7 +184,7 @@ class DatabaseRoutes(ComponentBase):
                 error = 'Error: Firmware with UID {} not found in database'.format(repr(firmware_uid))
             elif yara_rule_file is not None:
                 if is_valid_yara_rule_file(yara_rule_file):
-                    with ConnectTo(InterComFrontEndBinding, self._config) as connection:
+                    with ConnectTo(InterComFrontEndInterface, self._config) as connection:
                         request_id = connection.add_binary_search_request(yara_rule_file, firmware_uid)
                     return redirect(url_for('database/database_binary_search_results.html', request_id=request_id, only_firmware=only_firmware))
                 error = 'Error in YARA rules: {}'.format(get_yara_error(yara_rule_file))
@@ -211,7 +211,7 @@ class DatabaseRoutes(ComponentBase):
         firmware_dict, error, yara_rules = None, None, None
         if request.args.get('request_id'):
             request_id = request.args.get('request_id')
-            with ConnectTo(InterComFrontEndBinding, self._config) as connection:
+            with ConnectTo(InterComFrontEndInterface, self._config) as connection:
                 result, yara_rules = connection.get_binary_search_result(request_id)
             if isinstance(result, str):
                 error = result

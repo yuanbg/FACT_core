@@ -4,7 +4,7 @@ from multiprocessing import Queue, Value
 from tempfile import TemporaryDirectory
 from time import sleep
 
-from intercom.back_end_binding import InterComBackEndBinding
+from intercom.back_end_dispatcher import InterComBackEndDispatcher
 from storage.MongoMgr import MongoMgr
 from test.common_helper import get_config_for_testing
 
@@ -62,7 +62,7 @@ class TestInterComBackEndScheduler(unittest.TestCase):
     def setUp(self):
         config = get_config_for_testing(TMP_DIR)
         self.test_queue = Queue()
-        self.interface = InterComBackEndBinding(
+        self.interface = InterComBackEndDispatcher(
             config=config, testing=True, analysis_service=AnalysisServiceMock(), compare_service=ServiceMock(self.test_queue), unpacking_service=ServiceMock(self.test_queue)
         )
         self.interface.WAIT_TIME = 2

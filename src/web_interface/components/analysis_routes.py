@@ -13,7 +13,7 @@ from helperFunctions.mongo_task_conversion import (
     check_for_errors, convert_analysis_task_to_fw_obj, create_re_analyze_task
 )
 from helperFunctions.web_interface import get_template_as_string, overwrite_default_plugins
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from objects.file import FileObject
 from objects.firmware import Firmware
 from storage.db_interface_admin import AdminDbInterface
@@ -63,7 +63,7 @@ class AnalysisRoutes(ComponentBase):
                 root_uid = file_obj.uid
                 other_versions = sc.get_other_versions_of_firmware(file_obj)
             included_fo_analysis_complete = not sc.all_uids_found_in_database(list(file_obj.files_included))
-        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self._config) as sc:
             analysis_plugins = sc.get_available_analysis_plugins()
         return render_template_string(
             self._get_correct_template(selected_analysis, file_obj),
@@ -95,7 +95,7 @@ class AnalysisRoutes(ComponentBase):
             with ConnectTo(FrontEndDbInterface, self._config) as database:
                 file_object = database.get_object(uid)
             file_object.scheduled_analysis = request.form.getlist('analysis_systems')
-            with ConnectTo(InterComFrontEndBinding, self._config) as intercom:
+            with ConnectTo(InterComFrontEndInterface, self._config) as intercom:
                 intercom.add_single_file_task(file_object)
         else:
             flash('You have insufficient rights to add additional analyses')
@@ -140,7 +140,7 @@ class AnalysisRoutes(ComponentBase):
         device_name_dict[old_firmware.device_class][old_firmware.vendor].remove(old_firmware.device_name)
 
         previously_processed_plugins = list(old_firmware.processed_analysis.keys())
-        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self._config) as sc:
             plugin_dict = overwrite_default_plugins(sc, previously_processed_plugins)
 
         title = 're-do analysis' if re_do else 'update analysis'
@@ -161,7 +161,7 @@ class AnalysisRoutes(ComponentBase):
         if re_do:
             with ConnectTo(AdminDbInterface, self._config) as sc:
                 sc.delete_firmware(uid, delete_root_file=False)
-        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self._config) as sc:
             sc.add_re_analyze_task(fw)
 
     @roles_accepted(*PRIVILEGES['delete'])

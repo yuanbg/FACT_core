@@ -8,14 +8,13 @@ from tempfile import TemporaryDirectory
 from common_helper_files import create_dir_for_file
 
 from helperFunctions.config import load_config
-from intercom.back_end_binding import InterComBackEndBinding
+from intercom.back_end_dispatcher import InterComBackEndDispatcher
 from scheduler.Analysis import AnalysisScheduler
 from scheduler.Compare import CompareScheduler
 from scheduler.Unpacking import UnpackingScheduler
 from storage.MongoMgr import MongoMgr
-from test.common_helper import get_database_names, clean_test_database
+from test.common_helper import clean_test_database, get_database_names
 from web_interface.frontend_main import WebFrontEnd
-
 
 TMP_DIR = TemporaryDirectory(prefix='fact_test_')
 TMP_DB_NAME = 'tmp_acceptance_tests'
@@ -76,7 +75,7 @@ class TestAcceptanceBase(unittest.TestCase):
         self.analysis_service = AnalysisScheduler(config=self.config, post_analysis=post_analysis)
         self.unpacking_service = UnpackingScheduler(config=self.config, post_unpack=self.analysis_service.start_analysis_of_object)
         self.compare_service = CompareScheduler(config=self.config, callback=compare_callback)
-        self.intercom = InterComBackEndBinding(config=self.config, analysis_service=self.analysis_service, compare_service=self.compare_service, unpacking_service=self.unpacking_service)
+        self.intercom = InterComBackEndDispatcher(config=self.config, analysis_service=self.analysis_service, compare_service=self.compare_service, unpacking_service=self.unpacking_service)
 
     def _setup_debugging_logging(self):
         # for debugging purposes only

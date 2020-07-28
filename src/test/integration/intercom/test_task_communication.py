@@ -4,18 +4,18 @@ import unittest
 from tempfile import TemporaryDirectory
 from unittest import mock
 
-from intercom.back_end_binding import (
+from intercom.back_end_dispatcher import (
     InterComBackEndAnalysisPlugInsPublisher, InterComBackEndAnalysisTask, InterComBackEndCompareTask,
     InterComBackEndRawDownloadTask, InterComBackEndReAnalyzeTask, InterComBackEndSingleFileTask,
     InterComBackEndTarRepackTask
 )
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.fs_organizer import FS_Organizer
 from storage.MongoMgr import MongoMgr
 from test.common_helper import create_test_firmware, get_config_for_testing
 
 
-class AnalysisServiceMock():
+class AnalysisServiceMock:
 
     def __init__(self, config=None):
         pass
@@ -34,7 +34,7 @@ class TestInterComTaskCommunication(unittest.TestCase):
         cls.mongo_server = MongoMgr(config=cls.config)
 
     def setUp(self):
-        self.frontend = InterComFrontEndBinding(config=self.config)
+        self.frontend = InterComFrontEndInterface(config=self.config)
         self.backend = None
 
     def tearDown(self):
@@ -104,8 +104,8 @@ class TestInterComTaskCommunication(unittest.TestCase):
         with self.assertRaises(Exception):
             self.frontend.get_available_analysis_plugins()
 
-    @mock.patch('intercom.front_end_binding.generate_task_id')
-    @mock.patch('intercom.back_end_binding.BinaryService')
+    @mock.patch('intercom.front_end_interface.generate_task_id')
+    @mock.patch('intercom.back_end_dispatcher.BinaryService')
     def test_raw_download_task(self, binary_service_mock, generate_task_id_mock):
         binary_service_mock().get_binary_and_file_name.return_value = (b'test', 'test.txt')
         generate_task_id_mock.return_value = 'valid_uid_0.0'
@@ -119,8 +119,8 @@ class TestInterComTaskCommunication(unittest.TestCase):
         result = self.frontend.get_binary_and_filename('valid_uid_0.0')
         self.assertEqual(result, (b'test', 'test.txt'), 'retrieved binary not correct')
 
-    @mock.patch('intercom.front_end_binding.generate_task_id')
-    @mock.patch('intercom.back_end_binding.BinaryService')
+    @mock.patch('intercom.front_end_interface.generate_task_id')
+    @mock.patch('intercom.back_end_dispatcher.BinaryService')
     def test_tar_repack_task(self, binary_service_mock, generate_task_id_mock):
         binary_service_mock().get_repacked_binary_and_file_name.return_value = (b'test', 'test.tar')
         generate_task_id_mock.return_value = 'valid_uid_0.0'

@@ -6,7 +6,7 @@ from flask_restful import Resource
 from helperFunctions.database import ConnectTo
 from helperFunctions.dataConversion import normalize_compare_id
 from helperFunctions.rest import convert_rest_request, error_message, success_message
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_compare import CompareDbInterface, FactCompareException
 from web_interface.security.decorator import roles_accepted
 from web_interface.security.privileges import PRIVILEGES
@@ -47,7 +47,7 @@ class RestCompare(Resource):
             db_compare_service.check_objects_exist(compare_id)
         except FactCompareException as exception:
             return error_message(exception.get_message(), self.URL, request_data=data, return_code=404)
-        with ConnectTo(InterComFrontEndBinding, self.config) as intercom:
+        with ConnectTo(InterComFrontEndInterface, self.config) as intercom:
             intercom.add_compare_task(compare_id, force=redo)
         return success_message({'message': 'Compare started. Please use GET to get the results.'}, self.URL, request_data=data, return_code=202)
 

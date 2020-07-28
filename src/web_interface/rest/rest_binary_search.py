@@ -3,7 +3,7 @@ from flask_restful import Resource, request
 from helperFunctions.database import ConnectTo
 from helperFunctions.rest import convert_rest_request, error_message, success_message
 from helperFunctions.yara_binary_search import is_valid_yara_rule_file
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_frontend import FrontEndDbInterface
 from web_interface.security.decorator import roles_accepted
 from web_interface.security.privileges import PRIVILEGES
@@ -37,7 +37,7 @@ class RestBinarySearch(Resource):
         except RestBinarySearchException as exception:
             return error_message(exception.get_message(), self.URL, request_data=request.data)
 
-        with ConnectTo(InterComFrontEndBinding, self.config) as intercom:
+        with ConnectTo(InterComFrontEndInterface, self.config) as intercom:
             search_id = intercom.add_binary_search_request(yara_rules, uid)
 
         return success_message(
@@ -58,7 +58,7 @@ class RestBinarySearch(Resource):
         if search_id is None:
             return error_message('The request is missing a search_id (.../binary_search/<search_id>).', self.URL)
 
-        with ConnectTo(InterComFrontEndBinding, self.config) as intercom:
+        with ConnectTo(InterComFrontEndInterface, self.config) as intercom:
             result, _ = intercom.get_binary_search_result(search_id)
 
         if result is None:

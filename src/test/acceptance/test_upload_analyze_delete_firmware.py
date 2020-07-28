@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 
 from helperFunctions.database import ConnectTo
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_frontend import FrontEndDbInterface
 from storage.fs_organizer import FS_Organizer
 from test.acceptance.base_full_start import TestAcceptanceBaseFullStart
@@ -14,7 +14,7 @@ class TestAcceptanceAnalyzeFirmware(TestAcceptanceBaseFullStart):
         rv = self.test_client.get('/upload')
         self.assertIn(b'<h3 class="mb-3">Upload Firmware</h3>', rv.data, 'upload page not displayed correctly')
 
-        with ConnectTo(InterComFrontEndBinding, self.config) as connection:
+        with ConnectTo(InterComFrontEndInterface, self.config) as connection:
             plugins = connection.get_available_analysis_plugins()
 
         mandatory_plugins = [p for p in plugins if plugins[p][1]]

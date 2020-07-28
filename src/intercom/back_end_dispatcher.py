@@ -1,33 +1,29 @@
 import logging
 import pickle
-from multiprocessing import Process, Value
-from time import sleep
-from typing import Callable, Optional, Type
 
 from common_helper_mongo.gridfs import overwrite_file
 
 from helperFunctions.database import ConnectTo
 from helperFunctions.yara_binary_search import YaraBinarySearchScanner
-from intercom.common_mongo_binding import InterComListener, InterComListenerAndResponder, InterComMongoInterface
+from intercom.common_mongo_binding import (
+    InterComDispatcher, InterComListener, InterComListenerAndResponder, InterComMongoInterface
+)
 from storage.binary_service import BinaryService
 from storage.db_interface_common import MongoInterfaceCommon
 from storage.fs_organizer import FS_Organizer
 
 
-class InterComBackEndBinding:
+class InterComBackEndDispatcher(InterComDispatcher):
     '''
-    Internal Communication Backend Binding
+    Internal Communication Backend Dispatcher
+    receives requests from the frontend through the intercom and dispatches them
     '''
 
     def __init__(self, config=None, analysis_service=None, compare_service=None, unpacking_service=None, testing=False):
-        self.config = config
-        self.analysis_service = analysis_service
+        super().__init__(config)
         self.compare_service = compare_service
         self.unpacking_service = unpacking_service
-        self.poll_delay = self.config['ExpertSettings'].getfloat('intercom_poll_delay')
-
-        self.stop_condition = Value('i', 0)
-        self.process_list = []
+        self.analysis_service = analysis_service
         if not testing:
             self.startup()
         logging.info('InterCom started')
@@ -43,12 +39,6 @@ class InterComBackEndBinding:
         self.start_update_listener()
         self.start_delete_file_listener()
         self.start_single_analysis_listener()
-
-    def shutdown(self):
-        self.stop_condition.value = 1
-        for item in self.process_list:
-            item.join()
-        logging.info('InterCom down')
 
     def start_analysis_listener(self):
         self._start_listener(InterComBackEndAnalysisTask, self.unpacking_service.add_task)
@@ -76,23 +66,6 @@ class InterComBackEndBinding:
 
     def start_delete_file_listener(self):
         self._start_listener(InterComBackEndDeleteFile)
-
-    def _start_listener(self, listener: Type[InterComListener], do_after_function: Optional[Callable] = None):
-        process = Process(target=self._backend_worker, args=(listener, do_after_function))
-        process.start()
-        self.process_list.append(process)
-
-    def _backend_worker(self, listener: Type[InterComListener], do_after_function: Optional[Callable]):
-        interface = listener(config=self.config)
-        logging.debug('{} listener started'.format(type(interface).__name__))
-        while self.stop_condition.value == 0:
-            task = interface.get_next_task()
-            if task is None:
-                sleep(self.poll_delay)
-            elif do_after_function is not None:
-                do_after_function(task)
-        interface.shutdown()
-        logging.debug('{} listener stopped'.format(type(interface).__name__))
 
 
 class InterComBackEndAnalysisPlugInsPublisher(InterComMongoInterface):

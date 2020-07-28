@@ -1,7 +1,7 @@
 # pylint: disable=redefined-outer-name
 import pytest
 
-from intercom.back_end_binding import InterComBackEndDeleteFile
+from intercom.back_end_dispatcher import InterComBackEndDeleteFile
 from test.common_helper import DatabaseMock, fake_exit, get_config_for_testing
 from test.integration.common import MockFSOrganizer
 

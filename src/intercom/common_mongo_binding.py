@@ -1,6 +1,9 @@
 import logging
 import pickle
-from time import time
+from multiprocessing import Value
+from multiprocessing.context import Process
+from time import sleep, time
+from typing import Callable, Optional, Type
 
 import gridfs
 
@@ -103,3 +106,40 @@ class InterComListenerAndResponder(InterComListener):
         this function must be implemented by the sub_class
         '''
         return task
+
+
+class InterComDispatcher:
+    def __init__(self, config=None):
+        self.config = config
+        self.poll_delay = self.config['ExpertSettings'].getfloat('intercom_poll_delay')
+        self.process_list = []
+        self.stop_condition = Value('i', 0)
+
+    def _start_listener(self, listener: Type[InterComListener], do_after_function: Optional[Callable] = None):
+        process = Process(target=self._backend_worker, args=(listener, do_after_function))
+        process.start()
+        self.process_list.append(process)
+
+    def shutdown(self):
+        self.stop_condition.value = 1
+        for item in self.process_list:
+            item.join()
+        logging.info('InterCom down')
+
+    def _backend_worker(self, listener: Type[InterComListener], do_after_function: Optional[Callable]):
+        interface = listener(config=self.config)
+        logging.debug('{} listener started'.format(type(interface).__name__))
+        while self.stop_condition.value == 0:
+            task = interface.get_next_task()
+            if task is None:
+                sleep(self.poll_delay)
+            elif do_after_function is not None:
+                do_after_function(task)
+        interface.shutdown()
+        logging.debug('{} listener stopped'.format(type(interface).__name__))
+
+    def startup(self):
+        '''
+        needs to be implemented in derived classes
+        '''
+        raise NotImplementedError

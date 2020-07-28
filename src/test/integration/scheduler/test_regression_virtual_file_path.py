@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from intercom.back_end_binding import InterComBackEndBinding
+from intercom.back_end_dispatcher import InterComBackEndDispatcher
 from objects.firmware import Firmware
 from scheduler.Analysis import AnalysisScheduler
 from scheduler.Unpacking import UnpackingScheduler
@@ -74,7 +74,7 @@ def test_scheduler(test_config, finished_event, intermediate_event):
 
     analyzer = AnalysisScheduler(test_config, pre_analysis=count_pre_analysis, db_interface=interface)
     unpacker = UnpackingScheduler(config=test_config, post_unpack=analyzer.start_analysis_of_object)
-    intercom = InterComBackEndBinding(config=test_config, analysis_service=analyzer, unpacking_service=unpacker, compare_service=MockScheduler())
+    intercom = InterComBackEndDispatcher(config=test_config, analysis_service=analyzer, unpacking_service=unpacker, compare_service=MockScheduler())
     yield unpacker
     intercom.shutdown()
     unpacker.shutdown()

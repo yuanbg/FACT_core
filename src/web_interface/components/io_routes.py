@@ -12,7 +12,7 @@ from helperFunctions.mongo_task_conversion import (
 )
 from helperFunctions.pdf import build_pdf_report
 from helperFunctions.web_interface import get_radare_endpoint
-from intercom.front_end_binding import InterComFrontEndBinding
+from intercom.front_end_interface import InterComFrontEndInterface
 from storage.db_interface_compare import CompareDbInterface, FactCompareException
 from storage.db_interface_frontend import FrontEndDbInterface
 from web_interface.components.component_base import ComponentBase
@@ -38,7 +38,7 @@ class IORoutes(ComponentBase):
             error = check_for_errors(analysis_task)
             if not error:
                 fw = convert_analysis_task_to_fw_obj(analysis_task)
-                with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+                with ConnectTo(InterComFrontEndInterface, self._config) as sc:
                     sc.add_analysis_task(fw)
                 return render_template('upload/upload_successful.html', uid=analysis_task['uid'])
 
@@ -46,7 +46,7 @@ class IORoutes(ComponentBase):
             device_class_list = sc.get_device_class_list()
             vendor_list = sc.get_vendor_list()
             device_name_dict = sc.get_device_name_dict()
-        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self._config) as sc:
             analysis_plugins = sc.get_available_analysis_plugins()
         return render_template(
             'upload/upload.html',
@@ -70,7 +70,7 @@ class IORoutes(ComponentBase):
             object_exists = sc.existence_quick_check(uid)
         if not object_exists:
             return render_template('uid_not_found.html', uid=uid)
-        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self._config) as sc:
             if packed:
                 result = sc.get_repacked_binary_and_file_name(uid)
             else:
@@ -103,7 +103,7 @@ class IORoutes(ComponentBase):
             object_exists = sc.existence_quick_check(uid)
         if not object_exists:
             return render_template('uid_not_found.html', uid=uid)
-        with ConnectTo(InterComFrontEndBinding, self._config) as sc:
+        with ConnectTo(InterComFrontEndInterface, self._config) as sc:
             result = sc.get_binary_and_filename(uid)
         if result is None:
             return render_template('error.html', message='timeout')
