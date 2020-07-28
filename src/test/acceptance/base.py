@@ -65,11 +65,11 @@ class TestAcceptanceBase(unittest.TestCase):
         cls.config.set('Logging', 'mongoDbLogFile', os.path.join(TMP_DIR.name, 'mongo.log'))
 
     def _stop_backend(self):
-        with ThreadPoolExecutor(max_workers=4) as e:
-            e.submit(self.intercom.shutdown)
-            e.submit(self.compare_service.shutdown)
-            e.submit(self.unpacking_service.shutdown)
-            e.submit(self.analysis_service.shutdown)
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            pool.submit(self.intercom.shutdown)
+            pool.submit(self.compare_service.shutdown)
+            pool.submit(self.unpacking_service.shutdown)
+            pool.submit(self.analysis_service.shutdown)
 
     def _start_backend(self, post_analysis=None, compare_callback=None):
         self.analysis_service = AnalysisScheduler(config=self.config, post_analysis=post_analysis)

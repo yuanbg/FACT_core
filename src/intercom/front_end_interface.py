@@ -72,7 +72,6 @@ class InterComFrontEndInterface(InterComMongoInterface):
                     self.connections[response_connection]['fs'].delete(resp._id)  # pylint: disable=protected-access
                 logging.debug('Response received: {} -> {}'.format(response_connection, request_id))
                 break
-            else:
-                logging.debug('No response yet: {} -> {}'.format(response_connection, request_id))
-                sleep(1)
+            logging.debug('No response yet: {} -> {}'.format(response_connection, request_id))
+            sleep(1)
         return output_data
