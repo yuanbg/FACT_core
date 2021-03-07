@@ -20,6 +20,7 @@ from web_interface.security.privileges import PRIVILEGES
 class CompareRoutes(ComponentBase):
     def _init_component(self):
         self._app.add_url_rule('/compare', '/compare/', self._app_show_start_compare)
+        self._app.add_url_rule('/file_compare/<uid1>/<uid2>', '/file_compare/', self._file_compare)
         self._app.add_url_rule('/database/browse_compare', 'database/browse_compare', self._app_show_browse_compare)
         self._app.add_url_rule('/compare/<compare_id>', '/compare/<compare_id>', self._app_show_compare_result)
         self._app.add_url_rule('/comparison/add/<uid>', 'comparison/add/<uid>', self._add_to_compare_basket)
@@ -160,6 +161,10 @@ class CompareRoutes(ComponentBase):
         compare_uid_list.clear()
         session.modified = True
         return redirect(url_for('show_analysis', uid=analysis_uid))
+
+    @roles_accepted(*PRIVILEGES['compare'])
+    def _file_compare(self, uid1, uid2):
+        pass
 
 
 def get_comparison_uid_list_from_session():  # pylint: disable=invalid-name
