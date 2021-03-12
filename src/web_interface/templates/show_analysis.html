@@ -194,9 +194,6 @@
                                 function start_file_compare(){
                                     var checkbox = document.getElementById('recompare_checkbox');
                                     var link = '/file_compare';
-                                    {% for compare_uid in uids_for_comparison %}
-                                        link += '/{{ compare_uid }}'
-                                    {% endfor %}
                                     if (checkbox.checked) link += '?force_recompare=true';
                                     location.href = link;
                                 };

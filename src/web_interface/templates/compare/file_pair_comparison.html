@@ -27,44 +27,44 @@
             </tr>
             <tr id="collapse1" class="collapse">
                 {% autoescape false %}
-                <td><ul>{{ file1.header | nice_list }}</ul></td>
-                <td><ul>{{ file2.header | nice_list }}</ul></td>
+                <td><ul>{{ file1.header | nice_uid_list }}</ul></td>
+                <td><ul>{{ file2.header | nice_uid_list }}</ul></td>
                 {% endautoescape %}
             </tr>
             <<tr data-toggle="collapse" data-target="#collapse2" class="clickable success">
                 <td colspan="2">Imported Libraries</td>
             </tr>
             <tr id="collapse2" class="collapse">
-                <td>{{ file1.imported_libs | nice_list | safe }}</td>
-                <td>{{ file2.imported_libs | nice_list | safe }}</td>
+                <td>{{ file1.imported_libs | nice_uid_list | safe }}</td>
+                <td>{{ file2.imported_libs | nice_uid_list | safe }}</td>
             </tr>
             <tr data-toggle="collapse" data-target="#collapse3" class="clickable success">
                 <td colspan="2">Imported Functions</td>
             </tr>
             <tr id="collapse3" class="collapse">
-                <td>{{ file1.imported_functions | nice_list | safe }}</td>
-                <td>{{ file2.imported_functions | nice_list | safe }}</td>
+                <td>{{ file1.imported_functions | nice_uid_list | safe }}</td>
+                <td>{{ file2.imported_functions | nice_uid_list | safe }}</td>
             </tr>
             <tr data-toggle="collapse" data-target="#collapse4" class="clickable success">
                 <td colspan="2">Exported Functions</td>
             </tr>
             <tr id="collapse4" class="collapse">
-                <td>{{ file1.exported_functions | nice_list | safe }}</td>
-                <td>{{ file2.exported_functions | nice_list | safe }}</td>
+                <td>{{ file1.exported_functions | nice_uid_list | safe }}</td>
+                <td>{{ file2.exported_functions | nice_uid_list | safe }}</td>
             </tr>
             <tr data-toggle="collapse" data-target="#collapse5" class="clickable success">
                 <td colspan="2">Software Components</td>
             </tr>
             <tr id="collapse5" class="collapse">
-                <td>{{ file1.software_components | nice_list | safe }}</td>
-                <td>{{ file2.software_components | nice_list | safe }}</td>
+                <td>{{ file1.software_components | nice_uid_list | safe }}</td>
+                <td>{{ file2.software_components | nice_uid_list | safe }}</td>
             </tr>
             <tr data-toggle="collapse" data-target="#collapse6" class="clickable success">
                 <td colspan="2">Unique Strings</td>
             </tr>
             <tr id="collapse6" class="collapse">
-                <td>{{ file1.unique_strings | nice_list | safe }}</td>
-                <td>{{ file2.unique_strings | nice_list | safe }}</td>
+                <td>{{ file1.unique_strings | nice_uid_list | safe }}</td>
+                <td>{{ file2.unique_strings | nice_uid_list | safe }}</td>
             </tr>
         </table>
     </div>
