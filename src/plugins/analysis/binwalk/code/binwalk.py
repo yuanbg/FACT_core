@@ -24,6 +24,8 @@ class AnalysisPlugin(AnalysisBasePlugin):
 
     def process_object(self, file_object):
         result = {}
+        print(get_temp_dir_path(self.config))
+        print(file_object.file_path)
         tmp_dir = TemporaryDirectory(prefix='fact_analysis_binwalk_', dir=get_temp_dir_path(self.config))
         dir_path = tmp_dir.name
 
@@ -35,7 +37,7 @@ class AnalysisPlugin(AnalysisBasePlugin):
         pic_path = os.path.join(dir_path, '{}.png'.format(os.path.basename(file_object.file_path)))
         result['entropy_analysis_graph'] = get_binary_from_file(pic_path)
 
-        tmp_dir.cleanup()
+        #tmp_dir.cleanup()
         file_object.processed_analysis[self.NAME] = result
         return file_object
 
