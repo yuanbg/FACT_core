@@ -61,7 +61,7 @@ class FactFrontend(FactBase):
     def __init__(self):
         super().__init__()
         self.server = None
-        run_cmd_with_logging(f'docker-compose -f {COMPOSE_YAML} up -d')
+        run_cmd_with_logging(f'docker-compose -p fact_radare -f {COMPOSE_YAML} up -d')
 
     def main(self):
         with tempfile.NamedTemporaryFile() as fp:

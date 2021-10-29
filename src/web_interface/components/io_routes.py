@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import sleep
 
+import docker
 import requests
 from flask import make_response, redirect, render_template, request
 
@@ -123,7 +124,12 @@ class IORoutes(ComponentBase):
 
     @staticmethod
     def _get_radare_endpoint(config: ConfigParser) -> str:
-        radare2_host = config['ExpertSettings']['radare2_host']
+        radare2_host = config['ExpertSettings'].get('radare2_host')
+        if radare2_host is None:
+            client = docker.from_env()
+            for container in client.containers.list(all=False, filters={'name': 'fact_radare_server'}):
+                radare2_host = container.attrs['NetworkSettings']['Networks']['fact_radare_default']['IPAddress']
+
         if config.getboolean('ExpertSettings', 'nginx'):
             return 'https://{}/radare'.format(radare2_host)
         return 'http://{}:8000'.format(radare2_host)

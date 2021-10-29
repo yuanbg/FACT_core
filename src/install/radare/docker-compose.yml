@@ -3,11 +3,13 @@ version: '2'
 services:
     app:
         image: fkiecad/radare-web-gui:latest
+        container_name: fact_radare-web-gui
         restart: on-failure
     server:
         build:
             context: ./nginx
             dockerfile: Dockerfile
+        container_name: fact_radare_server
         restart: on-failure
         ports:
         - 8000:8000
