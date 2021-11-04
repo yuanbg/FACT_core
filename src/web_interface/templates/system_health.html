@@ -3,6 +3,7 @@
 {% set active_page = "Info" %}
 
 {% block head %}
+    <link href="{{ url_for('static', filename='css/text_shadow.css') }}" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="{{ url_for('static', filename='js/system_health.js') }}"></script>
     <script>
         setInterval(updateSystemHealth, 5000);
