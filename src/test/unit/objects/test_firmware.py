@@ -48,7 +48,7 @@ def test_create_firmware_container_raw():
 
 
 def test_create_firmware_from_file():
-    test_object = Firmware(file_path='{}/test_data_file.bin'.format(get_test_data_dir()))
+    test_object = Firmware(file_path=f'{get_test_data_dir()}/test_data_file.bin')
     assert test_object.device_name is None
     assert test_object.size == 19
     assert test_object.binary == b'test string in file'
@@ -57,7 +57,7 @@ def test_create_firmware_from_file():
 
 
 def test_set_binary():
-    binary = get_binary_from_file('{}/get_files_test/testfile1'.format(get_test_data_dir()))
+    binary = get_binary_from_file(f'{get_test_data_dir()}/get_files_test/testfile1')
     md5 = 'e802ca22f6cd2d9357cf3da1d191879e'
     firmware = Firmware()
     firmware.set_binary(binary)

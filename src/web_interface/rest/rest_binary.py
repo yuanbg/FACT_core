@@ -40,7 +40,7 @@ class RestBinary(RestResourceBase):
         with ConnectTo(FrontEndDbInterface, self.config) as db_service:
             existence = db_service.exists(uid)
         if not existence:
-            return error_message('No firmware with UID {} found in database'.format(uid), self.URL,
+            return error_message(f'No firmware with UID {uid} found in database', self.URL,
                                  request_data={'uid': uid}, return_code=404)
 
         try:

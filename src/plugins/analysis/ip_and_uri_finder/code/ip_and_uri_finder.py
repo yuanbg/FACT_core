@@ -73,7 +73,7 @@ class AnalysisPlugin(AnalysisBasePlugin):
 
     def find_geo_location(self, ip_address):
         response = self.reader.city(ip_address)
-        return '{}, {}'.format(response.location.latitude, response.location.longitude)  # pylint: disable=no-member
+        return f'{response.location.latitude}, {response.location.longitude}'  # pylint: disable=no-member
 
     def link_ips_with_geo_location(self, ip_addresses):
         linked_ip_geo_list = []
@@ -81,7 +81,7 @@ class AnalysisPlugin(AnalysisBasePlugin):
             try:
                 ip_tuple = ip, self.find_geo_location(ip)
             except (AttributeError, AddressNotFoundError, FileNotFoundError, ValueError, InvalidDatabaseError) as exception:
-                logging.debug('{} {}'.format(type(exception), str(exception)))
+                logging.debug(f'{type(exception)} {str(exception)}')
                 ip_tuple = ip, ''
             linked_ip_geo_list.append(ip_tuple)
         return linked_ip_geo_list

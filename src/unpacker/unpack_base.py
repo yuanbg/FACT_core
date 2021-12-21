@@ -26,7 +26,7 @@ class UnpackBase:
             )
         )
         if return_code != 0:
-            error = 'Failed to execute docker extractor with code {}:\n{}'.format(return_code, output)
+            error = f'Failed to execute docker extractor with code {return_code}:\n{output}'
             logging.error(error)
             raise RuntimeError(error)
 

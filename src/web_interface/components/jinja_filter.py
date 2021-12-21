@@ -29,7 +29,7 @@ class FilterClass:
         self._setup_filters()
 
     def _filter_print_program_version(self, *_):
-        return '{}'.format(self._program_version)
+        return f'{self._program_version}'
 
     def _filter_replace_uid_with_file_name(self, input_data):
         tmp = input_data.__str__()
@@ -37,7 +37,7 @@ class FilterClass:
         for item in uid_list:
             with ConnectTo(FrontEndDbInterface, self._config) as sc:
                 file_name = sc.get_file_name(item)
-            tmp = tmp.replace('>{}<'.format(item), '>{}<'.format(file_name))
+            tmp = tmp.replace(f'>{item}<', f'>{file_name}<')
         return tmp
 
     def _filter_replace_uid_with_hid(self, input_data, root_uid=None):
@@ -104,7 +104,7 @@ class FilterClass:
                 '    </a>'
                 '</span>'.format(uid=uid_element, root_uid=root_uid, hid=cap_length_of_element(hid_element))
             )
-        return '<span class="badge badge-secondary">{}</span>'.format(cap_length_of_element(hid_element))
+        return f'<span class="badge badge-secondary">{cap_length_of_element(hid_element)}</span>'
 
     @staticmethod
     def _render_firmware_detail_tabular_field(firmware_meta_data):

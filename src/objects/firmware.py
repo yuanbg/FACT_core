@@ -147,8 +147,8 @@ class Firmware(FileObject):  # pylint: disable=too-many-instance-attributes
         '''
         See :meth:`objects.file.FileObject.get_hid`.
         '''
-        part = ' - {}'.format(self.part) if self.part else ''
-        return '{} {}{} v. {}'.format(self.vendor, self.device_name, part, self.version)
+        part = f' - {self.part}' if self.part else ''
+        return f'{self.vendor} {self.device_name}{part} v. {self.version}'
 
     def __str__(self) -> str:
         return (

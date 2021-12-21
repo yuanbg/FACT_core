@@ -27,6 +27,6 @@ class TarRepack(UnpackBase):
 
     @staticmethod
     def _repack_extracted_files(extraction_dir: Path, out_file_path: str) -> bytes:
-        output = execute_shell_command('tar -C {} -cvzf {} .'.format(extraction_dir, out_file_path))
-        logging.debug('tar -cvzf:\n {}'.format(output))
+        output = execute_shell_command(f'tar -C {extraction_dir} -cvzf {out_file_path} .')
+        logging.debug(f'tar -cvzf:\n {output}')
         return get_binary_from_file(out_file_path)

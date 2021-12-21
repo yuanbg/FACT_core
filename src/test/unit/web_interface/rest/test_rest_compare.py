@@ -41,7 +41,7 @@ def test_get_invalid_compare_id_2(test_app):
 
 
 def test_get_success(test_app):
-    compare_id = '{};{}'.format(TEST_FW.uid, TEST_TEXT_FILE.uid)
+    compare_id = f'{TEST_FW.uid};{TEST_TEXT_FILE.uid}'
     result = decode_response(test_app.get(f'/rest/compare/{compare_id}'))
     assert 'this_is' in result
     assert result['this_is'] == 'a_compare_result'

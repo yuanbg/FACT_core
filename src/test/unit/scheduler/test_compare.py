@@ -27,7 +27,7 @@ class MockDbInterface:
     @staticmethod
     def check_objects_exist(compare_id):
         if not compare_id == 'existing_id':
-            raise FactCompareException('{} not found in database'.format(compare_id))
+            raise FactCompareException(f'{compare_id} not found in database')
 
     def get_complete_object_including_all_summaries(self, uid):
         if uid == self.test_object.uid:

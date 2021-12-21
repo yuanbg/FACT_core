@@ -77,7 +77,7 @@ class StatisticUpdater:
 
         benchmark = stats['creation_time'] - self.start_time
         stats['benchmark'] = benchmark
-        logging.info('time to create stats: {}'.format(time_format(benchmark)))
+        logging.info(f'time to create stats: {time_format(benchmark)}')
         return stats
 
     def get_malware_stats(self):
@@ -302,7 +302,7 @@ class StatisticUpdater:
             arch_frequency = sorted(self._count_occurrences(arch_list), key=lambda x: x[1], reverse=True)
             return arch_frequency[0][0]
         except (AttributeError, KeyError, TypeError) as exception:
-            logging.error('Could not get arch frequency: {} {}'.format(sys.exc_info()[0].__name__, exception))
+            logging.error(f'Could not get arch frequency: {sys.exc_info()[0].__name__} {exception}')
             return None
 
     @staticmethod

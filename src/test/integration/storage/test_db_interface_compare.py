@@ -29,7 +29,7 @@ class TestCompare:
         self.fw_two = create_test_firmware()
         self.fw_two.set_binary(b'another firmware')
         self.compare_dict = self._create_compare_dict()
-        self.compare_id = '{};{}'.format(self.fw_one.uid, self.fw_two.uid)
+        self.compare_id = f'{self.fw_one.uid};{self.fw_two.uid}'
 
     def teardown(self):
         self.db_interface_compare.shutdown()
@@ -79,12 +79,12 @@ class TestCompare:
         self.db_interface_backend.add_firmware(self.fw_one)
         assert not self.db_interface_compare.check_objects_exist(self.fw_one.uid), 'existing_object not found'
         with pytest.raises(FactCompareException):
-            self.db_interface_compare.check_objects_exist('{};none_existing_object'.format(self.fw_one.uid))
+            self.db_interface_compare.check_objects_exist(f'{self.fw_one.uid};none_existing_object')
 
     def test_get_compare_result_of_nonexistent_uid(self):
         self.db_interface_backend.add_firmware(self.fw_one)
         try:
-            self.db_interface_compare.check_objects_exist('{};none_existing_object'.format(self.fw_one.uid))
+            self.db_interface_compare.check_objects_exist(f'{self.fw_one.uid};none_existing_object')
         except FactCompareException as exception:
             assert exception.get_message() == 'none_existing_object not found in database', 'error message not correct'
 

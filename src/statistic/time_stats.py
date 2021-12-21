@@ -6,7 +6,7 @@ def build_stats_entry_from_date_query(date_query):
     result = []
     for year in sorted(time_dict.keys()):
         for month in sorted(time_dict[year].keys()):
-            result.append(('{} {}'.format(_get_month_name(month), year), time_dict[year][month]))
+            result.append((f'{_get_month_name(month)} {year}', time_dict[year][month]))
     return result
 
 

@@ -36,7 +36,7 @@ class TestFileAddition(unittest.TestCase):
         gc.collect()
 
     def test_unpack_and_analyse(self):
-        test_fw = Firmware(file_path='{}/container/test.zip'.format(get_test_data_dir()))
+        test_fw = Firmware(file_path=f'{get_test_data_dir()}/container/test.zip')
 
         self._unpack_scheduler.add_task(test_fw)
 

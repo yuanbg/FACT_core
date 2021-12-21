@@ -71,7 +71,7 @@ def get_imphash(file_object):
                 functions = normalize_lief_items(lief.parse(file_object.file_path).imported_functions)
             return md5(','.join(sorted(functions)).encode()).hexdigest()
         except Exception:
-            logging.error('Could not compute imphash for {}'.format(file_object.file_path), exc_info=True)
+            logging.error(f'Could not compute imphash for {file_object.file_path}', exc_info=True)
     return None
 
 

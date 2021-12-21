@@ -98,8 +98,8 @@ def test_check_collision(test_app, test_scheduler, finished_event, intermediate_
 
     finished_event.wait(timeout=30)
 
-    first_response = test_app.get('/analysis/{}/ro/{}'.format(TARGET_UID, FIRST_ROOT_ID))
+    first_response = test_app.get(f'/analysis/{TARGET_UID}/ro/{FIRST_ROOT_ID}')
     assert b'insufficient information' not in first_response.data
 
-    second_response = test_app.get('/analysis/{}/ro/{}'.format(TARGET_UID, SECOND_ROOT_ID))
+    second_response = test_app.get(f'/analysis/{TARGET_UID}/ro/{SECOND_ROOT_ID}')
     assert b'insufficient information' not in second_response.data

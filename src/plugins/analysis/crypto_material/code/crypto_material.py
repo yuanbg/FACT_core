@@ -68,7 +68,7 @@ class AnalysisPlugin(YaraBasePlugin):
             return self.get_pkcs12_cert
         if match == self.SSLCERT:
             return self.get_ssl_cert
-        logging.warning('Unknown crypto rule match: {}'.format(match))
+        logging.warning(f'Unknown crypto rule match: {match}')
         return None
 
     def extract_labeled_keys(self, matches: List[Match], binary, min_key_len=128) -> List[str]:

@@ -40,9 +40,9 @@ def generic_nice_representation(i):  # pylint: disable=too-many-return-statement
 
 def nice_number_filter(i):
     if isinstance(i, int):
-        return '{:,}'.format(i)
+        return f'{i:,}'
     if isinstance(i, float):
-        return '{:,.2f}'.format(i)
+        return f'{i:,.2f}'
     if i is None:
         return 'not available'
     return i
@@ -52,7 +52,7 @@ def byte_number_filter(i, verbose=False):
     if not isinstance(i, (float, int)):
         return 'not available'
     if verbose:
-        return '{} ({})'.format(human_readable_file_size(i), format(i, ',d') + ' bytes')
+        return f'{human_readable_file_size(i)} ({format(i, ",d")} bytes)'
     return human_readable_file_size(i)
 
 
@@ -73,7 +73,7 @@ def list_group(input_data):
     if isinstance(input_data, list):
         http_list = '<ul class="list-group list-group-flush">\n'
         for item in input_data:
-            http_list += '\t<li class="list-group-item">{}</li>\n'.format(_handle_generic_data(item))
+            http_list += f'\t<li class="list-group-item">{_handle_generic_data(item)}</li>\n'
         http_list += '</ul>\n'
         return http_list
     return input_data
@@ -103,7 +103,7 @@ def nice_dict(input_data):
         key_list = list(input_data.keys())
         key_list.sort()
         for item in key_list:
-            tmp += '{}: {}<br />'.format(item, input_data[item])
+            tmp += f'{item}: {input_data[item]}<br />'
         return tmp
     return input_data
 
@@ -195,7 +195,7 @@ def sort_chart_list_by_name(input_data):
     try:
         input_data.sort(key=lambda x: x[0])
     except (AttributeError, IndexError, KeyError, TypeError):
-        logging.error('Could not sort chart list {}'.format(input_data), exc_info=True)
+        logging.error(f'Could not sort chart list {input_data}', exc_info=True)
         return []
     return input_data
 
@@ -204,7 +204,7 @@ def sort_chart_list_by_value(input_data):
     try:
         input_data.sort(key=lambda x: x[1], reverse=True)
     except (AttributeError, IndexError, KeyError, TypeError):
-        logging.error('Could not sort chart list {}'.format(input_data), exc_info=True)
+        logging.error(f'Could not sort chart list {input_data}', exc_info=True)
         return []
     return input_data
 
@@ -213,7 +213,7 @@ def sort_comments(comment_list):
     try:
         comment_list.sort(key=itemgetter('time'), reverse=True)
     except (AttributeError, KeyError, TypeError):
-        logging.error('Could not sort comment list {}'.format(comment_list), exc_info=True)
+        logging.error(f'Could not sort comment list {comment_list}', exc_info=True)
         return []
     return comment_list
 
@@ -259,7 +259,7 @@ def comment_out_regex_meta_chars(input_data):
     meta_chars = ['^', '$', '.', '[', ']', '|', '(', ')', '?', '*', '+', '{', '}']
     for char in meta_chars:
         if char in input_data:
-            input_data = input_data.replace(char, '\\{}'.format(char))
+            input_data = input_data.replace(char, f'\\{char}')
     return input_data
 
 
@@ -360,7 +360,7 @@ def random_collapse_id():
 
 def create_firmware_version_links(firmware_list, selected_analysis=None):
     if selected_analysis:
-        template = '<a href="/analysis/{{}}/{}">{{}}</a>'.format(selected_analysis)
+        template = f'<a href="/analysis/{{}}/{selected_analysis}">{{}}</a>'
     else:
         template = '<a href="/analysis/{}">{}</a>'
 

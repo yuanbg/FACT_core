@@ -30,7 +30,7 @@ class StatisticDbUpdater(StatisticDb):
     READ_ONLY = False
 
     def update_statistic(self, identifier, content_dict):
-        logging.debug('update {} statistic'.format(identifier))
+        logging.debug(f'update {identifier} statistic')
         try:
             self.statistic.delete_many({'_id': identifier})
             content_dict['_id'] = identifier

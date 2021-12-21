@@ -11,7 +11,7 @@ class LuaLinter:
     Wrapper for luacheck luascript linter
     '''
     def do_analysis(self, file_path):
-        linter_output = execute_shell_command('luacheck -q --ranges --config  {} {}'.format(CONFIG_FILE_PATH, file_path))
+        linter_output = execute_shell_command(f'luacheck -q --ranges --config  {CONFIG_FILE_PATH} {file_path}')
         return self._parse_linter_output(linter_output)
 
     def _parse_linter_output(self, output):
@@ -34,7 +34,7 @@ class LuaLinter:
                 else:
                     pass
             except (IndexError, ValueError) as e:
-                logging.warning('Lualinter failed to parse line: {}\n{}'.format(line, e))
+                logging.warning(f'Lualinter failed to parse line: {line}\n{e}')
 
         return issues
 

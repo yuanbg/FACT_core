@@ -10,7 +10,7 @@ from web_interface.components.component_base import ComponentBase
 
 ROUTES_MODULE_NAME = 'routes'
 PLUGIN_CATEGORIES = ['analysis', 'compare']
-PLUGIN_DIR = '{}/plugins'.format(get_src_dir())
+PLUGIN_DIR = f'{get_src_dir()}/plugins'
 
 
 class PluginRoutes(ComponentBase):
@@ -27,11 +27,11 @@ class PluginRoutes(ComponentBase):
     def _find_plugins(self):
         plugin_list = []
         for plugin_category in PLUGIN_CATEGORIES:
-            plugin_list.append((plugin_category, self._get_modules_in_path('{}/{}'.format(PLUGIN_DIR, plugin_category))))
+            plugin_list.append((plugin_category, self._get_modules_in_path(f'{PLUGIN_DIR}/{plugin_category}')))
         return plugin_list
 
     def _module_has_routes(self, plugin, plugin_type):
-        plugin_components = self._get_modules_in_path('{}/{}/{}'.format(PLUGIN_DIR, plugin_type, plugin))
+        plugin_components = self._get_modules_in_path(f'{PLUGIN_DIR}/{plugin_type}/{plugin}')
         return ROUTES_MODULE_NAME in plugin_components
 
     def _import_module_routes(self, plugin, plugin_type):

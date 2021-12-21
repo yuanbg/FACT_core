@@ -85,5 +85,5 @@ class FSMetadataRoutesRest(Resource):
             results = db.get_analysis_results_for_included_uid(uid)
         endpoint = self.ENDPOINTS[0][0]
         if not results:
-            error_message('no results found for uid {}'.format(uid), endpoint, request_data={'uid': uid})
+            error_message(f'no results found for uid {uid}', endpoint, request_data={'uid': uid})
         return success_message({AnalysisPlugin.NAME: results}, endpoint, request_data={'uid': uid})

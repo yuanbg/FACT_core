@@ -31,7 +31,7 @@ def build_pdf_report(firmware: Firmware, folder: Path) -> Path:
     )
 
     if return_code != 0:
-        logging.error('Failed to execute pdf generator with code {}:\n{}'.format(return_code, output))
+        logging.error(f'Failed to execute pdf generator with code {return_code}:\n{output}')
         raise RuntimeError('Could not create PDF report')
 
     pdf_path = _find_pdf(folder)
@@ -55,6 +55,6 @@ def _find_pdf(folder: Path) -> Path:
     pdf_path = None
     for file_path in (folder / 'pdf').rglob('*.pdf'):
         if pdf_path:
-            logging.warning('Indistinct pdf name. Found: {}'.format(file_path.name))
+            logging.warning(f'Indistinct pdf name. Found: {file_path.name}')
         pdf_path = file_path
     return pdf_path

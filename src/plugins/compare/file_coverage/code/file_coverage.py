@@ -122,18 +122,18 @@ class ComparePlugin(CompareBasePlugin):
         if len(similarities_list) == 1:
             return similarities_list.pop()
         similarities_list = [int(v) for v in similarities_list]
-        return '{} ‒ {}'.format(min(similarities_list), max(similarities_list))
+        return f'{min(similarities_list)} ‒ {max(similarities_list)}'
 
     @staticmethod
     def _get_similar_file_id(file_uid: str, parent_uid: str) -> str:
-        return '{}:{}'.format(parent_uid, file_uid)
+        return f'{parent_uid}:{file_uid}'
 
     @staticmethod
     def _get_similar_file_group_id(similar_file_group: List[str]) -> str:
         group_id = ''
         for similar_file_id in similar_file_group:
             parent_uid, file_uid = similar_file_id.split(':')
-            group_id = '{}{}{}'.format(group_id, parent_uid[:4], file_uid[:4])
+            group_id = f'{group_id}{parent_uid[:4]}{file_uid[:4]}'
         return group_id
 
     def _get_non_zero_common_files(self, files_in_all, not_in_all):

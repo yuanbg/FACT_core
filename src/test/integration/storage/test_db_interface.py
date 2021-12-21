@@ -117,15 +117,15 @@ class TestMongoInterface(unittest.TestCase):
 
         self.test_firmware.processed_analysis = long_dict
         sanitized_dict = self.db_interface.sanitize_analysis(self.test_firmware.processed_analysis, self.test_firmware.uid)
-        self.assertIn('stub_plugin_result_{}'.format(self.test_firmware.uid), self.db_interface.sanitize_fs.list(), 'sanitized file not stored')
-        self.assertNotIn('summary_result_{}'.format(self.test_firmware.uid), self.db_interface.sanitize_fs.list(), 'summary is erroneously stored')
+        self.assertIn(f'stub_plugin_result_{self.test_firmware.uid}', self.db_interface.sanitize_fs.list(), 'sanitized file not stored')
+        self.assertNotIn(f'summary_result_{self.test_firmware.uid}', self.db_interface.sanitize_fs.list(), 'summary is erroneously stored')
         self.assertIn('file_system_flag', sanitized_dict['stub_plugin'].keys())
         self.assertTrue(sanitized_dict['stub_plugin']['file_system_flag'])
         self.assertEqual(type(sanitized_dict['stub_plugin']['summary']), list)
 
     def test_sanitize_db_duplicates(self):
         long_dict = {'stub_plugin': {'result': 10000000000, 'misc': 'Bananarama', 'summary': []}}
-        gridfs_file_name = 'stub_plugin_result_{}'.format(self.test_firmware.uid)
+        gridfs_file_name = f'stub_plugin_result_{self.test_firmware.uid}'
 
         self.test_firmware.processed_analysis = long_dict
         assert self.db_interface.sanitize_fs.find({'filename': gridfs_file_name}).count() == 0

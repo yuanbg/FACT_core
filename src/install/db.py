@@ -49,8 +49,8 @@ def main(distribution):
 
     # creating DB directory
     fact_db_directory = _get_db_directory()
-    mkdir_output, _ = execute_shell_command_get_return_code('sudo mkdir -p --mode=0744 {}'.format(fact_db_directory))
-    chown_output, chown_code = execute_shell_command_get_return_code('sudo chown {}:{} {}'.format(os.getuid(), os.getgid(), fact_db_directory))
+    mkdir_output, _ = execute_shell_command_get_return_code(f'sudo mkdir -p --mode=0744 {fact_db_directory}')
+    chown_output, chown_code = execute_shell_command_get_return_code(f'sudo chown {os.getuid()}:{os.getgid()} {fact_db_directory}')
     if chown_code != 0:
         raise InstallationError('Failed to set up database directory. Check if parent folder exists\n{}'.format('\n'.join((mkdir_output, chown_output))))
 
@@ -59,7 +59,7 @@ def main(distribution):
     with OperateInDirectory('..'):
         init_output, init_code = execute_shell_command_get_return_code('python3 init_database.py')
     if init_code != 0:
-        raise InstallationError('Unable to initialize database\n{}'.format(init_output))
+        raise InstallationError(f'Unable to initialize database\n{init_output}')
 
     with OperateInDirectory('../../'):
         with suppress(FileNotFoundError):

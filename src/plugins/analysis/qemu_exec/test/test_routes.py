@@ -33,7 +33,7 @@ class DbInterfaceMock:
         }
 
         self.fo = create_test_file_object()
-        self.fo.virtual_file_path['parent_uid'] = ['parent_uid|{}|/{}'.format(self.fw.uid, 'some_file')]
+        self.fo.virtual_file_path['parent_uid'] = [f'parent_uid|{self.fw.uid}|/some_file']
 
     def get_object(self, uid):
         if uid == 'parent_uid':
@@ -103,25 +103,25 @@ class TestFileSystemMetadataRoutes(TestCase):
         self.test_client = app.test_client()
 
     def test__get_analysis_results_not_executable(self):
-        response = self.test_client.get('/plugins/qemu_exec/ajax/{}'.format('foo')).data.decode()
+        response = self.test_client.get('/plugins/qemu_exec/ajax/foo').data.decode()
         assert 'Results for this File' in response
         assert 'Executable in QEMU' in response
         assert '<td>False</td>' in response
 
     def test__get_analysis_results_executable(self):
-        response = self.test_client.get('/plugins/qemu_exec/ajax/{}'.format('bar')).data.decode()
+        response = self.test_client.get('/plugins/qemu_exec/ajax/bar').data.decode()
         assert 'Results for this File' in response
         assert 'Executable in QEMU' in response
         assert '<td>True</td>' in response
         assert all(s in response for s in ['some-arch', 'stdout result', 'stderr result', '1337', '/some/path'])
 
     def test__get_analysis_results_with_error_outside(self):
-        response = self.test_client.get('/plugins/qemu_exec/ajax/{}'.format('error-outside')).data.decode()
+        response = self.test_client.get('/plugins/qemu_exec/ajax/error-outside').data.decode()
         assert 'some-arch' not in response
         assert 'some error' in response
 
     def test__get_analysis_results_with_error_inside(self):
-        response = self.test_client.get('/plugins/qemu_exec/ajax/{}'.format('error-inside')).data.decode()
+        response = self.test_client.get('/plugins/qemu_exec/ajax/error-inside').data.decode()
         assert 'some-arch' in response
         assert 'some error' in response
 
@@ -145,12 +145,12 @@ class TestFileSystemMetadataRoutesRest(TestCase):
         self.test_client = app.test_client()
 
     def test__get_rest(self):
-        result = decode_response(self.test_client.get('/plugins/qemu_exec/rest/{}'.format('foo')))
+        result = decode_response(self.test_client.get('/plugins/qemu_exec/rest/foo'))
         assert AnalysisPlugin.NAME in result
         assert 'parent_uid' in result[AnalysisPlugin.NAME]
         assert result[AnalysisPlugin.NAME]['parent_uid'] == {'executable': False}
 
     def test__get_rest__no_result(self):
-        result = decode_response(self.test_client.get('/plugins/qemu_exec/rest/{}'.format('not_found')))
+        result = decode_response(self.test_client.get('/plugins/qemu_exec/rest/not_found'))
         assert AnalysisPlugin.NAME in result
         assert result[AnalysisPlugin.NAME] == {}

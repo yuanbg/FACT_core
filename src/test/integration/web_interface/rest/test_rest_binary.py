@@ -34,13 +34,13 @@ class TestRestDownload(RestTestBase):
         self.db_interface.add_firmware(test_firmware)
 
         try:
-            rv = self.test_client.get('/rest/binary/{}'.format(test_firmware.uid), follow_redirects=True)
+            rv = self.test_client.get(f'/rest/binary/{test_firmware.uid}', follow_redirects=True)
         finally:
             backend_binding.shutdown()
 
         assert standard_b64encode(test_firmware.binary) in rv.data
-        assert '"file_name": "{}"'.format(test_firmware.file_name).encode() in rv.data
-        assert '"SHA256": "{}"'.format(test_firmware.sha256).encode() in rv.data
+        assert f'"file_name": "{test_firmware.file_name}"'.encode() in rv.data
+        assert f'"SHA256": "{test_firmware.sha256}"'.encode() in rv.data
 
     def test_rest_download_invalid_uid(self):
         rv = self.test_client.get('/rest/binary/not%20existing%20uid', follow_redirects=True)

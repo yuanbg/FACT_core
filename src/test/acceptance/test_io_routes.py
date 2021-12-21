@@ -36,13 +36,13 @@ class TestAcceptanceIoRoutes(TestAcceptanceBase):
         super().tearDown()
 
     def test_radare_button(self):
-        response = self.test_client.get('/radare-view/{uid}'.format(uid=self.test_fw.uid))
+        response = self.test_client.get(f'/radare-view/{self.test_fw.uid}')
         self.assertIn('200', response.status, 'radare view link failed')
         self.assertIn(b'File not found in database', response.data, 'radare view should fail on missing uid')
 
         self.db_backend_interface.add_firmware(self.test_fw)
 
-        response = self.test_client.get('/radare-view/{uid}'.format(uid=self.test_fw.uid))
+        response = self.test_client.get(f'/radare-view/{self.test_fw.uid}')
         self.assertIn('200', response.status, 'radare view link failed')
         self.assertIn(b'with url: /v1/retrieve', response.data, 'error coming from wrong request')
         self.assertIn(b'Failed to establish a new connection', response.data, 'connection shall fail')
@@ -57,7 +57,7 @@ class TestAcceptanceIoRoutes(TestAcceptanceBase):
         compare_interface.add_compare_result(COMPARE_RESULT)
         cid = compare_interface._calculate_compare_result_id(COMPARE_RESULT)
 
-        response = self.test_client.get('/ida-download/{cid}'.format(cid=cid))
+        response = self.test_client.get(f'/ida-download/{cid}')
         self.assertIn(b'IDA database', response.data, 'mocked ida database not in result')
 
     def test_ida_download_bad_uid(self):
@@ -66,18 +66,19 @@ class TestAcceptanceIoRoutes(TestAcceptanceBase):
         compare_interface.add_compare_result(COMPARE_RESULT)
         cid = compare_interface._calculate_compare_result_id(COMPARE_RESULT)
 
-        response = self.test_client.get('/ida-download/{cid}'.format(cid=cid))
+        response = self.test_client.get(f'/ida-download/{cid}')
         self.assertIn(b'not found in database', response.data, 'endpoint should dismiss result')
 
     def test_pdf_download(self):
-        response = self.test_client.get('/pdf-download/{uid}'.format(uid=self.test_fw.uid))
+        response = self.test_client.get(f'/pdf-download/{self.test_fw.uid}')
         assert response.status_code == 200, 'pdf download link failed'
         assert b'File not found in database' in response.data, 'radare view should fail on missing uid'
 
         self.db_backend_interface.add_firmware(self.test_fw)
 
-        response = self.test_client.get('/pdf-download/{uid}'.format(uid=self.test_fw.uid))
+        response = self.test_client.get(f'/pdf-download/{self.test_fw.uid}')
 
         assert response.status_code == 200, 'pdf download failed'
-        assert response.headers['Content-Disposition'] == 'attachment; filename={}_analysis_report.pdf'.format(self.test_fw.device_name.replace(' ', '_'))
+        device_name = self.test_fw.device_name.replace(' ', '_')
+        assert response.headers['Content-Disposition'] == f'attachment; filename={device_name}_analysis_report.pdf'
         assert get_file_type_from_binary(response.data)['mime'] == 'application/pdf'

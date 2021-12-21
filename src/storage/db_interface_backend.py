@@ -19,7 +19,7 @@ class BackEndDbInterface(MongoInterfaceCommon):
         elif isinstance(fo_fw, FileObject):
             self.add_file_object(fo_fw)
         else:
-            logging.error('invalid object type: {} -> {}'.format(type(fo_fw), fo_fw))
+            logging.error(f'invalid object type: {type(fo_fw)} -> {fo_fw}')
             return
         self.release_unpacking_lock(fo_fw.uid)
 
@@ -69,7 +69,7 @@ class BackEndDbInterface(MongoInterfaceCommon):
             entry = self.build_firmware_dict(firmware)
             try:
                 self.firmwares.insert_one(entry)
-                logging.debug('firmware added to db: {}'.format(firmware.uid))
+                logging.debug(f'firmware added to db: {firmware.uid}')
             except PyMongoError:
                 logging.error('Could not add firmware:', exc_info=True)
 
@@ -112,7 +112,7 @@ class BackEndDbInterface(MongoInterfaceCommon):
             entry = self.build_file_object_dict(file_object)
             try:
                 self.file_objects.insert_one(entry)
-                logging.debug('file added to db: {}'.format(file_object.uid))
+                logging.debug(f'file added to db: {file_object.uid}')
             except PyMongoError:
                 logging.error('Could not update firmware:', exc_info=True)
 
@@ -164,9 +164,9 @@ class BackEndDbInterface(MongoInterfaceCommon):
             collection.update_one(
                 {'_id': file_object.uid},
                 {'$set': {
-                    'processed_analysis.{}'.format(analysis_system): result
+                    f'processed_analysis.{analysis_system}': result
                 }}
             )
         except Exception as exception:
-            logging.error('Update of analysis failed badly ({})'.format(exception))
+            logging.error(f'Update of analysis failed badly ({exception})')
             raise exception

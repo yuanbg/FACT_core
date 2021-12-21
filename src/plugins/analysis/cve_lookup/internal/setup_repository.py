@@ -278,7 +278,7 @@ def main():
     check_validity_of_arguments(years=years)
     extraction_path = args.extraction_path
     if not extraction_path.endswith('/'):
-        extraction_path = '{}/'.format(extraction_path)
+        extraction_path = f'{extraction_path}/'
 
     try:
         if args.update:

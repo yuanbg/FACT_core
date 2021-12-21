@@ -332,7 +332,7 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
 
     def get_repacked_binary_and_file_name(self, uid):
         if uid == TEST_FW.uid:
-            return TEST_FW.binary, '{}.tar.gz'.format(TEST_FW.file_name)
+            return TEST_FW.binary, f'{TEST_FW.file_name}.tar.gz'
         return None, None
 
     def add_binary_search_request(self, yara_rule_binary, firmware_uid=None):
@@ -368,7 +368,7 @@ class DatabaseMock:  # pylint: disable=too-many-public-methods
     def get_complete_object_including_all_summaries(self, uid):
         if uid == TEST_FW.uid:
             return TEST_FW
-        raise Exception('UID not found: {}'.format(uid))
+        raise Exception(f'UID not found: {uid}')
 
     def rest_get_firmware_uids(self, offset, limit, query=None, recursive=False, inverted=False):
         if (offset != 0) or (limit != 0):

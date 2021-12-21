@@ -80,7 +80,7 @@ class IORoutes(ComponentBase):
             return render_template('error.html', message='timeout')
         binary, file_name = result
         response = make_response(binary)
-        response.headers['Content-Disposition'] = 'attachment; filename={}'.format(file_name)
+        response.headers['Content-Disposition'] = f'attachment; filename={file_name}'
         return response
 
     @roles_accepted(*PRIVILEGES['download'])
@@ -95,7 +95,7 @@ class IORoutes(ComponentBase):
             return render_template('error.html', message='timeout')
         binary = result['plugins']['Ida_Diff_Highlighting']['idb_binary']
         response = make_response(binary)
-        response.headers['Content-Disposition'] = 'attachment; filename={}.idb'.format(compare_id[:8])
+        response.headers['Content-Disposition'] = f'attachment; filename={compare_id[:8]}.idb'
         return response
 
     @roles_accepted(*PRIVILEGES['download'])
@@ -112,10 +112,10 @@ class IORoutes(ComponentBase):
         binary, _ = result
         try:
             host = self._get_radare_endpoint(self._config)
-            response = requests.post('{}/v1/retrieve'.format(host), data=binary, verify=False)
+            response = requests.post(f'{host}/v1/retrieve', data=binary, verify=False)
             if response.status_code != 200:
                 raise TimeoutError(response.text)
-            target_link = '{}{}m/'.format(host, response.json()['endpoint'])
+            target_link = f'{host}{response.json()["endpoint"]}m/'
             sleep(1)
             return redirect(target_link)
         except (requests.exceptions.ConnectionError, TimeoutError, KeyError) as error:
@@ -125,8 +125,8 @@ class IORoutes(ComponentBase):
     def _get_radare_endpoint(config: ConfigParser) -> str:
         radare2_host = config['ExpertSettings']['radare2_host']
         if config.getboolean('ExpertSettings', 'nginx'):
-            return 'https://{}/radare'.format(radare2_host)
-        return 'http://{}:8000'.format(radare2_host)
+            return f'https://{radare2_host}/radare'
+        return f'http://{radare2_host}:8000'
 
     @roles_accepted(*PRIVILEGES['download'])
     @AppRoute('/pdf-download/<uid>', GET)
@@ -147,6 +147,6 @@ class IORoutes(ComponentBase):
             return render_template('error.html', message=str(error))
 
         response = make_response(binary)
-        response.headers['Content-Disposition'] = 'attachment; filename={}'.format(pdf_path.name)
+        response.headers['Content-Disposition'] = f'attachment; filename={pdf_path.name}'
 
         return response

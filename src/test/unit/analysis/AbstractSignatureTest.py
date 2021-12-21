@@ -10,6 +10,7 @@ class AbstractSignatureTest(AnalysisPluginTest):
         path = os.path.join(self.TEST_DATA_DIR, filename)
         test_file = FileObject(file_path=path)
         self.analysis_plugin.process_object(test_file)
-        self.assertEqual(len(test_file.processed_analysis[self.PLUGIN_NAME]), expected_number_of_rules + 1, 'Number of results is {} but should be {}'.format(len(test_file.processed_analysis[self.PLUGIN_NAME]) - 1, expected_number_of_rules))
+        number_of_rules = len(test_file.processed_analysis[self.PLUGIN_NAME])
+        self.assertEqual(number_of_rules, expected_number_of_rules + 1, f'Number of results is {number_of_rules - 1} but should be {expected_number_of_rules}')
         if expected_rule_name is not None:
-            self.assertIn(expected_rule_name, test_file.processed_analysis[self.PLUGIN_NAME], 'Expected rule {} missing'.format(expected_rule_name))
+            self.assertIn(expected_rule_name, test_file.processed_analysis[self.PLUGIN_NAME], f'Expected rule {expected_rule_name} missing')

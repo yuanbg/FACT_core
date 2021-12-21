@@ -115,8 +115,10 @@ class FrontEndDbInterface(MongoInterfaceCommon):
     def _get_hid_firmware(self, uid):
         firmware = self.firmwares.find_one({'_id': uid}, {'vendor': 1, 'device_name': 1, 'device_part': 1, 'version': 1, 'device_class': 1})
         if firmware is not None:
-            part = ' -' if 'device_part' not in firmware or firmware['device_part'] == '' else ' - {}'.format(firmware['device_part'])
-            return '{} {}{} {} ({})'.format(firmware['vendor'], firmware['device_name'], part, firmware['version'], firmware['device_class'])
+            hid_elements = [firmware['vendor'], firmware['device_name'], '-', firmware['version'], f'({firmware["device_class"]})']
+            if 'device_part' in firmware and firmware['device_part'] != '':
+                hid_elements.insert(3, firmware["device_part"])
+            return ' '.join(hid_elements)
         return None
 
     def _get_hid_fo(self, uid, root_uid):
@@ -158,8 +160,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
                     result = remove_duplicates_from_list(result + parents)
 
         except Exception as exception:
-            error_message = 'could not process search request: {} {}'.format(sys.exc_info()[0].__name__, exception)
-            logging.warning(error_message)
+            logging.warning(f'could not process search request: {exception}', exc_info=True)
             return error_message
         return result
 
@@ -219,7 +220,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
             for node in VirtualPathFileTree(root_uid, parent_uid, fo_data, whitelist).get_file_tree_nodes():
                 yield node
         except (KeyError, TypeError):  # the requested data is not in the DB aka the file has not been analyzed yet
-            yield FileTreeNode(uid, root_uid, not_analyzed=True, name='{uid} (not analyzed yet)'.format(uid=uid))
+            yield FileTreeNode(uid, root_uid, not_analyzed=True, name=f'{uid} (not analyzed yet)')
 
     def get_number_of_total_matches(self, query, only_parent_firmwares, inverted):
         if not only_parent_firmwares:
@@ -311,8 +312,8 @@ class FrontEndDbInterface(MongoInterfaceCommon):
         for result in query_result:
             firmware_uid, analysis_list = result['_id'], result['analyses']
             query = {'$and': [
-                {'virtual_file_path.{}'.format(firmware_uid): {'$exists': True}},
-                {'$or': [{'processed_analysis.{}'.format(plugin): {'$exists': False}} for plugin in analysis_list]}
+                {f'virtual_file_path.{firmware_uid}': {'$exists': True}},
+                {'$or': [{f'processed_analysis.{plugin}': {'$exists': False}} for plugin in analysis_list]}
             ]}
             for entry in self.file_objects.find(query, {'_id': 1}):
                 missing_analyses.setdefault(firmware_uid, set()).add(entry['_id'])

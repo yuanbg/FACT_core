@@ -54,9 +54,9 @@ class TestFileAddition(TestCase):  # pylint: disable=too-many-instance-attribute
         gc.collect()
 
     def test_unpack_analyse_and_compare(self):
-        test_fw_1 = Firmware(file_path='{}/container/test.zip'.format(get_test_data_dir()))
+        test_fw_1 = Firmware(file_path=f'{get_test_data_dir()}/container/test.zip')
         test_fw_1.release_date = '2017-01-01'
-        test_fw_2 = Firmware(file_path='{}/regression_one'.format(get_test_data_dir()))
+        test_fw_2 = Firmware(file_path=f'{get_test_data_dir()}/regression_one')
         test_fw_2.release_date = '2017-01-01'
 
         self._unpack_scheduler.add_task(test_fw_1)

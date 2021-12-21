@@ -7,8 +7,8 @@ import requests
 from common_helper_process import execute_shell_command_get_return_code
 
 from helperFunctions.install import (
-    InstallationError, OperateInDirectory, apt_install_packages, dnf_install_packages, install_pip_packages, load_main_config, remove_folder,
-    run_cmd_with_logging
+    InstallationError, OperateInDirectory, apt_install_packages, dnf_install_packages, install_pip_packages,
+    load_main_config, remove_folder, run_cmd_with_logging
 )
 
 DEFAULT_CERT = '.\n.\n.\n.\n.\nexample.com\n.\n\n\n'
@@ -18,22 +18,22 @@ PIP_DEPENDENCIES = INSTALL_DIR / 'requirements_frontend.txt'
 
 def execute_commands_and_raise_on_return_code(commands, error=None):  # pylint: disable=invalid-name
     for command in commands:
-        bad_return = error if error else 'execute {}'.format(command)
+        bad_return = error if error else f'execute {command}'
         output, return_code = execute_shell_command_get_return_code(command)
         if return_code != 0:
-            raise InstallationError('Failed to {}\n{}'.format(bad_return, output))
+            raise InstallationError(f'Failed to {bad_return}\n{output}')
 
 
 def wget_static_web_content(url, target_folder, additional_actions, resource_logging_name=None):
-    logging.info('Install static {} content'.format(resource_logging_name if resource_logging_name else url))
+    logging.info(f'Install static {resource_logging_name if resource_logging_name else url} content')
     with OperateInDirectory(target_folder):
-        wget_output, wget_code = execute_shell_command_get_return_code('wget -nc {}'.format(url))
+        wget_output, wget_code = execute_shell_command_get_return_code(f'wget -nc {url}')
         if wget_code != 0:
-            raise InstallationError('Failed to fetch resource at {}\n{}'.format(url, wget_output))
+            raise InstallationError(f'Failed to fetch resource at {url}\n{wget_output}')
         for action in additional_actions:
             action_output, action_code = execute_shell_command_get_return_code(action)
             if action_code != 0:
-                raise InstallationError('Problem in processing resource at {}\n{}'.format(url, action_output))
+                raise InstallationError(f'Problem in processing resource at {url}\n{action_output}')
 
 
 def _build_highlight_js():
@@ -51,7 +51,7 @@ def _build_highlight_js():
 
     commands = [
         'wget {url} --header="Host: highlightjs.org" --header="User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0" --header="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" --header="Accept-Language: en-GB,en;q=0.5" --header="Accept-Encoding: gzip, deflate, br" --header="Referer: https://highlightjs.org/download/" --header="Content-Type: application/x-www-form-urlencoded" --header="Cookie: csrftoken={token}" --header="DNT: 1" --header="Connection: keep-alive" --header="Upgrade-Insecure-Requests: 1" --post-data="apache.js=on&bash.js=on&coffeescript.js=on&cpp.js=on&cs.js=on&csrfmiddlewaretoken={token}&css.js=on&diff.js=on&http.js=on&ini.js=on&java.js=on&javascript.js=on&json.js=on&makefile.js=on&markdown.js=on&nginx.js=on&objectivec.js=on&perl.js=on&php.js=on&python.js=on&ruby.js=on&shell.js=on&sql.js=on&xml.js=on" -O {zip}'.format(url=highlight_js_url, token=csrf_token, zip=highlight_js_zip),  # pylint: disable=line-too-long
-        'unzip {} -d {}'.format(highlight_js_zip, highlight_js_dir)
+        f'unzip {highlight_js_zip} -d {highlight_js_dir}'
     ]
     execute_commands_and_raise_on_return_code(commands, error='Failed to set up highlight.js')
     Path(highlight_js_zip).unlink()
@@ -65,8 +65,8 @@ def _create_directory_for_authentication():  # pylint: disable=invalid-name
     # pylint: disable=fixme
     factauthdir = '/'.join(dburi.split('/')[:-1])[10:]  # FIXME this should be beautified with pathlib
 
-    mkdir_output, mkdir_code = execute_shell_command_get_return_code('sudo mkdir -p --mode=0744 {}'.format(factauthdir))
-    chown_output, chown_code = execute_shell_command_get_return_code('sudo chown {}:{} {}'.format(os.getuid(), os.getgid(), factauthdir))
+    mkdir_output, mkdir_code = execute_shell_command_get_return_code(f'sudo mkdir -p --mode=0744 {factauthdir}')
+    chown_output, chown_code = execute_shell_command_get_return_code(f'sudo chown {os.getuid()}:{os.getgid()} {factauthdir}')
 
     if not all(return_code == 0 for return_code in [mkdir_code, chown_code]):
         raise InstallationError('Error in creating directory for authentication database.\n{}'.format('\n'.join((mkdir_output, chown_output))))
@@ -87,14 +87,14 @@ def _install_nginx(distribution):
         ], error='restore selinux context')
     nginx_output, nginx_code = execute_shell_command_get_return_code('sudo nginx -s reload')
     if nginx_code != 0:
-        raise InstallationError('Failed to start nginx\n{}'.format(nginx_output))
+        raise InstallationError(f'Failed to start nginx\n{nginx_output}')
 
 
 def _generate_and_install_certificate():
     logging.info('Generating self-signed certificate')
     execute_commands_and_raise_on_return_code([
         'openssl genrsa -out fact.key 4096',
-        'echo "{}" | openssl req -new -key fact.key -out fact.csr'.format(DEFAULT_CERT),
+        f'echo "{DEFAULT_CERT}" | openssl req -new -key fact.key -out fact.csr',
         'openssl x509 -req -days 730 -in fact.csr -signkey fact.key -out fact.crt',
         'sudo mv fact.key fact.csr fact.crt /etc/nginx'
     ], error='generate SSL certificate')
@@ -161,13 +161,13 @@ def _install_docker_images(radare):
         with OperateInDirectory('radare'):
             output, return_code = execute_shell_command_get_return_code('docker-compose build')
             if return_code != 0:
-                raise InstallationError('Failed to initialize radare container:\n{}'.format(output))
+                raise InstallationError(f'Failed to initialize radare container:\n{output}')
 
     # pull pdf report container
     logging.info('Pulling pdf report container')
     output, return_code = execute_shell_command_get_return_code('docker pull fkiecad/fact_pdf_report')
     if return_code != 0:
-        raise InstallationError('Failed to pull pdf report container:\n{}'.format(output))
+        raise InstallationError(f'Failed to pull pdf report container:\n{output}')
 
 
 def main(skip_docker, radare, nginx, distribution):

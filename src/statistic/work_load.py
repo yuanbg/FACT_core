@@ -20,10 +20,10 @@ class WorkLoadStatistic:
         self.component = component
         self.db = StatisticDbUpdater(config=self.config)
         self.platform_information = self._get_platform_information()
-        logging.debug('{}: Online'.format(self.component))
+        logging.debug(f'{self.component}: Online')
 
     def shutdown(self):
-        logging.debug('{}: shutting down -> set offline message'.format(self.component))
+        logging.debug(f'{self.component}: shutting down -> set offline message')
         self.db.update_statistic(self.component, {'status': 'offline', 'last_update': time()})
         self.db.shutdown()
 

@@ -22,7 +22,7 @@ class ViewUpdater(ViewSyncDb):
 
     def update_view(self, file_name, content):
         overwrite_file(self.view_storage, file_name, content)
-        logging.debug('view updated: {}'.format(file_name))
+        logging.debug(f'view updated: {file_name}')
 
 
 class ViewReader(ViewSyncDb):
@@ -30,7 +30,7 @@ class ViewReader(ViewSyncDb):
     READ_ONLY = True
 
     def get_view(self, plugin_name):
-        view = self.view_storage.find_one({'filename': '{}'.format(plugin_name)})
+        view = self.view_storage.find_one({'filename': plugin_name})
         if view:
             return view.read()
         return None

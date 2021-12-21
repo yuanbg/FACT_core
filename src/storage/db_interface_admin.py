@@ -43,7 +43,7 @@ class AdminDbInterface(MongoInterfaceCommon):
             self._delete_swapped_analysis_entries(fw)
             self.firmwares.delete_one({'_id': uid})
         else:
-            logging.error('Firmware not found in Database: {}'.format(uid))
+            logging.error(f'Firmware not found in Database: {uid}')
         return removed_fp, deleted
 
     def _delete_swapped_analysis_entries(self, fo_entry):
@@ -52,7 +52,7 @@ class AdminDbInterface(MongoInterfaceCommon):
                 if fo_entry['processed_analysis'][key]['file_system_flag']:
                     self._delete_sanitized_entry(fo_entry, key)
             except KeyError:
-                logging.warning('key error while deleting analysis for {}:{}'.format(fo_entry['_id'], key))
+                logging.warning(f'key error while deleting analysis for {fo_entry["_id"]}:{key}')
 
     def _delete_sanitized_entry(self, fo_entry, key):
         for analysis_key in fo_entry['processed_analysis'][key].keys():
@@ -79,7 +79,7 @@ class AdminDbInterface(MongoInterfaceCommon):
                 deleted += child_deleted
             if any([root != root_uid for root in fo['virtual_file_path'].keys()]):
                 # there are more roots in the virtual path, meaning this file is included in other firmwares
-                self.remove_object_field(fo_uid, 'virtual_file_path.{}'.format(root_uid))
+                self.remove_object_field(fo_uid, f'virtual_file_path.{root_uid}')
                 if 'parent_firmware_uids' in fo:
                     self.remove_from_object_array(fo_uid, 'parent_firmware_uids', root_uid)
                 removed_fp += 1

@@ -58,7 +58,7 @@ class PluginRoutes(ComponentBase):
 
     @staticmethod
     def _load_view():
-        path = os.path.join(get_src_dir(), 'plugins/analysis/{}/routes/ajax_view.html'.format(AnalysisPlugin.NAME))
+        path = os.path.join(get_src_dir(), f'plugins/analysis/{AnalysisPlugin.NAME}/routes/ajax_view.html')
         with open(path, 'r') as fp:
             return fp.read()
 
@@ -79,5 +79,5 @@ class QemuExecRoutesRest(Resource):
         results = get_analysis_results_for_included_uid(uid, self.config)
         endpoint = self.ENDPOINTS[0][0]
         if not results:
-            error_message('no results found for uid {}'.format(uid), endpoint, request_data={'uid': uid})
+            error_message(f'no results found for uid {uid}', endpoint, request_data={'uid': uid})
         return success_message({AnalysisPlugin.NAME: results}, endpoint, request_data={'uid': uid})

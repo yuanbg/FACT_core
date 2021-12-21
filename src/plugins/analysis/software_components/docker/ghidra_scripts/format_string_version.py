@@ -26,7 +26,7 @@ def get_key_strings():
     except IOError:
         logging.error('key string file not found')
         sys.exit(3)
-    logging.info('key: {}'.format(repr(key_strings)))
+    logging.info(f'key: {repr(key_strings)}')
     return key_strings
 
 
@@ -65,14 +65,14 @@ class ReferencedStringFinder:
         if address is None:
             logging.error('key string address not found')
             return []
-        logging.info('found address of key string: {}'.format(address))
+        logging.info(f'found address of key string: {address}')
         reference_list = self.flat_api.getReferencesTo(address)
         if not reference_list:
             logging.warning('found no references to address')
             return []
         logging.info('found references to address:')
         for reference in set(reference_list):
-            logging.info('\t{}'.format(reference))
+            logging.info(f'\t{reference}')
             basic_block = self.find_basic_block_containing(reference)
             if not basic_block:
                 logging.warning('address not in function -> skipping')
@@ -83,7 +83,7 @@ class ReferencedStringFinder:
     def find_basic_block_containing(self, reference):
         source_addr = reference.getFromAddress()
         function = self.flat_api.getFunctionBefore(source_addr)
-        logging.info('\tin function: {}'.format(function))
+        logging.info(f'\tin function: {function}')
         function_decompiler = self.decompiler.decompileFunction(function, 120, getMonitor())
         high_function = function_decompiler.getHighFunction()
         basic_block_list = high_function.getBasicBlocks()
@@ -102,7 +102,7 @@ class ReferencedStringFinder:
             string = self.read_string_from_address(data_address)
             if string and key_string[:self.MAX_LEN] not in string and string_is_printable(string):
                 result.append(string)
-                logging.info('\t{} -> {}'.format(data_reference, repr(string)))
+                logging.info(f'\t{data_reference} -> {repr(string)}')
         return result
 
     @staticmethod

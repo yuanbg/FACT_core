@@ -131,7 +131,7 @@ class TestStorageDbInterfaceFrontend(unittest.TestCase):
         child_fo = create_test_file_object()
         child_fo.processed_analysis['file_type'] = {'mime': 'sometype'}
         uid = parent_fw.uid
-        child_fo.virtual_file_path = {uid: ['|{}|/folder/{}'.format(uid, child_fo.file_name)]}
+        child_fo.virtual_file_path = {uid: [f'|{uid}|/folder/{child_fo.file_name}']}
         parent_fw.files_included = {child_fo.uid}
         self.db_backend_interface.add_object(parent_fw)
         self.db_backend_interface.add_object(child_fo)
@@ -155,7 +155,7 @@ class TestStorageDbInterfaceFrontend(unittest.TestCase):
         child_fo.parent_firmware_uids = [uid]
         self.db_backend_interface.add_object(parent_fw)
         self.db_backend_interface.add_object(child_fo)
-        query = '{{"$or": [{{"_id": "{}"}}, {{"_id": "{}"}}]}}'.format(uid, child_fo.uid)
+        query = f'{{"$or": [{{"_id": "{uid}"}}, {{"_id": "{child_fo.uid}"}}]}}'
         assert self.db_frontend_interface.get_number_of_total_matches(query, only_parent_firmwares=False, inverted=False) == 2
         assert self.db_frontend_interface.get_number_of_total_matches(query, only_parent_firmwares=True, inverted=False) == 1
         assert self.db_frontend_interface.get_number_of_total_matches(query, only_parent_firmwares=True, inverted=True) == 0

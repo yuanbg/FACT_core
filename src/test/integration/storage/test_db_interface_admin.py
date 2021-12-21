@@ -34,10 +34,10 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
         copyfile(TEST_FIRMWARE_ORIGINAL, TEST_FIRMWARE_COPY)
         self.test_firmware = create_test_firmware(bin_path='container/test_copy.zip')
         self.uid = self.test_firmware.uid
-        self.test_firmware.virtual_file_path = {self.uid: ['|{}|'.format(self.test_firmware.uid)]}
+        self.test_firmware.virtual_file_path = {self.uid: [f'|{self.test_firmware.uid}|']}
         copyfile(TEST_FILE_ORIGINAL, TEST_FILE_COPY)
         self.child_fo = create_test_file_object(TEST_FILE_COPY)
-        self.child_fo.virtual_file_path = {self.uid: ['|{}|/folder/{}'.format(self.uid, self.child_fo.file_name)]}
+        self.child_fo.virtual_file_path = {self.uid: [f'|{self.uid}|/folder/{self.child_fo.file_name}']}
         self.test_firmware.files_included = [self.child_fo.uid]
         self.child_uid = self.child_fo.uid
 
@@ -59,7 +59,7 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
     def test_remove_object_field(self):
         self.db_backend_interface.add_file_object(self.child_fo)
         self.assertIn(self.uid, self.db_backend_interface.file_objects.find_one(self.child_uid, {'virtual_file_path': 1})['virtual_file_path'])
-        self.admin_interface.remove_object_field(self.child_uid, 'virtual_file_path.{}'.format(self.uid))
+        self.admin_interface.remove_object_field(self.child_uid, f'virtual_file_path.{self.uid}')
         self.assertNotIn(self.uid, self.db_backend_interface.file_objects.find_one(self.child_uid, {'virtual_file_path': 1})['virtual_file_path'])
 
     def test_remove_virtual_path_entries_no_other_roots(self):
@@ -84,9 +84,9 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
         self.db_backend_interface.add_firmware(self.test_firmware)
         self.admin_interface.client.drop_database(self.config.get('data_storage', 'sanitize_database'))
         self.admin_interface.sanitize_analysis(self.test_firmware.processed_analysis, self.uid)
-        self.assertIn('test_plugin_result_{}'.format(self.test_firmware.uid), self.admin_interface.sanitize_fs.list())
+        self.assertIn(f'test_plugin_result_{self.test_firmware.uid}', self.admin_interface.sanitize_fs.list())
         self.admin_interface._delete_swapped_analysis_entries(self.admin_interface.firmwares.find_one(self.uid))
-        self.assertNotIn('test_plugin_result_{}'.format(self.test_firmware.uid), self.admin_interface.sanitize_fs.list())
+        self.assertNotIn(f'test_plugin_result_{self.test_firmware.uid}', self.admin_interface.sanitize_fs.list())
 
     def test_delete_file_object(self):
         self.db_backend_interface.add_file_object(self.child_fo)

@@ -27,10 +27,10 @@ class BasePlugin:
         views_dir = Path(plugin_path).parent.parent / 'view'
         view_files = list(views_dir.iterdir()) if views_dir.is_dir() else []
         if len(view_files) < 1:
-            logging.debug('{}: No view available! Generic view will be used.'.format(self.NAME))
+            logging.debug(f'{self.NAME}: No view available! Generic view will be used.')
             return None
         if len(view_files) > 1:
-            logging.warning('{}: Plug-in provides more than one view! \'{}\' is used!'.format(self.NAME, view_files[0]))
+            logging.warning(f'{self.NAME}: Plug-in provides more than one view! "{view_files[0]}" is used!')
         return view_files[0]
 
     def register_plugin(self):

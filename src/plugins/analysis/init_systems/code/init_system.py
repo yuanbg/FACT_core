@@ -151,4 +151,4 @@ class AnalysisPlugin(AnalysisBasePlugin):
 
     @staticmethod
     def _add_quotes(unquoted_list):
-        return ['"{}"'.format(element) for element in unquoted_list]
+        return [f'"{element}"' for element in unquoted_list]

@@ -30,23 +30,23 @@ class CompareDbInterface(MongoInterfaceCommon):
         with suppress(PyMongoError):
             self.compare_results.delete_one({'_id': compare_result['_id']})
         self.compare_results.insert_one(compare_result)
-        logging.info('compare result added to db: {}'.format(compare_result['_id']))
+        logging.info(f'compare result added to db: {compare_result["_id"]}')
 
     def get_compare_result(self, compare_id: str) -> Optional[dict]:
         compare_id = normalize_compare_id(compare_id)
         self.check_objects_exist(compare_id)
         compare_result = self.compare_results.find_one(compare_id)
         if compare_result:
-            logging.debug('got compare result from db: {}'.format(compare_id))
+            logging.debug(f'got compare result from db: {compare_id}')
             return compare_result
-        logging.debug('compare result not found in db: {}'.format(compare_id))
+        logging.debug(f'compare result not found in db: {compare_id}')
         return None
 
     def check_objects_exist(self, compare_id, raise_exc=True):
         for uid in convert_compare_id_to_list(compare_id):
             if not self.exists(uid):
                 if raise_exc:
-                    raise FactCompareException('{} not found in database'.format(uid))
+                    raise FactCompareException(f'{uid} not found in database')
                 return True
         return False
 
@@ -57,9 +57,9 @@ class CompareDbInterface(MongoInterfaceCommon):
     def delete_old_compare_result(self, compare_id):
         try:
             self.compare_results.remove({'_id': normalize_compare_id(compare_id)})
-            logging.debug('old compare result deleted: {}'.format(compare_id))
+            logging.debug(f'old compare result deleted: {compare_id}')
         except Exception as exception:
-            logging.warning('Could not delete old compare result: {} {}'.format(type(exception).__name__, exception))
+            logging.warning(f'Could not delete old compare result: {exception}', exc_info=True)
 
     @staticmethod
     def _calculate_compare_result_id(compare_result):

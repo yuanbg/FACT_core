@@ -90,7 +90,7 @@ class InterComListenerAndResponder(InterComListener):
     def post_processing(self, task, task_id):
         logging.debug(f'request received: {self.CONNECTION_TYPE} -> {task_id}')
         response = self.get_response(task)
-        self.connections[self.OUTGOING_CONNECTION_TYPE]['fs'].put(pickle.dumps(response), filename='{}'.format(task_id))
+        self.connections[self.OUTGOING_CONNECTION_TYPE]['fs'].put(pickle.dumps(response), filename=f'{task_id}')
         logging.debug(f'response send: {self.OUTGOING_CONNECTION_TYPE} -> {task_id}')
         return task
 

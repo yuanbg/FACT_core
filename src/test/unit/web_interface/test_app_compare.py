@@ -14,7 +14,7 @@ class TestAppCompare(WebInterfaceTest):
 
     def test_add_firmwares_to_compare(self):
         with self.test_client:
-            rv = self.test_client.get('/comparison/add/{}'.format(TEST_FW.uid), follow_redirects=True)
+            rv = self.test_client.get(f'/comparison/add/{TEST_FW.uid}', follow_redirects=True)
             self.assertIn('Firmware Selected for Comparison', rv.data.decode())
             self.assertIn('uids_for_comparison', session)
             self.assertIn(TEST_FW.uid, session['uids_for_comparison'])
@@ -23,14 +23,14 @@ class TestAppCompare(WebInterfaceTest):
         with self.test_client as tc:
             with tc.session_transaction() as test_session:
                 test_session['uids_for_comparison'] = {TEST_FW_2.uid: None}
-            rv = self.test_client.get('/comparison/add/{}'.format(TEST_FW.uid), follow_redirects=True)
+            rv = self.test_client.get(f'/comparison/add/{TEST_FW.uid}', follow_redirects=True)
             self.assertIn('Remove All', rv.data.decode())
 
     def test_start_compare(self):
         with self.test_client as tc:
             with tc.session_transaction() as test_session:
                 test_session['uids_for_comparison'] = {TEST_FW.uid: None, TEST_FW_2.uid: None}
-            compare_id = '{};{}'.format(TEST_FW.uid, TEST_FW_2.uid)
+            compare_id = f'{TEST_FW.uid};{TEST_FW_2.uid}'
             rv = self.test_client.get('/compare', follow_redirects=True)
             assert b'Your compare task is in progress' in rv.data
             self.assertEqual(len(self.mocked_interface.tasks), 1, 'task not added')
@@ -40,7 +40,7 @@ class TestAppCompare(WebInterfaceTest):
         with self.test_client as tc:
             with tc.session_transaction() as test_session:
                 test_session['uids_for_comparison'] = {TEST_FW.uid: None, TEST_FW_2.uid: None}
-            compare_id = '{};{}'.format(TEST_FW.uid, TEST_FW_2.uid)
+            compare_id = f'{TEST_FW.uid};{TEST_FW_2.uid}'
             rv = self.test_client.get('/compare?force_recompare=true', follow_redirects=True)
             assert b'Your compare task is in progress' in rv.data
             self.assertEqual(len(self.mocked_interface.tasks), 1, 'task not added')
@@ -51,8 +51,8 @@ class TestAppCompare(WebInterfaceTest):
         assert b'No UIDs found for comparison' in rv.data
 
     def test_show_compare_result(self):
-        compare_id = '{};{}'.format(TEST_FW.uid, TEST_FW_2.uid)
-        rv = self.test_client.get('/compare/{}'.format(compare_id), follow_redirects=True)
+        compare_id = f'{TEST_FW.uid};{TEST_FW_2.uid}'
+        rv = self.test_client.get(f'/compare/{compare_id}', follow_redirects=True)
         assert b'General information' in rv.data
 
     def test_get_comparison_uid_list_dict_session(self):
@@ -116,7 +116,7 @@ class TestAppCompare(WebInterfaceTest):
             ('plugin_2', b'<plugin view 2>')
         ]
         key = '{# individual plugin views #}'
-        compare_view = 'xxxxx{}yyyyy'.format(key)
+        compare_view = f'xxxxx{key}yyyyy'
         key_index = compare_view.find(key)
         result = cr._add_plugin_views_to_compare_view(compare_view, plugin_views)
 

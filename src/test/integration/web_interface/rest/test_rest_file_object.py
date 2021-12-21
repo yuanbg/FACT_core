@@ -19,7 +19,7 @@ class TestRestFileObject(RestTestBase):
         test_file_object = create_test_file_object()
         self.db_backend.add_file_object(test_file_object)
 
-        rv = self.test_client.get('/rest/file_object/{}'.format(test_file_object.uid), follow_redirects=True)
+        rv = self.test_client.get(f'/rest/file_object/{test_file_object.uid}', follow_redirects=True)
 
         assert b'hid' in rv.data
         assert b'size' in rv.data

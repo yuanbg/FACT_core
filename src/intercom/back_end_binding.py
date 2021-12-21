@@ -186,17 +186,17 @@ class InterComBackEndDeleteFile(InterComListener):
 
     def post_processing(self, task, task_id):
         if self._entry_was_removed_from_db(task['_id']):
-            logging.info('remove file: {}'.format(task['_id']))
+            logging.info(f'remove file: {task["_id"]}')
             self.fs_organizer.delete_file(task['_id'])
         return task
 
     def _entry_was_removed_from_db(self, uid):
         with ConnectTo(MongoInterfaceCommon, self.config) as db:
             if db.exists(uid):
-                logging.debug('file not removed, because database entry exists: {}'.format(uid))
+                logging.debug(f'file not removed, because database entry exists: {uid}')
                 return False
             if db.check_unpacking_lock(uid):
-                logging.debug('file not removed, because it is processed by unpacker: {}'.format(uid))
+                logging.debug(f'file not removed, because it is processed by unpacker: {uid}')
                 return False
         return True
 

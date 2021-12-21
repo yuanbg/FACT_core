@@ -248,11 +248,11 @@ class TestFileSystemMetadata(AnalysisPluginTest):
     def test_no_temporary_data(self):
         fo = FoMock(None, None)
 
-        fo.virtual_file_path['some_uid'] = ['|some_uid|{}|/some_file'.format(TEST_FW.uid)]
+        fo.virtual_file_path['some_uid'] = [f'|some_uid|{TEST_FW.uid}|/some_file']
         # mime-type in mocked db is 'application/octet-stream' so the result should be false
         assert self.analysis_plugin._parent_has_file_system_metadata(fo) is False
 
-        fo.virtual_file_path['some_uid'] = ['|some_uid|{}|/some_file'.format(TEST_FW_2.uid)]
+        fo.virtual_file_path['some_uid'] = [f'|some_uid|{TEST_FW_2.uid}|/some_file']
         # mime-type in mocked db is 'filesystem/cramfs' so the result should be true
         assert self.analysis_plugin._parent_has_file_system_metadata(fo) is True
 

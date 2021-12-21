@@ -19,7 +19,7 @@ class DbInterfaceMock:
         self.fw = create_test_firmware()
         self.fw.processed_analysis[AnalysisPlugin.NAME] = {'files': {b64_encode('some_file'): {'test_result': 'test_value'}}}
         self.fo = create_test_file_object()
-        self.fo.virtual_file_path['some_uid'] = ['some_uid|{}|/{}'.format(self.fw.uid, 'some_file')]
+        self.fo.virtual_file_path['some_uid'] = [f'some_uid|{self.fw.uid}|/some_file']
 
     def get_object(self, uid):
         if uid == self.fw.uid:
@@ -49,7 +49,7 @@ class TestFileSystemMetadataRoutesStatic(TestCase):
         encoded_name = b64_encode(file_name)
 
         fw.processed_analysis[AnalysisPlugin.NAME] = {'files': {encoded_name: {'result': 'value'}}}
-        fo.virtual_file_path['some_uid'] = ['some_uid|{}|/{}'.format(fw.uid, file_name)]
+        fo.virtual_file_path['some_uid'] = [f'some_uid|{fw.uid}|/{file_name}']
 
         results = {}
         routes.FsMetadataRoutesDbInterface.get_results_from_parent_fos(fw, fo, results)
@@ -69,7 +69,7 @@ class TestFileSystemMetadataRoutesStatic(TestCase):
 
         vfp = fo.virtual_file_path['some_uid'] = []
         for f in file_names:
-            vfp.append('some_uid|{}|/{}'.format(fw.uid, f))
+            vfp.append(f'some_uid|{fw.uid}|/{f}')
 
         results = {}
         routes.FsMetadataRoutesDbInterface.get_results_from_parent_fos(fw, fo, results)
@@ -119,7 +119,7 @@ class TestFileSystemMetadataRoutes(TestCase):
         self.test_client = app.test_client()
 
     def test_get_analysis_results_of_parent_fo(self):
-        rv = self.test_client.get('/plugins/file_system_metadata/ajax/{}'.format('foo'))
+        rv = self.test_client.get('/plugins/file_system_metadata/ajax/foo')
         assert 'test_result' in rv.data.decode()
         assert 'test_value' in rv.data.decode()
 
@@ -143,13 +143,13 @@ class TestFileSystemMetadataRoutesRest(TestCase):
         self.test_client = app.test_client()
 
     def test_get_rest(self):
-        result = decode_response(self.test_client.get('/plugins/file_system_metadata/rest/{}'.format('foo')))
+        result = decode_response(self.test_client.get('/plugins/file_system_metadata/rest/foo'))
         assert AnalysisPlugin.NAME in result
         assert 'some_file' in result[AnalysisPlugin.NAME]
         assert 'test_result' in result[AnalysisPlugin.NAME]['some_file']
 
     def test_get_rest__no_result(self):
-        result = decode_response(self.test_client.get('/plugins/file_system_metadata/rest/{}'.format('not_found')))
+        result = decode_response(self.test_client.get('/plugins/file_system_metadata/rest/not_found'))
         assert AnalysisPlugin.NAME in result
         assert result[AnalysisPlugin.NAME] == {}
 

@@ -73,7 +73,7 @@ def filter_out_illegal_characters(string: Optional[str]) -> Optional[str]:
     '''
     if string is None:
         return string
-    return re.sub('[^\\w {}!.-]'.format(SPECIAL_CHARACTERS), '', string)
+    return re.sub(f'[^\\w {SPECIAL_CHARACTERS}!.-]', '', string)
 
 
 def get_template_as_string(view_name: str) -> str:
@@ -111,11 +111,11 @@ def cap_length_of_element(hid_element: str, maximum: int = 55) -> str:
     :param maximum: The length after witch the element is capped.
     :return: The capped string.
     '''
-    return '~{}'.format(hid_element[-(maximum - 1):]) if len(hid_element) > maximum else hid_element
+    return f'~{hid_element[-(maximum - 1):]}' if len(hid_element) > maximum else hid_element
 
 
 def _format_si_prefix(number: float, unit: str) -> str:
-    return '{number}{unit}'.format(number=si_format(number, precision=2), unit=unit)
+    return f'{si_format(number, precision=2)}{unit}'
 
 
 def format_time(seconds: float) -> str:

@@ -135,7 +135,7 @@ def get_boolean_from_request(request_parameters: ImmutableMultiDict, name: str) 
     except (AttributeError, KeyError):
         return False
     except (json.JSONDecodeError, TypeError):
-        raise ValueError('{} must be true or false'.format(name))
+        raise ValueError(f'{name} must be true or false')
     return parameter
 
 

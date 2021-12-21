@@ -15,7 +15,7 @@ class TestAnalysisPluginFileType(AnalysisPluginTest):
         self.analysis_plugin = AnalysisPlugin(self, config=config)
 
     def test_detect_type_of_file(self):
-        test_file = FileObject(file_path='{}/container/test.zip'.format(get_test_data_dir()))
+        test_file = FileObject(file_path=f'{get_test_data_dir()}/container/test.zip')
         test_file = self.analysis_plugin.process_object(test_file)
         assert test_file.processed_analysis[self.PLUGIN_NAME]['mime'] == 'application/zip', 'mime-type not detected correctly'
         assert test_file.processed_analysis[self.PLUGIN_NAME]['full'].startswith('Zip archive data, at least'), 'full type not correct'

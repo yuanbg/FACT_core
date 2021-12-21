@@ -34,11 +34,11 @@ def run_docker_container(  # pylint: disable=too-many-arguments
         container.wait(timeout=timeout)
         return container.logs(stderr=include_stderr).decode()
     except ReadTimeout:
-        logging.warning('[{}]: timeout while processing'.format(label))
+        logging.warning(f'[{label}]: timeout while processing')
         if reraise:
             raise
     except (DockerException, IOError):
-        logging.warning('[{}]: encountered process error while processing'.format(label))
+        logging.warning(f'[{label}]: encountered process error while processing')
         if reraise:
             raise
     finally:

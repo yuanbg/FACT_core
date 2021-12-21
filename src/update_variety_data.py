@@ -73,7 +73,7 @@ def main(command_line_options=sys.argv):
     return_code = _create_variety_data(config)
     process_time = time() - start_time
 
-    logging.info('generation time: {}'.format(time_format(process_time)))
+    logging.info(f'generation time: {time_format(process_time)}')
 
     if args.testing:
         logging.info('Stopping Mongo Server...')
