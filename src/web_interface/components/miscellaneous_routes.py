@@ -26,11 +26,11 @@ class MiscellaneousRoutes(ComponentBase):
     def show_home(self):
         stats = StatisticUpdater(config=self._config)
         with ConnectTo(FrontEndDbInterface, config=self._config) as sc:
-            latest_firmware_submissions = sc.get_last_added_firmwares(int(self._config['database'].get('number_of_latest_firmwares_to_display', '10')))
-            latest_comments = sc.get_latest_comments(int(self._config['database'].get('number_of_latest_firmwares_to_display', '10')))
+            latest_firmware_submissions = sc.get_last_added_firmwares(int(self._config['database'].get('number-of-latest-firmwares-to-display', '10')))
+            latest_comments = sc.get_latest_comments(int(self._config['database'].get('number-of-latest-firmwares-to-display', '10')))
         with ConnectTo(CompareDbInterface, config=self._config) as sc:
             latest_comparison_results = sc.page_compare_results(limit=10)
-        ajax_stats_reload_time = int(self._config['database']['ajax_stats_reload_time'])
+        ajax_stats_reload_time = int(self._config['database']['ajax-stats-reload-time'])
         general_stats = stats.get_general_stats()
         stats.shutdown()
         return render_template(

@@ -17,7 +17,7 @@ class TestAnalysisPlugInPrintableStrings(AnalysisPluginTest):
     def setUp(self):
         super().setUp()
         config = self.init_basic_config()
-        config.set(self.PLUGIN_NAME, 'min_length', '4')
+        config.set(self.PLUGIN_NAME, 'min-length', '4')
         self.analysis_plugin = AnalysisPlugin(self, config=config)
 
         self.strings = ['first string', 'second<>_$tring!', 'third:?-+012345/\\string']
@@ -63,7 +63,7 @@ class TestAnalysisPlugInPrintableStrings(AnalysisPluginTest):
     def test_get_min_length_from_config(self):
         assert self.analysis_plugin._get_min_length_from_config() == '4'
 
-        self.analysis_plugin.config[self.PLUGIN_NAME].pop('min_length')
+        self.analysis_plugin.config[self.PLUGIN_NAME].pop('min-length')
         assert self.analysis_plugin._get_min_length_from_config() == '8'
 
         self.analysis_plugin.config.pop(self.PLUGIN_NAME)

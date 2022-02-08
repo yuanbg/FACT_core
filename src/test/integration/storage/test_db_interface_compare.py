@@ -35,7 +35,7 @@ class TestCompare:
         self.db_interface_compare.shutdown()
         self.db_interface_admin.shutdown()
         self.db_interface_backend.shutdown()
-        self.db_interface.client.drop_database(self._config.get('data_storage', 'main_database'))
+        self.db_interface.client.drop_database(self._config.get('data-storage', 'main-database'))
         self.db_interface.shutdown()
         gc.collect()
 

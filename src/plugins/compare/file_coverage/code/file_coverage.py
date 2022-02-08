@@ -20,7 +20,7 @@ class ComparePlugin(CompareBasePlugin):
 
     def __init__(self, plugin_administrator, config=None, db_interface=None, plugin_path=__file__):
         super().__init__(plugin_administrator, config=config, db_interface=db_interface, plugin_path=plugin_path)
-        self.ssdeep_ignore_threshold = self.config.getint('ExpertSettings', 'ssdeep_ignore')
+        self.ssdeep_ignore_threshold = self.config.getint('expert-settings', 'ssdeep-ignore')
 
     def compare_function(self, fo_list):
         compare_result = dict()

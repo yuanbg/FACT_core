@@ -12,7 +12,7 @@ class ViewSyncDb(MongoInterface):
     '''
     def __init__(self, config=None):
         super().__init__(config=config)
-        self.view_collection = self.client[self.config['data_storage']['view_storage']]
+        self.view_collection = self.client[self.config['data-storage']['view-storage']]
         self.view_storage = gridfs.GridFS(self.view_collection)
 
 

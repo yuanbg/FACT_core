@@ -63,7 +63,7 @@ def get_temp_dir_path(config: ConfigParser = None) -> str:
     :param config: The FACT configuration
     '''
 
-    temp_dir_path = config.get('data_storage', 'temp_dir_path', fallback='/tmp') if config else '/tmp'
+    temp_dir_path = config.get('data-storage', 'temp-dir-path', fallback='/tmp') if config else '/tmp'
     if not Path(temp_dir_path).is_dir():
         try:
             Path(temp_dir_path).mkdir()

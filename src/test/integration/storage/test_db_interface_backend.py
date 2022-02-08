@@ -44,7 +44,7 @@ class TestStorageDbInterfaceBackend(unittest.TestCase):
         self.test_fo = create_test_file_object()
 
     def tearDown(self):
-        self.db_interface.client.drop_database(self._config.get('data_storage', 'main_database'))
+        self.db_interface.client.drop_database(self._config.get('data-storage', 'main-database'))
         self.db_interface_backend.shutdown()
         self.db_interface.shutdown()
         gc.collect()

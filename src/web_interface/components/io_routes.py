@@ -49,7 +49,7 @@ class IORoutes(ComponentBase):
         return render_template(
             'upload/upload.html',
             device_classes=device_class_list, vendors=vendor_list, error=error,
-            analysis_presets=list(self._config['default_plugins']),
+            analysis_presets=list(self._config['default-plugins']),
             device_names=json.dumps(device_name_dict, sort_keys=True), analysis_plugin_dict=analysis_plugins
         )
 
@@ -122,8 +122,8 @@ class IORoutes(ComponentBase):
 
     @staticmethod
     def _get_radare_endpoint(config: ConfigParser) -> str:
-        radare2_host = config['ExpertSettings']['radare2_host']
-        if config.getboolean('ExpertSettings', 'nginx'):
+        radare2_host = config['expert-settings']['radare2-host']
+        if config.getboolean('expert-settings', 'nginx'):
             return 'https://{}/radare'.format(radare2_host)
         return 'http://{}:8000'.format(radare2_host)
 
@@ -139,7 +139,7 @@ class IORoutes(ComponentBase):
             firmware = connection.get_complete_object_including_all_summaries(uid)
 
         try:
-            with TemporaryDirectory(dir=self._config['data_storage']['docker-mount-base-dir']) as folder:
+            with TemporaryDirectory(dir=self._config['data-storage']['docker-mount-base-dir']) as folder:
                 pdf_path = build_pdf_report(firmware, Path(folder))
                 binary = pdf_path.read_bytes()
         except RuntimeError as error:

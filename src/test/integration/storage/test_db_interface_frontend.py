@@ -26,7 +26,7 @@ class TestStorageDbInterfaceFrontend(unittest.TestCase):
 
     def tearDown(self):
         self.db_frontend_interface.shutdown()
-        self.db_backend_interface.client.drop_database(self._config.get('data_storage', 'main_database'))
+        self.db_backend_interface.client.drop_database(self._config.get('data-storage', 'main-database'))
         self.db_backend_interface.shutdown()
         gc.collect()
 
@@ -107,7 +107,7 @@ class TestStorageDbInterfaceFrontend(unittest.TestCase):
         self.assertEqual(result, [self.test_firmware.uid], 'Firmware not successfully received')
 
     def test_all_uids_found_in_database(self):
-        self.db_backend_interface.client.drop_database(self._config.get('data_storage', 'main_database'))
+        self.db_backend_interface.client.drop_database(self._config.get('data-storage', 'main-database'))
         uid_list = [self.test_firmware.uid]
         self.assertFalse(self.db_frontend_interface.all_uids_found_in_database(uid_list))
         self.db_backend_interface.add_firmware(self.test_firmware)

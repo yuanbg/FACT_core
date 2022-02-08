@@ -15,10 +15,10 @@ class StatisticDb(MongoInterface):
         super().__init__(config=config)
 
     def _setup_database_mapping(self):
-        self.main_collection = self.client[self.config['data_storage']['main_database']]
+        self.main_collection = self.client[self.config['data-storage']['main-database']]
         self.firmwares = self.main_collection.firmwares
         self.file_objects = self.main_collection.file_objects
-        self.statistic_collection = self.client[self.config['data_storage']['statistic_database']]
+        self.statistic_collection = self.client[self.config['data-storage']['statistic-database']]
         self.statistic = self.statistic_collection.statistic
 
 

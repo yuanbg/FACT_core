@@ -37,14 +37,14 @@ class AnalysisPluginTest(unittest.TestCase):
         config = ConfigParser()
         config.add_section(self.PLUGIN_NAME)
         config.set(self.PLUGIN_NAME, 'threads', '1')
-        config.add_section('ExpertSettings')
-        config.set('ExpertSettings', 'block_delay', '0.1')
-        config.add_section('data_storage')
+        config.add_section('expert-settings')
+        config.set('expert-settings', 'block-delay', '0.1')
+        config.add_section('data-storage')
         load_users_from_main_config(config)
-        config.set('data_storage', 'mongo_server', 'localhost')
-        config.set('data_storage', 'mongo_port', '54321')
-        config.set('data_storage', 'view_storage', 'tmp_view')
-        config.set('data_storage', 'docker-mount-base-dir', str(self.docker_mount_base_dir))
+        config.set('data-storage', 'mongo-server', 'localhost')
+        config.set('data-storage', 'mongo-port', '54321')
+        config.set('data-storage', 'view-storage', 'tmp_view')
+        config.set('data-storage', 'docker-mount-base-dir', str(self.docker_mount_base_dir))
         return config
 
     def register_plugin(self, name, plugin_object):

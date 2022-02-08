@@ -245,7 +245,7 @@ class FrontEndDbInterface(MongoInterfaceCommon):
         all_field_strings = list(
             key_item['_id']['key'] for key_item in file_object_keys
             if key_item['_id']['key'].startswith('processed_analysis')
-            and key_item['percentContaining'] >= float(self.config['data_storage']['structural_threshold'])
+            and key_item['percentContaining'] >= float(self.config['data-storage']['structural-threshold'])
         )
         stripped_field_strings = list(field[len('processed_analysis.'):] for field in all_field_strings if field != 'processed_analysis')
 

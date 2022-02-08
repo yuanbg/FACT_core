@@ -34,18 +34,18 @@ PROGRAM_DESCRIPTION = 'Initialize or update database structure information used 
 
 
 def _create_variety_data(config):
-    varietyjs_script_path = Path(get_src_dir()) / config['data_storage']['variety_path']
+    varietyjs_script_path = Path(get_src_dir()) / config['data-storage']['variety-path']
     mongo_call = (
         'mongo --port {mongo_port} -u "{username}" -p "{password}" --authenticationDatabase "admin" '.format(
-            mongo_port=config['data_storage']['mongo_port'],
-            username=config['data_storage']['db_admin_user'],
-            password=config['data_storage']['db_admin_pw'],
+            mongo_port=config['data-storage']['mongo-port'],
+            username=config['data-storage']['db-admin-user'],
+            password=config['data-storage']['db-admin-pw'],
         )
     )
     output, return_code = execute_shell_command_get_return_code(
         '{mongo_call} {database} --eval "var collection = \'file_objects\', persistResults=true" {script_path}'.format(
             mongo_call=mongo_call,
-            database=config['data_storage']['main_database'],
+            database=config['data-storage']['main-database'],
             script_path=varietyjs_script_path),
         timeout=None
     )

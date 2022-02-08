@@ -66,7 +66,7 @@ class InterComFrontEndBinding(InterComMongoInterface):
     def _response_listener(self, response_connection, request_id, timeout=None, delete=True):
         output_data = None
         if timeout is None:
-            timeout = time() + int(self.config['ExpertSettings'].get('communication_timeout', '60'))
+            timeout = time() + int(self.config['expert-settings'].get('communication-timeout', '60'))
         while timeout > time():
             resp = self.connections[response_connection]['fs'].find_one({'filename': request_id})
             if resp:

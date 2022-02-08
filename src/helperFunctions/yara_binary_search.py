@@ -25,7 +25,7 @@ class YaraBinarySearchScanner:
     def __init__(self, config: ConfigParser):
         self.matches = []
         self.config = config
-        self.db_path = self.config['data_storage']['firmware_file_storage_directory']
+        self.db_path = self.config['data-storage']['firmware-file-storage-directory']
 
     def _execute_yara_search(self, rule_file_path: str, target_path: Optional[str] = None) -> str:
         '''

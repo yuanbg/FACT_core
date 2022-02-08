@@ -26,7 +26,7 @@ class InterComBackEndBinding:
         self.analysis_service = analysis_service
         self.compare_service = compare_service
         self.unpacking_service = unpacking_service
-        self.poll_delay = self.config['ExpertSettings'].getfloat('intercom_poll_delay')
+        self.poll_delay = self.config['expert-settings'].getfloat('intercom-poll-delay')
 
         self.stop_condition = Value('i', 0)
         self.process_list = []

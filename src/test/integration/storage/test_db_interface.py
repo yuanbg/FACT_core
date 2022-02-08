@@ -26,8 +26,8 @@ class TestMongoInterface(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._config = get_config_for_testing(TMP_DIR)
-        cls._config.set('data_storage', 'report_threshold', '32')
-        cls._config.set('data_storage', 'sanitize_database', 'tmp_sanitize')
+        cls._config.set('data-storage', 'report-threshold', '32')
+        cls._config.set('data-storage', 'sanitize_database', 'tmp_sanitize')
         cls.mongo_server = MongoMgr(config=cls._config)
 
     def setUp(self):
@@ -53,9 +53,9 @@ class TestMongoInterface(unittest.TestCase):
         self.test_fo = create_test_file_object()
 
     def tearDown(self):
-        self.db_interface_backend.client.drop_database(self._config.get('data_storage', 'main_database'))
+        self.db_interface_backend.client.drop_database(self._config.get('data-storage', 'main-database'))
         self.db_interface_backend.shutdown()
-        self.db_interface.client.drop_database(self._config.get('data_storage', 'sanitize_database'))
+        self.db_interface.client.drop_database(self._config.get('data-storage', 'sanitize_database'))
         self.db_interface.shutdown()
         gc.collect()
 
@@ -347,7 +347,7 @@ class TestSummary(unittest.TestCase):
         self.db_interface_backend = BackEndDbInterface(config=self._config)
 
     def tearDown(self):
-        self.db_interface.client.drop_database(self._config.get('data_storage', 'main_database'))
+        self.db_interface.client.drop_database(self._config.get('data-storage', 'main-database'))
         self.db_interface.shutdown()
         self.db_interface_backend.shutdown()
         self.mongo_server.shutdown()

@@ -454,12 +454,12 @@ def fake_exit(self, *args):
 
 
 def get_database_names(config):
-    prefix = config.get('data_storage', 'intercom_database_prefix')
+    prefix = config.get('data-storage', 'intercom-database-prefix')
     databases = [f'{prefix}_{intercom_db}' for intercom_db in InterComMongoInterface.INTERCOM_CONNECTION_TYPES]
     databases.extend([
-        config.get('data_storage', 'main_database'),
-        config.get('data_storage', 'view_storage'),
-        config.get('data_storage', 'statistic_database')
+        config.get('data-storage', 'main-database'),
+        config.get('data-storage', 'view-storage'),
+        config.get('data-storage', 'statistic-database')
     ])
     return databases
 
@@ -497,45 +497,45 @@ def get_config_for_testing(temp_dir: Optional[Union[TemporaryDirectory, str]] = 
     if isinstance(temp_dir, TemporaryDirectory):
         temp_dir = temp_dir.name
     config = ConfigParser()
-    config.add_section('data_storage')
-    config.set('data_storage', 'mongo_server', 'localhost')
-    config.set('data_storage', 'main_database', 'tmp_unit_tests')
-    config.set('data_storage', 'intercom_database_prefix', 'tmp_unit_tests')
-    config.set('data_storage', 'statistic_database', 'tmp_unit_tests')
-    config.set('data_storage', 'view_storage', 'tmp_tests_view')
-    config.set('data_storage', 'mongo_port', '27018')
-    config.set('data_storage', 'report_threshold', '2048')
-    config.set('data_storage', 'password_salt', '1234')
-    config.set('data_storage', 'firmware_file_storage_directory', '/tmp/fact_test_fs_directory')
+    config.add_section('data-storage')
+    config.set('data-storage', 'mongo-server', 'localhost')
+    config.set('data-storage', 'main-database', 'tmp_unit_tests')
+    config.set('data-storage', 'intercom-database-prefix', 'tmp_unit_tests')
+    config.set('data-storage', 'statistic-database', 'tmp_unit_tests')
+    config.set('data-storage', 'view-storage', 'tmp_tests_view')
+    config.set('data-storage', 'mongo-port', '27018')
+    config.set('data-storage', 'report-threshold', '2048')
+    config.set('data-storage', 'password-salt', '1234')
+    config.set('data-storage', 'firmware-file-storage-directory', '/tmp/fact_test_fs_directory')
     docker_mount_base_dir = create_docker_mount_base_dir()
-    config.set('data_storage', 'docker-mount-base-dir', str(docker_mount_base_dir))
+    config.set('data-storage', 'docker-mount-base-dir', str(docker_mount_base_dir))
     config.add_section('unpack')
     config.set('unpack', 'whitelist', '')
-    config.set('unpack', 'max_depth', '10')
-    config.add_section('default_plugins')
-    config.add_section('ExpertSettings')
-    config.set('ExpertSettings', 'block_delay', '0.1')
-    config.set('ExpertSettings', 'ssdeep_ignore', '1')
-    config.set('ExpertSettings', 'authentication', 'false')
-    config.set('ExpertSettings', 'intercom_poll_delay', '0.5')
-    config.set('ExpertSettings', 'nginx', 'false')
+    config.set('unpack', 'max-depth', '10')
+    config.add_section('default-plugins')
+    config.add_section('expert-settings')
+    config.set('expert-settings', 'block-delay', '0.1')
+    config.set('expert-settings', 'ssdeep-ignore', '1')
+    config.set('expert-settings', 'authentication', 'false')
+    config.set('expert-settings', 'intercom-poll-delay', '0.5')
+    config.set('expert-settings', 'nginx', 'false')
     config.add_section('database')
-    config.set('database', 'results_per_page', '10')
+    config.set('database', 'results-per-page', '10')
     load_users_from_main_config(config)
-    config.add_section('Logging')
+    config.add_section('logging')
     if temp_dir is not None:
-        config.set('data_storage', 'firmware_file_storage_directory', temp_dir)
-        config.set('Logging', 'mongoDbLogFile', os.path.join(temp_dir, 'mongo.log'))
-    config.set('ExpertSettings', 'radare2_host', 'localhost')
+        config.set('data-storage', 'firmware-file-storage-directory', temp_dir)
+        config.set('logging', 'mongodb-logfile', os.path.join(temp_dir, 'mongo.log'))
+    config.set('expert-settings', 'radare2-host', 'localhost')
     return config
 
 
 def load_users_from_main_config(config: ConfigParser):
     fact_config = load_config('main.cfg')
-    config.set('data_storage', 'db_admin_user', fact_config['data_storage']['db_admin_user'])
-    config.set('data_storage', 'db_admin_pw', fact_config['data_storage']['db_admin_pw'])
-    config.set('data_storage', 'db_readonly_user', fact_config['data_storage']['db_readonly_user'])
-    config.set('data_storage', 'db_readonly_pw', fact_config['data_storage']['db_readonly_pw'])
+    config.set('data-storage', 'db-admin-user', fact_config['data-storage']['db-admin-user'])
+    config.set('data-storage', 'db-admin-pw', fact_config['data-storage']['db-admin-pw'])
+    config.set('data-storage', 'db-readonly-user', fact_config['data-storage']['db-readonly-user'])
+    config.set('data-storage', 'db-readonly-pw', fact_config['data-storage']['db-readonly-pw'])
 
 
 def store_binary_on_file_system(tmp_dir: str, test_object: Union[FileObject, Firmware]):

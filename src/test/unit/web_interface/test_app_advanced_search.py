@@ -7,7 +7,7 @@ class TestAppAdvancedSearch(WebInterfaceTest):
     def setUp(self):
         super().setUp()
         self.config['database'] = {}
-        self.config['database']['results_per_page'] = '10'
+        self.config['database']['results-per-page'] = '10'
 
     def test_advanced_search(self):
         rv = self.test_client.post('/database/advanced_search', content_type='multipart/form-data',

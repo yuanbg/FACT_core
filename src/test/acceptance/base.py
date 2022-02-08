@@ -39,10 +39,10 @@ class TestAcceptanceBase(unittest.TestCase):
 
     def setUp(self):
         self.tmp_dir = TemporaryDirectory(prefix='fact_test_')
-        self.config.set('data_storage', 'firmware_file_storage_directory', self.tmp_dir.name)
-        self.config.set('Logging', 'mongoDbLogFile', str(Path(self.tmp_dir.name) / 'mongo.log'))
+        self.config.set('data-storage', 'firmware-file-storage-directory', self.tmp_dir.name)
+        self.config.set('logging', 'mongodb-logfile', str(Path(self.tmp_dir.name) / 'mongo.log'))
         self.frontend = WebFrontEnd(config=self.config)
-        self.frontend.app.config['TESTING'] = not self.config.getboolean('ExpertSettings', 'authentication')
+        self.frontend.app.config['TESTING'] = not self.config.getboolean('expert-settings', 'authentication')
         self.test_client = self.frontend.app.test_client()
 
         self.test_fw_a = self.TestFW('418a54d78550e8584291c96e5d6168133621f352bfc1d43cf84e81187fef4962_787',
@@ -64,10 +64,10 @@ class TestAcceptanceBase(unittest.TestCase):
     @classmethod
     def _set_config(cls):
         cls.config = load_config('main.cfg')
-        cls.config.set('data_storage', 'main_database', TMP_DB_NAME)
-        cls.config.set('data_storage', 'intercom_database_prefix', TMP_DB_NAME)
-        cls.config.set('data_storage', 'statistic_database', TMP_DB_NAME)
-        cls.config.set('ExpertSettings', 'authentication', 'false')
+        cls.config.set('data-storage', 'main-database', TMP_DB_NAME)
+        cls.config.set('data-storage', 'intercom-database-prefix', TMP_DB_NAME)
+        cls.config.set('data-storage', 'statistic-database', TMP_DB_NAME)
+        cls.config.set('expert-settings', 'authentication', 'false')
 
     def _stop_backend(self):
         with ThreadPoolExecutor(max_workers=4) as pool:
@@ -90,8 +90,8 @@ class TestAcceptanceBase(unittest.TestCase):
         log_format = logging.Formatter(fmt='[%(asctime)s][%(module)s][%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         logger = logging.getLogger('')
         logger.setLevel(logging.DEBUG)
-        create_dir_for_file(self.config['Logging']['logFile'])
-        file_log = logging.FileHandler(self.config['Logging']['logFile'])
+        create_dir_for_file(self.config['logging']['logfile'])
+        file_log = logging.FileHandler(self.config['logging']['logfile'])
         file_log.setLevel(log_level)
         file_log.setFormatter(log_format)
         console_log = logging.StreamHandler()

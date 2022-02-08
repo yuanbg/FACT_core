@@ -18,9 +18,9 @@ class argument_mock():
 
 
 config_mock = {
-    'Logging': {
-        'logFile': '/tmp/fact_test.log',
-        'logLevel': 'DEBUG'
+    'logging': {
+        'logfile': '/tmp/fact_test.log',
+        'loglevel': 'DEBUG'
     }
 }
 
@@ -36,8 +36,8 @@ def test_get_console_output_level(input_data, expected_output):
 def test_load_config():
     args = argument_mock()
     config = _load_config(args)
-    assert config['Logging']['logLevel'] == 'DEBUG'
-    assert config['Logging']['logFile'] == '/log/file/path'
+    assert config['logging']['loglevel'] == 'DEBUG'
+    assert config['logging']['logfile'] == '/log/file/path'
 
 
 def test_setup_logging():
@@ -52,7 +52,7 @@ def test_program_setup():
     log_file_path = tmp_dir.name + '/folder/log_file'
     args, config = program_setup('test', 'test description', command_line_options=['script_name', '--config_file', argument_mock.config_file, '--log_file', log_file_path])
     assert args.debug is False
-    assert config['Logging']['logFile'] == log_file_path
+    assert config['logging']['logfile'] == log_file_path
     assert os.path.exists(log_file_path)
 
     tmp_dir.cleanup()

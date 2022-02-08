@@ -24,8 +24,8 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = get_config_for_testing(TMP_DIR)
-        cls.config.set('data_storage', 'sanitize_database', 'tmp_sanitize')
-        cls.config.set('data_storage', 'report_threshold', '32')
+        cls.config.set('data-storage', 'sanitize_database', 'tmp_sanitize')
+        cls.config.set('data-storage', 'report-threshold', '32')
         cls.mongo_server = MongoMgr(config=cls.config)
 
     def setUp(self):
@@ -42,8 +42,8 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
         self.child_uid = self.child_fo.uid
 
     def tearDown(self):
-        self.admin_interface.client.drop_database(self.config.get('data_storage', 'main_database'))
-        self.admin_interface.client.drop_database(self.config.get('data_storage', 'sanitize_database'))
+        self.admin_interface.client.drop_database(self.config.get('data-storage', 'main-database'))
+        self.admin_interface.client.drop_database(self.config.get('data-storage', 'sanitize_database'))
         self.admin_interface.shutdown()
         self.db_backend_interface.shutdown()
         gc.collect()
@@ -82,7 +82,7 @@ class TestStorageDbInterfaceAdmin(unittest.TestCase):
     def test_delete_swapped_analysis_entries(self):
         self.test_firmware.processed_analysis = {'test_plugin': {'result': 10000000000, 'misc': 'delete_swap_test'}}
         self.db_backend_interface.add_firmware(self.test_firmware)
-        self.admin_interface.client.drop_database(self.config.get('data_storage', 'sanitize_database'))
+        self.admin_interface.client.drop_database(self.config.get('data-storage', 'sanitize_database'))
         self.admin_interface.sanitize_analysis(self.test_firmware.processed_analysis, self.uid)
         self.assertIn('test_plugin_result_{}'.format(self.test_firmware.uid), self.admin_interface.sanitize_fs.list())
         self.admin_interface._delete_swapped_analysis_entries(self.admin_interface.firmwares.find_one(self.uid))

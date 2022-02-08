@@ -36,12 +36,12 @@ def _get_console_output_level(debug_flag):
 
 
 def _setup_logging(config, debug_flag=False):
-    log_level = getattr(logging, config['Logging']['logLevel'], None)
+    log_level = getattr(logging, config['logging']['loglevel'], None)
     log_format = logging.Formatter(fmt='[%(asctime)s][%(module)s][%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger('')
     logger.setLevel(logging.DEBUG)
-    create_dir_for_file(config['Logging']['logFile'])
-    file_log = logging.FileHandler(config['Logging']['logFile'])
+    create_dir_for_file(config['logging']['logfile'])
+    file_log = logging.FileHandler(config['logging']['logfile'])
     file_log.setLevel(log_level)
     file_log.setFormatter(log_format)
     console_log = logging.StreamHandler()
@@ -55,9 +55,9 @@ def _load_config(args):
     config = configparser.ConfigParser()
     config.read(args.config_file)
     if args.log_file is not None:
-        config['Logging']['logFile'] = args.log_file
+        config['logging']['logfile'] = args.log_file
     if args.log_level is not None:
-        config['Logging']['logLevel'] = args.log_level
+        config['logging']['loglevel'] = args.log_level
     return config
 
 

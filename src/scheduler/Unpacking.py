@@ -66,7 +66,7 @@ class UnpackingScheduler:
         unpacker = Unpacker(self.config, worker_id=worker_id, db_interface=self.db_interface)
         while self.stop_condition.value == 0:
             with suppress(Empty):
-                fo = self.in_queue.get(timeout=float(self.config['ExpertSettings']['block_delay']))
+                fo = self.in_queue.get(timeout=float(self.config['expert-settings']['block-delay']))
                 extracted_objects = unpacker.unpack(fo)
                 logging.debug(f'[worker {worker_id}] unpacking of {fo.uid} complete: {len(extracted_objects)} files extracted')
                 self.post_unpack(fo)
@@ -102,7 +102,7 @@ class UnpackingScheduler:
             log_function(color_string(f'Queue Length (Analysis/Unpack): {workload} / {unpack_queue_size}',
                                       TerminalColors.WARNING))
 
-            if workload < int(self.config['ExpertSettings']['unpack_throttle_limit']):
+            if workload < int(self.config['expert-settings']['unpack-throttle-limit']):
                 self.throttle_condition.value = 0
             else:
                 self.throttle_condition.value = 1

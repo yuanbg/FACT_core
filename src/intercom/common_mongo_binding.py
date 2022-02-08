@@ -44,7 +44,7 @@ class InterComMongoInterface(MongoInterface):
     def _setup_database_mapping(self):
         self.connections = {}
         for item in self.INTERCOM_CONNECTION_TYPES:
-            prefix = self.config['data_storage']['intercom_database_prefix']
+            prefix = self.config['data-storage']['intercom-database-prefix']
             self.connections[item] = {'name': f'{prefix}_{item}'}
             self.connections[item]['collection'] = self.client[self.connections[item]['name']]
             self.connections[item]['fs'] = gridfs.GridFS(self.connections[item]['collection'])

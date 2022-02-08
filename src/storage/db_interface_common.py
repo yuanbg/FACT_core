@@ -24,15 +24,15 @@ FIELDS_SAVED_FROM_SANITIZATION = ['summary', 'tags']
 class MongoInterfaceCommon(MongoInterface):  # pylint: disable=too-many-instance-attributes
 
     def _setup_database_mapping(self):
-        main_database = self.config['data_storage']['main_database']
+        main_database = self.config['data-storage']['main-database']
         self.main = self.client[main_database]
         self.firmwares = self.main.firmwares
         self.file_objects = self.main.file_objects
         self.search_query_cache = self.main.search_query_cache
         self.locks = self.main.locks
         # sanitize stuff
-        self.report_threshold = int(self.config['data_storage']['report_threshold'])
-        sanitize_db = self.config['data_storage'].get('sanitize_database', 'faf_sanitize')
+        self.report_threshold = int(self.config['data-storage']['report-threshold'])
+        sanitize_db = self.config['data-storage'].get('sanitize_database', 'faf_sanitize')
         self.sanitize_storage = self.client[sanitize_db]
         self.sanitize_fs = gridfs.GridFS(self.sanitize_storage)
 

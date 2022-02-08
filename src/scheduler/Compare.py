@@ -60,7 +60,7 @@ class CompareScheduler:
 
     def _compare_single_run(self, compares_done):
         try:
-            compare_id, redo = self.in_queue.get(timeout=float(self.config['ExpertSettings']['block_delay']))
+            compare_id, redo = self.in_queue.get(timeout=float(self.config['expert-settings']['block-delay']))
         except Empty:
             pass
         else:

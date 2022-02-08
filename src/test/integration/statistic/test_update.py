@@ -203,7 +203,7 @@ class TestStatisticWithDb(TestStatisticBase):
         self.db_backend_interface = BackEndDbInterface(config=self.config)
 
     def tearDown(self):
-        self.db_backend_interface.client.drop_database(self.config.get('data_storage', 'main_database'))
+        self.db_backend_interface.client.drop_database(self.config.get('data-storage', 'main-database'))
         self.db_backend_interface.shutdown()
         super().tearDown()
 
