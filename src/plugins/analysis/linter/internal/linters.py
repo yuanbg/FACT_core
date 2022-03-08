@@ -35,10 +35,10 @@ def run_eslint(file_path):
 
 
 def run_shellcheck(file_path):
-    linter_output, return_code = execute_shell_command_get_return_code('shellcheck --format=json {}'.format(file_path))
+    linter_output, return_code = execute_shell_command_get_return_code(f'shellcheck --format=json {file_path}')
 
     if return_code == 2:
-        logging.debug('Failed to execute shellcheck:\n{}'.format(linter_output))
+        logging.debug(f'Failed to execute shellcheck:\n{linter_output}')
         return list()
 
     try:
@@ -66,7 +66,7 @@ def _shellcheck_extract_relevant_warnings(shellcheck_json):
 def run_luacheck(file_path):
     luacheckrc_path = Path(Path(__file__).parent, 'config', 'luacheckrc')
 
-    linter_output = execute_shell_command('luacheck -q --ranges --config  {} {}'.format(luacheckrc_path, file_path))
+    linter_output = execute_shell_command(f'luacheck -q --ranges --config  {luacheckrc_path} {file_path}')
     return _luacheck_parse_linter_output(linter_output)
 
 
@@ -90,7 +90,7 @@ def _luacheck_parse_linter_output(output):
             else:
                 pass
         except (IndexError, ValueError) as e:
-            logging.warning('Lualinter failed to parse line: {}\n{}'.format(line, e))
+            logging.warning(f'Lualinter failed to parse line: {line}\n{e}')
 
     return issues
 
@@ -109,11 +109,11 @@ def _luacheck_get_first_column(columns):
 
 
 def run_pylint(file_path):
-    pylint_output = execute_shell_command('pylint --output-format=json {}'.format(file_path))
+    pylint_output = execute_shell_command(f'pylint --output-format=json {file_path}')
     try:
         pylint_json = json.loads(pylint_output)
     except json.JSONDecodeError:
-        logging.warning('Failed to execute pylint:\n{}'.format(pylint_output))
+        logging.warning(f'Failed to execute pylint:\n{pylint_output}')
         return list()
 
     return _pylint_extract_relevant_warnings(pylint_json)
