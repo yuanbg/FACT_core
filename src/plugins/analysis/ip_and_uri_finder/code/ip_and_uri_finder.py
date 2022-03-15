@@ -35,10 +35,7 @@ class AnalysisPlugin(AnalysisBasePlugin):
     DESCRIPTION = 'Search file for IP addresses and URIs based on regular expressions.'
     VERSION = '0.4.2'
 
-    def __init__(self, plugin_administrator, config=None, recursive=True):
-
-        self.config = config
-
+    def __init__(self, plugin_administrator, recursive=True):
         self.ip_and_uri_finder = CommonAnalysisIPAndURIFinder()
 
         try:
@@ -47,7 +44,7 @@ class AnalysisPlugin(AnalysisBasePlugin):
             logging.error('could not load GeoIP database')
             self.reader = None
 
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=__file__)
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=__file__)
 
     def process_object(self, file_object):
         result = self.ip_and_uri_finder.analyze_file(file_object.file_path, separate_ipv6=True)

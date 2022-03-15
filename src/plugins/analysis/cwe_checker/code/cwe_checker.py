@@ -38,10 +38,9 @@ class AnalysisPlugin(AnalysisBasePlugin):
     MIME_WHITELIST = ['application/x-executable', 'application/x-object', 'application/x-sharedlib']
     SUPPORTED_ARCHS = ['arm', 'x86', 'x64', 'mips', 'ppc']
 
-    def __init__(self, plugin_administrator, config=None, recursive=True, timeout=TIMEOUT_IN_SECONDS + 30):
-        self.config = config
+    def __init__(self, plugin_administrator, recursive=True, timeout=TIMEOUT_IN_SECONDS + 30):
         self._log_version_string()
-        super().__init__(plugin_administrator, config=config, plugin_path=__file__, recursive=recursive, timeout=timeout)
+        super().__init__(plugin_administrator, plugin_path=__file__, recursive=recursive, timeout=timeout)
 
     def _log_version_string(self):
         output = self._run_cwe_checker_to_get_version_string()

@@ -23,8 +23,8 @@ class AnalysisPlugin(AnalysisBasePlugin):
     VERSION = '1.0'
     MIME_BLACKLIST = [*MIME_BLACKLIST_COMPRESSED, 'audio', 'image', 'video']
 
-    def __init__(self, plugin_administrator, config=None, recursive=True):
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=__file__)
+    def __init__(self, plugin_administrator, recursive=True):
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=__file__)
 
     def process_object(self, file_object: FileObject):
         file_object.processed_analysis[self.NAME] = {'summary': []}

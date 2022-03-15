@@ -3,6 +3,7 @@ from multiprocessing import Manager, Queue, Value
 from queue import Empty
 from time import time
 
+from config import cfg, configparser_cfg
 from helperFunctions.process import (
     ExceptionSafeProcess, check_worker_exceptions, start_single_worker, terminate_process_and_children
 )
@@ -27,15 +28,14 @@ class AnalysisBasePlugin(BasePlugin):  # pylint: disable=too-many-instance-attri
 
     timeout = None
 
-    def __init__(self, plugin_administrator, config=None, recursive=True, no_multithread=False, timeout=300, offline_testing=False, plugin_path=None):  # pylint: disable=too-many-arguments
-        super().__init__(plugin_administrator, config=config, plugin_path=plugin_path)
-        self.check_config(no_multithread)
+    def __init__(self, plugin_administrator, recursive=True, no_multithread=False, timeout=300, offline_testing=False, plugin_path=None):  # pylint: disable=too-many-arguments
+        super().__init__(plugin_administrator, plugin_path=plugin_path)
         self.recursive = recursive
         self.in_queue = Queue()
         self.out_queue = Queue()
         self.stop_condition = Value('i', 0)
         self.workers = []
-        self.thread_count = int(self.config[self.NAME]['threads'])
+        self.thread_count = 1 if no_multithread else int(getattr(cfg, self.NAME, {}).get('threads', 1))
         self.active = [Value('i', 0) for _ in range(self.thread_count)]
         if self.timeout is None:
             self.timeout = timeout
@@ -107,12 +107,6 @@ class AnalysisBasePlugin(BasePlugin):  # pylint: disable=too-many-instance-attri
             result_update.update({'system_version': self.SYSTEM_VERSION})
         return result_update
 
-    def check_config(self, no_multithread):
-        if self.NAME not in self.config:
-            self.config.add_section(self.NAME)
-        if 'threads' not in self.config[self.NAME] or no_multithread:
-            self.config.set(self.NAME, 'threads', '1')
-
     def start_worker(self):
         for process_index in range(self.thread_count):
             self.workers.append(start_single_worker(process_index, 'Analysis', self.worker))
@@ -150,7 +144,7 @@ class AnalysisBasePlugin(BasePlugin):  # pylint: disable=too-many-instance-attri
     def worker(self, worker_id):
         while self.stop_condition.value == 0:
             try:
-                next_task = self.in_queue.get(timeout=float(self.config['expert-settings']['block-delay']))
+                next_task = self.in_queue.get(timeout=float(cfg.expert_settings.block_delay))
                 logging.debug('Worker {}: Begin {} analysis on {}'.format(worker_id, self.NAME, next_task.uid))
             except Empty:
                 self.active[worker_id].value = 0
@@ -162,4 +156,4 @@ class AnalysisBasePlugin(BasePlugin):  # pylint: disable=too-many-instance-attri
         logging.debug('worker {} stopped'.format(worker_id))
 
     def check_exceptions(self):
-        return check_worker_exceptions(self.workers, 'Analysis', self.config, self.worker)
+        return check_worker_exceptions(self.workers, 'Analysis', configparser_cfg, self.worker)

@@ -17,10 +17,10 @@ class AnalysisPlugin(YaraBasePlugin):
     DEPENDENCIES = ['file_hashes', 'software_components']
     VERSION = '0.2'
 
-    def __init__(self, plugin_administrator, config=None, recursive=True):
+    def __init__(self, plugin_administrator, recursive=True):
         self._rule_base_vulnerabilities = vulnerabilities()
 
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=__file__)
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=__file__)
 
     def process_object(self, file_object):
         file_object = super().process_object(file_object)

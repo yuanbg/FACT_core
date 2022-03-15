@@ -25,8 +25,8 @@ class AnalysisPlugin(AnalysisBasePlugin):
     )
     VERSION = '0.1'
 
-    def __init__(self, plugin_administrator, config=None, recursive=True, timeout=300):
-        super().__init__(plugin_administrator, config=config, recursive=recursive, timeout=timeout,
+    def __init__(self, plugin_administrator, recursive=True, timeout=300):
+        super().__init__(plugin_administrator, recursive=recursive, timeout=timeout,
                          plugin_path=__file__)
 
     def process_object(self, file_object):

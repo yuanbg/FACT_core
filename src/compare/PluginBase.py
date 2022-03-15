@@ -11,7 +11,8 @@ class CompareBasePlugin(BasePlugin):
     '''
 
     def __init__(self, plugin_administrator, config=None, db_interface=None, plugin_path=None):
-        super().__init__(plugin_administrator, config=config, plugin_path=plugin_path)
+        super().__init__(plugin_administrator, plugin_path=plugin_path)
+        self.config = config
         self.database = db_interface
         self.register_plugin()
 

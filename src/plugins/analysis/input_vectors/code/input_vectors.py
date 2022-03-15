@@ -8,6 +8,7 @@ from docker.types import Mount
 from requests.exceptions import ReadTimeout
 
 from analysis.PluginBase import AnalysisBasePlugin
+from config import cfg
 from helperFunctions.docker import run_docker_container
 from objects.file import FileObject
 
@@ -30,13 +31,12 @@ class AnalysisPlugin(AnalysisBasePlugin):
     VERSION = '0.1.2'
     MIME_WHITELIST = ['application/x-executable', 'application/x-object', 'application/x-sharedlib']
 
-    def __init__(self, plugin_administrator, config=None, recursive=True):
-        self.config = config
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=__file__)
+    def __init__(self, plugin_administrator, recursive=True):
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=__file__)
         logging.info('Up and running.')
 
     def process_object(self, file_object: FileObject):
-        with TemporaryDirectory(prefix=self.NAME, dir=self.config['data-storage']['docker-mount-base-dir']) as tmp_dir:
+        with TemporaryDirectory(prefix=self.NAME, dir=cfg.data_storage.docker_mount_base_dir) as tmp_dir:
             file_path = Path(tmp_dir) / file_object.file_name
             file_path.write_bytes(file_object.binary)
             try:

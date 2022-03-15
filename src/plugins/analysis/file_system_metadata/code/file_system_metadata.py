@@ -12,6 +12,7 @@ from typing import List, NamedTuple, Tuple
 from docker.types import Mount
 
 from analysis.PluginBase import AnalysisBasePlugin
+from config import cfg, configparser_cfg
 from helperFunctions.database import ConnectTo
 from helperFunctions.docker import run_docker_container
 from helperFunctions.tag import TagColor
@@ -55,9 +56,9 @@ class AnalysisPlugin(AnalysisBasePlugin):
         'filesystem/squashfs'
     ]
 
-    def __init__(self, plugin_administrator, config=None, recursive=True):
+    def __init__(self, plugin_administrator, recursive=True):
         self.result = {}
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=__file__)
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=__file__)
 
     def process_object(self, file_object: FileObject) -> FileObject:
         self.result = {}
@@ -74,7 +75,7 @@ class AnalysisPlugin(AnalysisBasePlugin):
         if hasattr(file_object, 'temporary_data') and 'parent_fo_type' in file_object.temporary_data:
             mime_type = file_object.temporary_data['parent_fo_type']
             return mime_type in self.ARCHIVE_MIME_TYPES + self.FS_MIME_TYPES
-        with ConnectTo(FsMetadataDbInterface, self.config) as db_interface:
+        with ConnectTo(FsMetadataDbInterface, configparser_cfg) as db_interface:
             return db_interface.parent_fo_has_fs_metadata_analysis_results(file_object)
 
     def _extract_metadata(self, file_object: FileObject):
@@ -88,7 +89,7 @@ class AnalysisPlugin(AnalysisBasePlugin):
             self._add_tag(file_object, self.result)
 
     def _extract_metadata_from_file_system(self, file_object: FileObject):
-        with TemporaryDirectory(dir=self.config['data-storage']['docker-mount-base-dir']) as tmp_dir:
+        with TemporaryDirectory(dir=cfg.data_storage.docker_mount_base_dir) as tmp_dir:
             input_file = Path(tmp_dir) / 'input.img'
             input_file.write_bytes(file_object.binary or Path(file_object.file_path).read_bytes())
             output = self._mount_in_docker(tmp_dir)

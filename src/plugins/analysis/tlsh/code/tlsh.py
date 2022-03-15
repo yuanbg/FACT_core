@@ -1,6 +1,7 @@
 from itertools import chain
 
 from analysis.PluginBase import AnalysisBasePlugin
+from config import configparser_cfg
 from helperFunctions.database import ConnectTo
 from helperFunctions.hash import get_tlsh_comparison
 from storage.db_interface_common import MongoInterfaceCommon
@@ -15,13 +16,13 @@ class AnalysisPlugin(AnalysisBasePlugin):
     DEPENDENCIES = ['file_hashes']
     VERSION = '0.2'
 
-    def __init__(self, plugin_administrator, config=None, recursive=True, offline_testing=False):
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=__file__, offline_testing=offline_testing)
+    def __init__(self, plugin_administrator, recursive=True, offline_testing=False):
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=__file__, offline_testing=offline_testing)
 
     def process_object(self, file_object):
         comparisons_dict = {}
         if 'tlsh' in file_object.processed_analysis['file_hashes'].keys():
-            with ConnectTo(TLSHInterface, self.config) as interface:
+            with ConnectTo(TLSHInterface, configparser_cfg) as interface:
                 for file in interface.tlsh_query_all_objects():
                     value = get_tlsh_comparison(file_object.processed_analysis['file_hashes']['tlsh'], file['processed_analysis']['file_hashes']['tlsh'])
                     if value <= 150 and not file['_id'] == file_object.uid:

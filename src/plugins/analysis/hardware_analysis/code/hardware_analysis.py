@@ -12,11 +12,8 @@ class AnalysisPlugin(AnalysisBasePlugin):
     DEPENDENCIES = ['cpu_architecture', 'elf_analysis', 'kernel_config']
     VERSION = '0.2'
 
-    def __init__(self, plugin_adminstrator, config=None, recursive=True):
-
-        self.config = config
-
-        super().__init__(plugin_adminstrator, config=config, recursive=recursive, plugin_path=__file__)
+    def __init__(self, plugin_adminstrator, recursive=True):
+        super().__init__(plugin_adminstrator, recursive=recursive, plugin_path=__file__)
 
     def process_object(self, file_object):
 

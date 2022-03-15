@@ -2,7 +2,7 @@ import logging
 from hashlib import algorithms_available
 
 from analysis.PluginBase import AnalysisBasePlugin
-from helperFunctions.config import read_list_from_config
+from config import _parse_comma_separated_list, cfg
 from helperFunctions.hash import get_hash, get_imphash, get_ssdeep, get_tlsh
 
 
@@ -15,17 +15,17 @@ class AnalysisPlugin(AnalysisBasePlugin):
     DESCRIPTION = 'calculate different hash values of the file'
     VERSION = '1.2'
 
-    def __init__(self, plugin_administrator, config=None, recursive=True):
+    def __init__(self, plugin_administrator, recursive=True):
         '''
         recursive flag: If True recursively analyze included files
         default flags should be edited above. Otherwise the scheduler cannot overwrite them.
         '''
-        self.config = config
-        self.hashes_to_create = self._get_hash_list_from_config()
+        hashes = getattr(cfg, self.NAME).get('hashes', 'sha256')
+        self.hashes_to_create = _parse_comma_separated_list(hashes)
 
         # additional init stuff can go here
 
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=__file__, timeout=600)
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=__file__, timeout=600)
 
     def process_object(self, file_object):
         '''
@@ -47,7 +47,3 @@ class AnalysisPlugin(AnalysisBasePlugin):
             file_object.processed_analysis[self.NAME]['tlsh'] = get_tlsh(file_object.binary)
 
         return file_object
-
-    def _get_hash_list_from_config(self):
-        hash_list = read_list_from_config(self.config, self.NAME, 'hashes', default=['sha256'])
-        return hash_list if hash_list else ['sha256']

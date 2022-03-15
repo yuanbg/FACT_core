@@ -16,18 +16,17 @@ class YaraBasePlugin(AnalysisBasePlugin):
     DESCRIPTION = 'this is a Yara plugin'
     VERSION = '0.0'
 
-    def __init__(self, plugin_administrator, config=None, recursive=True, plugin_path=None):
+    def __init__(self, plugin_administrator, recursive=True, plugin_path=None):
         '''
         recursive flag: If True recursively analyze included files
         propagate flag: If True add analysis result of child to parent object
         '''
-        self.config = config
         self.signature_path = self._get_signature_file(plugin_path) if plugin_path else None
         if self.signature_path and not Path(self.signature_path).exists():
             logging.error(f'Signature file {self.signature_path} not found. Did you run "compile_yara_signatures.py"?')
             raise PluginInitException(plugin=self)
         self.SYSTEM_VERSION = self.get_yara_system_version()  # pylint: disable=invalid-name
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=plugin_path)
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=plugin_path)
 
     def get_yara_system_version(self):
         with subprocess.Popen(['yara', '--version'], stdout=subprocess.PIPE) as process:

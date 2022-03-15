@@ -16,7 +16,8 @@ from unpacker.unpack_base import UnpackBase
 
 class Unpacker(UnpackBase):
     def __init__(self, config=None, worker_id=None, db_interface=None):
-        super().__init__(config=config, worker_id=worker_id)
+        super().__init__(worker_id=worker_id)
+        self.config = config
         self.file_storage_system = FSOrganizer(config=self.config)
         self.db_interface = db_interface
 

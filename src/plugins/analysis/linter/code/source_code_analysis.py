@@ -6,6 +6,7 @@ from pathlib import Path
 from docker.types import Mount
 
 from analysis.PluginBase import AnalysisBasePlugin
+from config import configparser_cfg
 from helperFunctions.docker import run_docker_container
 from storage.fsorganizer import FSOrganizer
 
@@ -42,10 +43,9 @@ class AnalysisPlugin(AnalysisBasePlugin):
         'php': linters.run_phpstan,
     }
 
-    def __init__(self, plugin_administrator, config=None, recursive=True, offline_testing=False):
-        self.config = config
-        self._fs_organizer = FSOrganizer(config)
-        super().__init__(plugin_administrator, config=config, plugin_path=__file__, recursive=recursive, offline_testing=offline_testing)
+    def __init__(self, plugin_administrator, recursive=True, offline_testing=False):
+        self._fs_organizer = FSOrganizer(configparser_cfg)
+        super().__init__(plugin_administrator, plugin_path=__file__, recursive=recursive, offline_testing=offline_testing)
 
     def process_object(self, file_object):
         '''

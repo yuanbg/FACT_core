@@ -22,10 +22,9 @@ class AnalysisPlugin(AnalysisBasePlugin):
     DEPENDENCIES = ['file_type']
     VERSION = '0.4.2'
 
-    def __init__(self, plugin_administrator, config=None, recursive=True):
-        self.config = config
+    def __init__(self, plugin_administrator, recursive=True):
         self.content = None
-        super().__init__(plugin_administrator, config=config, recursive=recursive, plugin_path=__file__)
+        super().__init__(plugin_administrator, recursive=recursive, plugin_path=__file__)
 
     @staticmethod
     def _is_text_file(file_object):
