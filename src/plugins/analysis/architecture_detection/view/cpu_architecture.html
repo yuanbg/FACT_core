@@ -6,11 +6,19 @@
 	<td class="table-head-light"><b>Architecture</b></td>
 	<td class="table-head-light"><b>Means of Detection</b></td>
 </tr>
-	{% for result, method in firmware.processed_analysis[selected_analysis]["architectures"].items() %}
+	{% if "architectures" in firmware.processed_analysis[selected_analysis] %}
+	 	{% for result, method in firmware.processed_analysis[selected_analysis]["architectures"].items() %}
+	 		<tr>
+	 			<td>{{ result }}</td>
+	 			<td>{{ method }}</td>
+	 		</tr>
+		{% endfor %}
+	{% else %}
 		<tr>
-			<td>{{ result }}</td>
-			<td>{{ method }}</td>
-		</tr>
-	{% endfor %}
+			<td></td>
+			<td>The analysis result is outdated, please rerun the analysis.</td>
+	</tr>
+	{% endif %}
+
 
 {% endblock %}
