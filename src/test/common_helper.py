@@ -2,13 +2,17 @@
 import grp
 import json
 import os
+import shutil
+import tempfile
 from base64 import standard_b64encode
 from configparser import ConfigParser
 from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
+import config
+from config import Config, _replace_hyphens_with_underscores
 from helperFunctions.config import load_config
 from helperFunctions.data_conversion import get_value_of_first_key, normalize_compare_id
 from helperFunctions.fileSystem import get_src_dir
@@ -544,7 +548,7 @@ def store_binary_on_file_system(tmp_dir: str, test_object: Union[FileObject, Fir
     (binary_dir / test_object.uid).write_bytes(test_object.binary)
 
 
-def create_docker_mount_base_dir():
+def create_docker_mount_base_dir() -> Path:
     docker_mount_base_dir = Path('/tmp/fact-docker-mount-base-dir')
     try:
         docker_mount_base_dir.mkdir(0o770)
@@ -555,3 +559,159 @@ def create_docker_mount_base_dir():
         os.chown(docker_mount_base_dir, -1, docker_gid)
 
     return docker_mount_base_dir
+
+
+def test_config_cleanup(cfg: Config):
+    shutil.rmtree(cfg.data_storage.docker_mount_base_dir)
+    shutil.rmtree(cfg.data_storage.firmware_file_storage_directory)
+
+
+def get_test_config(defaults: Dict = None) -> Tuple[Config, ConfigParser]:
+    """TODO
+    :arg defaults: Sections to overwrite
+    Creates docker-mount-base-dir.
+    Creates a temporary directory.
+    Use `test_config_cleanup` for cleanup of these directorys.
+    """
+    # We need `main_cfg_path` to read database authentication data
+
+    docker_mount_base_dir = create_docker_mount_base_dir()
+    config.load_config()
+
+    # TODO this defaulted to '/tmp/fact_test_fs_directory'
+    firmware_file_storage_directory = Path(tempfile.mkdtemp())
+
+    sections = {
+        'data-storage': {
+            'firmware-file-storage-directory': str(firmware_file_storage_directory),
+
+            'db-admin-user': config.cfg.data_storage.db_admin_user,
+            'db-admin-pw': config.cfg.data_storage.db_admin_pw,
+            'db-readonly-user': config.cfg.data_storage.db_readonly_user,
+            'db-readonly-pw': config.cfg.data_storage.db_readonly_pw,
+
+
+            'mongo-server': 'localhost',
+            'mongo-port': '27018',
+            'main-database': 'tmp_unit_tests',
+            'intercom-database-prefix': 'tmp_unit_tests',
+            'statistic-database': 'tmp_unit_tests',
+            'view-storage': 'tmp_tests_view',
+
+            'user-database': 'sqlite:////media/data/fact_auth_data/fact_users.db',
+            'password-salt': '1234',
+
+            'report-threshold': '2048',
+            'structural-threshold': '40',  # TODO
+            'temp-dir-path': '/tmp',
+            'docker-mount-base-dir': str(docker_mount_base_dir),  # TODO
+            'variety-path': 'bin/variety.js',
+         },
+        'database': {
+            'ajax-stats-reload-time': '10000',  # TODO
+            'number-of-latest-firmwares-to-display': '10',
+            'results-per-page': '10'
+        },
+        'default-plugins': {
+            'default': [
+                ''
+                # TODO
+            ],
+            'minimal': [
+                ''
+                # TODO
+            ],
+        },
+        'expert-settings': {
+            'authentication': 'false',
+            'block-delay': '0.1',
+            'communication-timeout': '60',
+            'intercom-poll-delay': '0.5',
+            'nginx': 'false',
+            'radare2-host': 'localhost',
+            'ssdeep-ignore': '1',
+            'throw-exceptions': 'false',
+            'unpack-threshold': '0.8',
+            'unpack_throttle_limit': '50'
+        },
+        'logging': {
+            'logfile': '/tmp/fact_main.log',
+            'loglevel': 'WARNING',
+            'mongodb-logfile': '/tmp/fact_mongo.log'
+        },
+        'unpack': {
+            'max-depth': '10',
+            'memory-limit': '2048',
+            'threads': '4',
+            'whitelist': [
+                ''
+            ]
+        },
+        # TODO maybe the plugin tests should set these themselves via the cfg_defaults mark
+        # Plugins
+        'binwalk': {
+            'threads': '1'
+        },
+        'cpu_architecture': {
+            'threads': '1'
+        },
+        'crypto_material': {
+            'threads': '1'
+        },
+        'cwe_checker': {
+            'threads': '1'
+        },
+        'elf_analysis': {
+            'threads': '1'
+        },
+        'exploit_mitigations': {
+            'threads': '1'
+        },
+        'file_hashes': {
+            'hashes': 'md5, sha1, sha256, sha512, ripemd160, whirlpool',
+            'threads': '1'
+        },
+        'init_systems': {
+            'threads': '1'
+        },
+        'input_vectors': {
+            'threads': '1'
+        },
+        'ip_and_uri_finder': {
+            'threads': '1'
+        },
+        'malware_scanner': {
+            'threads': '1'
+        },
+        'printable_strings': {
+            'min_length': '6',  # TODO
+            'threads': '1'
+        },
+        'qemu_exec': {
+            'threads': '1'
+        },
+        'software_components': {
+            'threads': '1'
+        },
+        'source_code_analysis': {
+            'threads': '1'
+        },
+        'statistics': {
+            'max_elements_per_chart': '10'
+        },
+        'string_evaluator': {
+            'threads': '1'
+        },
+        'users_and_passwords': {
+            'threads': '1'
+        },
+    }
+    sections.update(defaults if defaults is not None else {})
+
+    configparser_cfg = ConfigParser()
+    configparser_cfg.read_dict(sections)
+
+    _replace_hyphens_with_underscores(sections)
+    cfg = Config(**sections)
+
+    return cfg, configparser_cfg
