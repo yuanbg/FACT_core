@@ -55,8 +55,7 @@ class TestFileSystemMetadata(AnalysisPluginTest):
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
-        self.analysis_plugin = plugin.AnalysisPlugin(self, config=config)
+        self.analysis_plugin = plugin.AnalysisPlugin(self)
         self._setup_patches()
         self.test_file_tar = TEST_DATA_DIR / 'test.tar'
         self.test_file_fs = TEST_DATA_DIR / 'squashfs.img'

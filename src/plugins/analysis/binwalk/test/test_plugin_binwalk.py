@@ -24,9 +24,7 @@ class TestAnalysisPluginBinwalk(AnalysisPluginTest):
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
-        # additional setup can go here
-        self.analysis_plugin = AnalysisPlugin(self, config=config)
+        self.analysis_plugin = AnalysisPlugin(self)
 
     def test_signature_analysis(self):
         test_file = FileObject(file_path='{}/container/test.zip'.format(get_test_data_dir()))

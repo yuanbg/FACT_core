@@ -3,9 +3,12 @@ import unittest
 import unittest.mock
 from configparser import ConfigParser
 
+import pytest
+
 from test.common_helper import DatabaseMock, create_docker_mount_base_dir, fake_exit, load_users_from_main_config
 
 
+@pytest.mark.usefixtures('patch_cfg')
 class AnalysisPluginTest(unittest.TestCase):
     '''
     This is the base class for analysis plugin test.unit
@@ -25,6 +28,7 @@ class AnalysisPluginTest(unittest.TestCase):
         self.docker_mount_base_dir = create_docker_mount_base_dir()
 
     def tearDown(self):
+
         self.analysis_plugin.shutdown()  # pylint: disable=no-member
 
         self.enter_patch.stop()

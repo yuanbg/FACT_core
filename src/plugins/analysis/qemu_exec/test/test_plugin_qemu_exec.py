@@ -9,7 +9,7 @@ from common_helper_files import get_dir_of_file
 from requests.exceptions import ConnectionError as RequestConnectionError
 from requests.exceptions import ReadTimeout
 
-from test.common_helper import TEST_FW, create_test_firmware, get_config_for_testing, get_test_data_dir
+from test.common_helper import TEST_FW, create_test_firmware, get_test_data_dir
 from test.mock import mock_patch
 from test.unit.analysis.analysis_plugin_test_class import AnalysisPluginTest
 
@@ -91,9 +91,8 @@ class TestPluginQemuExec(AnalysisPluginTest):
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
         self.mock_unpacker = MockUnpacker()
-        self.analysis_plugin = qemu_exec.AnalysisPlugin(self, config=config, unpacker=self.mock_unpacker)
+        self.analysis_plugin = qemu_exec.AnalysisPlugin(self, unpacker=self.mock_unpacker)
 
     def test_has_relevant_type(self):
         assert self.analysis_plugin._has_relevant_type(None) is False
@@ -418,8 +417,7 @@ class TestQemuExecUnpacker(TestCase):
 
     def setUp(self):
         self.name_prefix = 'FACT_plugin_qemu'
-        self.config = get_config_for_testing()
-        self.unpacker = qemu_exec.Unpacker(config=self.config)
+        self.unpacker = qemu_exec.Unpacker()
         qemu_exec.BinaryServiceDbInterface = MockBinaryService
 
     def test_unpack_fo(self):

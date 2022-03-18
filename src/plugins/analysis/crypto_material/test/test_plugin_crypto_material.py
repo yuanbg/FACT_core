@@ -13,8 +13,7 @@ class CryptoCodeMaterialTest(AbstractSignatureTest):
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
-        self.analysis_plugin = AnalysisPlugin(self, config=config)
+        self.analysis_plugin = AnalysisPlugin(self)
 
     def test_gnupg(self):
         self._rule_match('0x6C2DF2C5-pub.asc', 'PgpPublicKeyBlock', len(['PgpPublicKeyBlock', 'PgpPublicKeyBlock_GnuPG']))

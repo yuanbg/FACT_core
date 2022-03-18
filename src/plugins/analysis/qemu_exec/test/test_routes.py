@@ -4,17 +4,17 @@ from unittest import TestCase
 from flask import Flask
 from flask_restx import Api
 
-from test.common_helper import create_test_file_object, create_test_firmware, get_config_for_testing
+from test.common_helper import create_test_file_object, create_test_firmware
 from test.unit.web_interface.rest.conftest import decode_response
 
 from ..code.qemu_exec import AnalysisPlugin
 from ..routes import routes
 
+from config import configparser_cfg
+
 
 class DbInterfaceMock:
-    def __init__(self, config):
-        self.config = config
-
+    def __init__(self, _config):
         self.fw = create_test_firmware()
         self.fw.uid = 'parent_uid'
         self.fw.processed_analysis[AnalysisPlugin.NAME] = {
@@ -49,11 +49,10 @@ class DbInterfaceMock:
 class TestQemuExecRoutesStatic(TestCase):
 
     def setUp(self):
-        self.config = get_config_for_testing()
         routes.FrontEndDbInterface = DbInterfaceMock
 
     def test_get_analysis_results_for_included_uid(self):
-        result = routes.get_analysis_results_for_included_uid('foo', self.config)
+        result = routes.get_analysis_results_for_included_uid('foo', configparser_cfg)
         assert result is not None
         assert result != {}
         assert 'parent_uid' in result
@@ -98,8 +97,7 @@ class TestFileSystemMetadataRoutes(TestCase):
         app.jinja_env.filters['replace_uid_with_hid'] = lambda x: x
         app.jinja_env.filters['nice_unix_time'] = lambda x: x
         app.jinja_env.filters['decompress'] = lambda x: x
-        config = get_config_for_testing()
-        self.plugin_routes = routes.PluginRoutes(app, config)
+        self.plugin_routes = routes.PluginRoutes(app, configparser_cfg)
         self.test_client = app.test_client()
 
     def test__get_analysis_results_not_executable(self):
@@ -133,14 +131,13 @@ class TestFileSystemMetadataRoutesRest(TestCase):
         app = Flask(__name__)
         app.config.from_object(__name__)
         app.config['TESTING'] = True
-        config = get_config_for_testing()
         api = Api(app)
         endpoint, methods = routes.QemuExecRoutesRest.ENDPOINTS[0]
         api.add_resource(
             routes.QemuExecRoutesRest,
             endpoint,
             methods=methods,
-            resource_class_kwargs={'config': config}
+            resource_class_kwargs={'config': configparser_cfg}
         )
         self.test_client = app.test_client()
 

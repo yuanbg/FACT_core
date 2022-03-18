@@ -10,9 +10,8 @@ class TestCweCheckerFunctions(AnalysisPluginTest):
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
         # TODO: Mock calls to cwe_checker
-        self.analysis_plugin = AnalysisPlugin(self, config=config)
+        self.analysis_plugin = AnalysisPlugin(self)
 
     def test_parse_cwe_checker_output(self):
         test_data = """[

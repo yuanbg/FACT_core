@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from common_helper_files import get_dir_of_file
 
 from objects.file import FileObject
@@ -10,15 +11,19 @@ from ..code.strings import AnalysisPlugin
 TEST_DATA_DIR = os.path.join(get_dir_of_file(__file__), 'data')
 
 
+@pytest.mark.cfg_defaults(
+    {
+        'printable_strings': {
+            'min-length': '4',
+        }
+    },
+)
 class TestAnalysisPlugInPrintableStrings(AnalysisPluginTest):
-
     PLUGIN_NAME = 'printable_strings'
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
-        config.set(self.PLUGIN_NAME, 'min-length', '4')
-        self.analysis_plugin = AnalysisPlugin(self, config=config)
+        self.analysis_plugin = AnalysisPlugin(self)
 
         self.strings = ['first string', 'second<>_$tring!', 'third:?-+012345/\\string']
         self.offsets = [(3, self.strings[0]), (21, self.strings[1]), (61, self.strings[2])]
@@ -59,12 +64,3 @@ class TestAnalysisPlugInPrintableStrings(AnalysisPluginTest):
         test_input = b'01234a\0b\0c\0d\0e\0f\0g\0h\0i\0j\x0005678'
         result = AnalysisPlugin._match_with_offset(regex, test_input, encoding)
         assert result == [(5, 'abcdefghij')]
-
-    def test_get_min_length_from_config(self):
-        assert self.analysis_plugin._get_min_length_from_config() == '4'
-
-        self.analysis_plugin.config[self.PLUGIN_NAME].pop('min-length')
-        assert self.analysis_plugin._get_min_length_from_config() == '8'
-
-        self.analysis_plugin.config.pop(self.PLUGIN_NAME)
-        assert self.analysis_plugin._get_min_length_from_config() == '8'

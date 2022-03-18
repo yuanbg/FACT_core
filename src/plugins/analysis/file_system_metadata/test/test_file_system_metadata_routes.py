@@ -6,16 +6,17 @@ from flask import Flask
 from flask_restx import Api
 
 from helperFunctions.database import ConnectTo
-from test.common_helper import create_test_file_object, create_test_firmware, get_config_for_testing
+from test.common_helper import create_test_file_object, create_test_firmware
 from test.unit.web_interface.rest.conftest import decode_response
 
 from ..code.file_system_metadata import AnalysisPlugin
 from ..routes import routes
 
+from config import configparser_cfg
+
 
 class DbInterfaceMock:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, _config):
         self.fw = create_test_firmware()
         self.fw.processed_analysis[AnalysisPlugin.NAME] = {'files': {b64_encode('some_file'): {'test_result': 'test_value'}}}
         self.fo = create_test_file_object()
@@ -39,7 +40,6 @@ class DbInterfaceMock:
 class TestFileSystemMetadataRoutesStatic(TestCase):
 
     def setUp(self):
-        self.config = get_config_for_testing()
         routes.FsMetadataDbInterface.__bases__ = (DbInterfaceMock,)
 
     def test_get_results_from_parent_fos(self):
@@ -82,7 +82,7 @@ class TestFileSystemMetadataRoutesStatic(TestCase):
         assert results[file_names[0]]['result'] == 'value', 'wrong value of analysis result'
 
     def test_get_analysis_results_for_included_uid(self):
-        with ConnectTo(routes.FsMetadataRoutesDbInterface, self.config) as db_interface:
+        with ConnectTo(routes.FsMetadataRoutesDbInterface, configparser_cfg) as db_interface:
             result = db_interface.get_analysis_results_for_included_uid('foo')
 
         assert result is not None
@@ -91,14 +91,14 @@ class TestFileSystemMetadataRoutesStatic(TestCase):
         assert 'some_file' in result, 'files missing from result'
 
     def test_get_analysis_results_for_included_uid__uid_not_found(self):
-        with ConnectTo(routes.FsMetadataRoutesDbInterface, self.config) as db_interface:
+        with ConnectTo(routes.FsMetadataRoutesDbInterface, configparser_cfg) as db_interface:
             result = db_interface.get_analysis_results_for_included_uid('not_found')
 
         assert result is not None
         assert result == {}, 'result should be empty'
 
     def test_get_analysis_results_for_included_uid__parent_not_found(self):
-        with ConnectTo(routes.FsMetadataRoutesDbInterface, self.config) as db_interface:
+        with ConnectTo(routes.FsMetadataRoutesDbInterface, configparser_cfg) as db_interface:
             result = db_interface.get_analysis_results_for_included_uid('bar')
 
         assert result is not None
@@ -114,8 +114,7 @@ class TestFileSystemMetadataRoutes(TestCase):
         app.config['TESTING'] = True
         app.jinja_env.filters['replace_uid_with_hid'] = lambda x: x
         app.jinja_env.filters['nice_unix_time'] = lambda x: x
-        config = get_config_for_testing()
-        self.plugin_routes = routes.PluginRoutes(app, config)
+        self.plugin_routes = routes.PluginRoutes(app, configparser_cfg)
         self.test_client = app.test_client()
 
     def test_get_analysis_results_of_parent_fo(self):
@@ -131,14 +130,13 @@ class TestFileSystemMetadataRoutesRest(TestCase):
         app = Flask(__name__)
         app.config.from_object(__name__)
         app.config['TESTING'] = True
-        config = get_config_for_testing()
         api = Api(app)
         endpoint, methods = routes.FSMetadataRoutesRest.ENDPOINTS[0]
         api.add_resource(
             routes.FSMetadataRoutesRest,
             endpoint,
             methods=methods,
-            resource_class_kwargs={'config': config}
+            resource_class_kwargs={'config': configparser_cfg}
         )
         self.test_client = app.test_client()
 

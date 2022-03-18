@@ -14,8 +14,7 @@ class TestAnalysisPluginPasswordFileAnalyzer(AnalysisPluginTest):
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
-        self.analysis_plugin = AnalysisPlugin(self, config=config)
+        self.analysis_plugin = AnalysisPlugin(self)
 
     def test_process_object_shadow_file(self):
         test_file = FileObject(file_path=str(TEST_DATA_DIR / 'passwd_test'))

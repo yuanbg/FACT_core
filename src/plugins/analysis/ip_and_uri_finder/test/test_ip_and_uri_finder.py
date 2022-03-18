@@ -48,8 +48,7 @@ class TestAnalysisPluginIpAndUriFinder(AnalysisPluginTest):
     @patch('geoip2.database.Reader', MockReader)
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
-        self.analysis_plugin = AnalysisPlugin(self, config=config)
+        self.analysis_plugin = AnalysisPlugin(self)
 
     @patch('geoip2.database.Reader', MockReader)
     def test_process_object_ips(self):

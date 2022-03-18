@@ -16,8 +16,7 @@ class TestAnalysisPluginsSoftwareComponents(AnalysisPluginTest):
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
-        self.analysis_plugin = AnalysisPlugin(self, config=config)
+        self.analysis_plugin = AnalysisPlugin(self)
 
     def test_process_object(self):
         test_file = FileObject(file_path=os.path.join(TEST_DATA_DIR, 'yara_test_file'))

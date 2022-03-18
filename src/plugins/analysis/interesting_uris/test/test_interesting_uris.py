@@ -32,8 +32,7 @@ class TestAnalysisPluginInterestingUris(AnalysisPluginTest):
 
     def setUp(self):
         super().setUp()
-        config = self.init_basic_config()
-        self.analysis_plugin = AnalysisPlugin(self, config=config)
+        self.analysis_plugin = AnalysisPlugin(self)
 
     def test_process_object(self):
         fo = create_test_file_object()
