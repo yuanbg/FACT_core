@@ -5,6 +5,22 @@ set -e
 # cd in this files directory for relative paths to work
 cd "$( dirname "${BASH_SOURCE[0]}" )" || exit 1
 
+#换源
+
+sudo echo "deb http://mirrors.ustc.edu.cn/ubuntu/ xenial main restricted universe multiverse
+deb http://mirrors.ustc.edu.cn/ubuntu/ xenial-security main restricted universe multiverse
+deb http://mirrors.ustc.edu.cn/ubuntu/ xenial-updates main restricted universe multiverse
+deb http://mirrors.ustc.edu.cn/ubuntu/ xenial-proposed main restricted universe multiverse
+deb http://mirrors.ustc.edu.cn/ubuntu/ xenial-backports main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ xenial main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ xenial-security main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ xenial-updates main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ xenial-proposed main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ xenial-backports main restricted universe multiverse" > /etc/apt/sources.list
+sudo source /etc/apt/sources.list
+echo "换源"
+
+
 FACTUSER=$(whoami)
 
 CODENAME=$(lsb_release -cs)
